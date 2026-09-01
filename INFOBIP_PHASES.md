@@ -16,18 +16,18 @@ This roadmap tracks the incremental development of the Flutter wrapper for the I
 
 This phase is analysis-only. Do not implement features or add public APIs during this phase.
 
-- [ ] Inspect the official Infobip Flutter public Dart API
-- [ ] Inspect the Infobip Huawei Android SDK 8.14.0 API
-- [ ] Compare Core APIs
-- [ ] Compare Push / Notification APIs
-- [ ] Compare User APIs
-- [ ] Compare Installation APIs
-- [ ] Compare Inbox APIs
-- [ ] Compare Chat APIs
-- [ ] Compare models and enums
-- [ ] Identify unsupported APIs
-- [ ] Identify APIs requiring adaptation
-- [ ] Populate `API_COMPATIBILITY.md`
+- [x] Inspect the official Infobip Flutter public Dart API
+- [x] Inspect the Infobip Huawei Android SDK 8.14.0 API
+- [x] Compare Core APIs
+- [x] Compare Push / Notification APIs
+- [x] Compare User APIs
+- [x] Compare Installation APIs
+- [x] Compare Inbox APIs
+- [x] Compare Chat APIs
+- [x] Compare models and enums
+- [x] Identify unsupported APIs
+- [x] Identify APIs requiring adaptation
+- [x] Populate `API_COMPATIBILITY.md`
 
 ## Phase 3 - Core / SDK Initialization
 
