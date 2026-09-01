@@ -340,6 +340,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _controller = InfobipHuaweiChatController();
+  InfobipHuaweiChatError? _error;
 
   Future<void> _back() async {
     final handled = await _controller.navigateBackOrCloseChat();
@@ -364,7 +365,26 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: InfobipHuaweiChatView(controller: _controller),
+      body: Stack(
+        children: [
+          InfobipHuaweiChatView(
+            controller: _controller,
+            onError: (error) {
+              if (!mounted) return;
+              setState(() => _error = error);
+            },
+          ),
+          if (_error != null)
+            const Center(
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('Chat is currently unavailable.'),
+                ),
+              ),
+            ),
+        ],
+      ),
     ),
   );
 }
