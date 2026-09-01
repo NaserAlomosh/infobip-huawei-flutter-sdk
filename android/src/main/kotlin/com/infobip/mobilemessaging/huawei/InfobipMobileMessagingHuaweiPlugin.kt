@@ -1,6 +1,7 @@
 package com.infobip.mobilemessaging.huawei
 
 import android.content.Context
+import android.app.Activity
 import android.os.Handler
 import android.os.Looper
 import com.infobip.mobilemessaging.huawei.core.MobileMessagingInitializer
@@ -10,14 +11,18 @@ import com.infobip.mobilemessaging.huawei.user.UserManager
 import com.infobip.mobilemessaging.huawei.installation.InstallationManager
 import com.infobip.mobilemessaging.huawei.inbox.InboxManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.infobip.mobile.messaging.MobileMessaging
+import com.infobip.mobilemessaging.huawei.chat.ChatPlatformViewFactory
 
 class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     MethodChannel.MethodCallHandler,
-    EventChannel.StreamHandler {
+    EventChannel.StreamHandler,
+    ActivityAware {
     private var methodChannel: MethodChannel? = null
     private var eventChannel: EventChannel? = null
     private var initializer: MobileMessagingInitializer? = null
@@ -27,6 +32,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     private var installationManager: InstallationManager? = null
     private var inboxManager: InboxManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var activity: Activity? = null
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         applicationContext = binding.applicationContext
@@ -47,6 +53,14 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         eventChannel = EventChannel(binding.binaryMessenger, ChannelContract.EVENT_CHANNEL).also {
             it.setStreamHandler(this)
         }
+        binding.platformViewRegistry.registerViewFactory(
+            ChannelContract.CHAT_VIEW,
+            ChatPlatformViewFactory(
+                messenger = binding.binaryMessenger,
+                activityProvider = { activity },
+                initialized = { initializer?.isInitialized == true },
+            ),
+        )
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -61,6 +75,23 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         installationManager = null
         inboxManager = null
         applicationContext = null
+        activity = null
+    }
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activity = binding.activity
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+        activity = null
+    }
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        activity = binding.activity
+    }
+
+    override fun onDetachedFromActivity() {
+        activity = null
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {

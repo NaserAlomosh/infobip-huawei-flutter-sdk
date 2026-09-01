@@ -2,7 +2,7 @@
 
 An Android-only Flutter plugin being developed as a Flutter-facing wrapper for the official Infobip Huawei Mobile Messaging SDK.
 
-> **Phase 7 status:** Core initialization, notification events, User Management, Installation Management, and Inbox are implemented. Chat APIs are **not implemented**.
+> **Phase 8 status:** Core initialization, notifications, User Management, Installation Management, Inbox, and embedded Chat are implemented.
 
 ## Requirements
 
@@ -32,6 +32,29 @@ Public Dart API
 ```
 
 Channel names, method identifiers, and versioned event identifiers are centralized on both platforms. Initialization uses the method channel; unsolicited notification events use one shared event-channel subscription.
+
+## Embedded Chat
+
+Chat uses Huawei SDK 8.14.0's `InAppChatView` through a dedicated Android PlatformView. `InAppChatView` has no native toolbar, so Flutter retains ownership of the route, `AppBar`, and business actions without displaying a duplicate toolbar. The Infobip view retains its native composer, attachment workflow, focus handling, validation, and upload lifecycle.
+
+Initialize the core SDK successfully before constructing Chat, then place the widget in any bounded Flutter layout:
+
+```dart
+final chatController = InfobipHuaweiChatController();
+
+Scaffold(
+  appBar: AppBar(title: const Text('Chat'), actions: [businessAction]),
+  body: InfobipHuaweiChatView(controller: chatController),
+);
+```
+
+For Flutter-owned back navigation, call `navigateBackOrCloseChat()` first and pop the Flutter route only when it returns `false`. A controller is bound to one PlatformView ID, is detached when its widget is disposed, and never targets a global or previously disposed Chat view. Each view uses the SDK-managed Chat singleton; the plugin does not create another `MobileMessaging` instance.
+
+Creation without completed initialization renders the deterministic `not_initialized` state; creation while no Activity is attached renders `activity_unavailable`. Native operation failures use `chat_unavailable` and do not include messages, URLs, thread data, attachment paths, tokens, or stack traces.
+
+Phase 8 intentionally does not expose full-screen Chat, availability, unread counts/events, raw-message or internal UI events, threads, programmatic sends, contextual data, language, or runtime theme commands. Although several are available in the Huawei component, the inspected official Flutter contract does not justify expanding the public API without stable portable models. Native attachments remain available from the native composer; Android resource theme configuration remains host-native configuration.
+
+Android PlatformViews require real-device validation for IME resizing, accessibility, attachment permissions, Activity recreation, and route leave/re-entry behavior. No manual keyboard workaround is installed. Chat also requires a correctly configured Infobip application/backend and a Huawei device or suitable HMS environment. Never log Chat content, contextual data, URLs, identity, tokens, or local attachment paths.
 
 ## Initialization
 

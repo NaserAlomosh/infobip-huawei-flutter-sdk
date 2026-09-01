@@ -1,6 +1,9 @@
 abstract final class ChannelContract {
   static const methodChannel = 'com.infobip.mobilemessaging.huawei/methods';
   static const eventChannel = 'com.infobip.mobilemessaging.huawei/events';
+  static const chatView = 'com.infobip.mobilemessaging.huawei/chat_view';
+  static const chatViewChannel = 'com.infobip.mobilemessaging.huawei/chat_view/';
+  static const chatNavigateBack = 'navigateBackOrCloseChat';
   static const initialize = 'initialize';
   static const setRegistration = 'setRegistration';
   static const isRegistrationEnabled = 'isRegistrationEnabled';

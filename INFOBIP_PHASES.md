@@ -61,7 +61,8 @@ Background Dart isolate delivery is unsupported by this wrapper and is not claim
 
 ## Phase 8 - Chat
 
-- [ ] Implement approved Chat APIs
+- [x] Implement embedded `InAppChatView` and view-scoped back controller
+- [ ] Implement remaining approved Chat APIs
 - [ ] Implement Chat models, unread-count updates, and events
 
 ## Phase 9 - Models, Mappers, and Error Handling

@@ -3,6 +3,9 @@ package com.infobip.mobilemessaging.huawei.plugin
 internal object ChannelContract {
     const val METHOD_CHANNEL = "com.infobip.mobilemessaging.huawei/methods"
     const val EVENT_CHANNEL = "com.infobip.mobilemessaging.huawei/events"
+    const val CHAT_VIEW = "com.infobip.mobilemessaging.huawei/chat_view"
+    const val CHAT_VIEW_CHANNEL = "com.infobip.mobilemessaging.huawei/chat_view/"
+    const val CHAT_NAVIGATE_BACK = "navigateBackOrCloseChat"
     const val INITIALIZE = "initialize"
     const val SET_REGISTRATION = "setRegistration"
     const val IS_REGISTRATION_ENABLED = "isRegistrationEnabled"
