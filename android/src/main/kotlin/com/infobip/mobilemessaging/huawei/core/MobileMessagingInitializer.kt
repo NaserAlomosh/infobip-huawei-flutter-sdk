@@ -5,12 +5,10 @@ import org.infobip.mobile.messaging.MobileMessaging
 
 internal class MobileMessagingInitializer(context: Context) {
     private val applicationContext = context.applicationContext
-    private var codeForBuild: String? = null
-    private val coordinator = InitializationCoordinator { complete ->
-        val code = requireNotNull(codeForBuild)
+    private val coordinator = InitializationCoordinator { applicationCode, complete ->
         try {
             MobileMessaging.Builder(applicationContext)
-                .withApplicationCode(code)
+                .withApplicationCode(applicationCode)
                 .build { result ->
                     if (result.isSuccess) {
                         complete(null)
@@ -32,9 +30,6 @@ internal class MobileMessagingInitializer(context: Context) {
         if (applicationCode.isBlank()) {
             callback(InitializationError("invalid_argument", "applicationCode must not be empty"))
             return
-        }
-        synchronized(this) {
-            if (codeForBuild == null) codeForBuild = applicationCode
         }
         coordinator.initialize(applicationCode, callback)
     }

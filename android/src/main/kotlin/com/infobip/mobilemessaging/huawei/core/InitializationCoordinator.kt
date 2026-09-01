@@ -7,42 +7,50 @@ internal data class InitializationError(
 )
 
 internal class InitializationCoordinator(
-    private val start: ((InitializationError?) -> Unit) -> Unit,
+    private val start: (String, (InitializationError?) -> Unit) -> Unit,
 ) {
     internal enum class State { NOT_INITIALIZED, INITIALIZING, INITIALIZED, FAILED }
 
     private var state = State.NOT_INITIALIZED
     private var applicationCode: String? = null
-    private var failure: InitializationError? = null
+    private var attempt = 0
     private val callbacks = mutableListOf<(InitializationError?) -> Unit>()
 
     fun initialize(code: String, callback: (InitializationError?) -> Unit) {
-        var shouldStart = false
+        var attemptToStart: Int? = null
+        var shouldCompleteImmediately = false
+        var immediateError: InitializationError? = null
         synchronized(this) {
             if (applicationCode != null && applicationCode != code) {
-                callback(InitializationError("already_initialized", "Initialization already started with a different application code"))
-                return
-            }
-            when (state) {
-                State.INITIALIZED -> callback(null)
-                State.FAILED -> callback(failure)
-                State.INITIALIZING -> callbacks += callback
-                State.NOT_INITIALIZED -> {
-                    applicationCode = code
-                    state = State.INITIALIZING
-                    callbacks += callback
-                    shouldStart = true
+                shouldCompleteImmediately = true
+                immediateError = InitializationError(
+                    "already_initialized",
+                    "Initialization already started with a different application code",
+                )
+            } else {
+                when (state) {
+                    State.INITIALIZED -> shouldCompleteImmediately = true
+                    State.INITIALIZING -> callbacks += callback
+                    State.NOT_INITIALIZED, State.FAILED -> {
+                        if (applicationCode == null) applicationCode = code
+                        state = State.INITIALIZING
+                        callbacks += callback
+                        attempt++
+                        attemptToStart = attempt
+                    }
                 }
             }
         }
-        if (shouldStart) start(::complete)
+        if (shouldCompleteImmediately) callback(immediateError)
+        attemptToStart?.let { currentAttempt ->
+            start(code) { error -> complete(currentAttempt, error) }
+        }
     }
 
-    private fun complete(error: InitializationError?) {
+    private fun complete(completedAttempt: Int, error: InitializationError?) {
         val pending: List<(InitializationError?) -> Unit>
         synchronized(this) {
-            if (state != State.INITIALIZING) return
-            failure = error
+            if (state != State.INITIALIZING || completedAttempt != attempt) return
             state = if (error == null) State.INITIALIZED else State.FAILED
             pending = callbacks.toList()
             callbacks.clear()
