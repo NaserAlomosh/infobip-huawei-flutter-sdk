@@ -1,208 +1,91 @@
-# Infobip Huawei Flutter Plugin
+# Infobip Huawei Flutter Plugin Roadmap
 
-Flutter plugin that provides Huawei-specific support for the Infobip Mobile Messaging SDK.
+This roadmap tracks the incremental development of the Flutter wrapper for the Infobip Huawei Mobile Messaging SDK. A checked item represents completed work; all unchecked feature items remain unimplemented roadmap work.
 
-This plugin wraps the native Huawei Mobile Messaging SDK and exposes the required functionality to Flutter through a clean Dart API.
+## Phase 1 - Project Setup
 
----
+- [x] Create the Flutter plugin and Android module
+- [x] Establish the Flutter, Dart, Kotlin, Java, and Android dependency baseline
+- [x] Configure the Huawei Maven repository and Infobip Huawei SDK 8.14.0 dependency
+- [x] Add MethodChannel and EventChannel infrastructure
+- [x] Add project documentation and contribution guidance
+- [x] Add the example application integration shell
+- [x] Verify formatting, analysis, tests, and Android builds for the setup baseline
 
-## Project Status
+## Phase 2 - API Compatibility Analysis
 
-### Phase 1 - Project Setup
+This phase is analysis-only. Do not implement features or add public APIs during this phase.
 
-- [ ] Create Flutter plugin project
-- [ ] Configure Android module
-- [ ] Configure Kotlin
-- [ ] Add Huawei Maven repositories
-- [ ] Add Infobip Huawei SDK dependency
-- [ ] Add Huawei HMS dependencies
-- [ ] Configure AGConnect
-- [ ] Verify Android build
+- [ ] Inspect the official Infobip Flutter public Dart API
+- [ ] Inspect the Infobip Huawei Android SDK 8.14.0 API
+- [ ] Compare Core APIs
+- [ ] Compare Push / Notification APIs
+- [ ] Compare User APIs
+- [ ] Compare Installation APIs
+- [ ] Compare Inbox APIs
+- [ ] Compare Chat APIs
+- [ ] Compare models and enums
+- [ ] Identify unsupported APIs
+- [ ] Identify APIs requiring adaptation
+- [ ] Populate `API_COMPATIBILITY.md`
 
----
+## Phase 3 - Core / SDK Initialization
 
-## Phase 2 - SDK Initialization
+- [ ] Implement the approved initialization and lifecycle APIs
+- [ ] Map initialization results and failures to Flutter
+- [ ] Validate initialization behavior and repeated calls
 
-- [ ] Initialize Infobip Mobile Messaging SDK
-- [ ] Expose initialization method to Flutter
-- [ ] Handle initialization errors
-- [ ] Prevent duplicate initialization
-- [ ] Verify initialization on Huawei device
+## Phase 4 - Push Notifications and Events
 
----
+- [ ] Implement approved push registration and token handling
+- [ ] Implement approved notification payload and action handling
+- [ ] Expose approved foreground, background, opened, and token events
 
-## Phase 3 - Push Notifications
+## Phase 5 - User Management
 
-- [ ] Request notification permission
-- [ ] Obtain Huawei push token
-- [ ] Register push token with Infobip
-- [ ] Handle token refresh
-- [ ] Handle notification received in foreground
-- [ ] Handle notification received in background
-- [ ] Handle notification opened by user
-- [ ] Handle notification payload
-- [ ] Expose notification events to Flutter
-- [ ] Test push notifications on Huawei device
+- [ ] Implement approved user registration and profile APIs
+- [ ] Implement approved user identity and attribute handling
 
----
+## Phase 6 - Installation Management
 
-## Phase 4 - User Registration
+- [ ] Implement approved installation retrieval and update APIs
+- [ ] Implement approved installation attributes and push status handling
 
-- [ ] Register user
-- [ ] Update user profile
-- [ ] Fetch current user
-- [ ] Handle user identity
-- [ ] Handle external user ID
-- [ ] Test user registration
+## Phase 7 - Inbox
 
----
+- [ ] Implement approved Inbox APIs
+- [ ] Implement Inbox data mapping and events
 
-## Phase 5 - Installation
+## Phase 8 - Chat
 
-- [ ] Fetch installation
-- [ ] Update installation
-- [ ] Handle installation attributes
-- [ ] Handle push registration status
-- [ ] Test installation APIs
+- [ ] Implement approved Chat APIs
+- [ ] Implement Chat models, unread-count updates, and events
 
----
+## Phase 9 - Models, Mappers, and Error Handling
 
-## Phase 6 - Personalization
+- [ ] Add the approved Dart models and enums
+- [ ] Map native values and errors into predictable Flutter types
+- [ ] Handle invalid arguments, unsupported operations, and platform failures
 
-- [ ] Personalize user
-- [ ] Handle user attributes
-- [ ] Handle custom attributes
-- [ ] Handle user demographics
-- [ ] Test personalization flow
+## Phase 10 - Example Application Integration
 
----
+- [ ] Integrate completed feature areas into the example application
+- [ ] Demonstrate supported workflows without placeholder credentials
 
-## Phase 7 - Messages
+## Phase 11 - Testing and Device Validation
 
-- [ ] Receive message data
-- [ ] Map native message model to Dart model
-- [ ] Handle custom payload
-- [ ] Handle deep links
-- [ ] Handle notification action
-- [ ] Expose message events to Flutter
-- [ ] Test message handling
+- [ ] Add Dart, platform-channel, and native Android tests
+- [ ] Validate supported workflows on Huawei devices
+- [ ] Validate lifecycle, background, failure, and regression scenarios
 
----
+## Phase 12 - Documentation and Release Preparation
 
-## Phase 8 - In-App Chat
-
-- [ ] Initialize chat
-- [ ] Open chat
-- [ ] Fetch chat availability
-- [ ] Fetch unread message count
-- [ ] Observe unread message count changes
-- [ ] Send chat messages
-- [ ] Receive chat messages
-- [ ] Handle chat events
-- [ ] Map native chat models to Dart
-- [ ] Handle chat errors
-- [ ] Test chat flow
-
----
-
-## Phase 9 - Flutter API
-
-- [ ] Create main plugin API
-- [ ] Create service layer
-- [ ] Create Dart models
-- [ ] Create enums
-- [ ] Create exception models
-- [ ] Implement MethodChannel communication
-- [ ] Implement EventChannel communication
-- [ ] Add strongly typed responses
-- [ ] Add public API documentation
-
----
-
-## Phase 10 - Error Handling
-
-- [ ] Map native exceptions to Flutter
-- [ ] Create plugin exception type
-- [ ] Handle invalid arguments
-- [ ] Handle SDK initialization errors
-- [ ] Handle network errors
-- [ ] Handle unsupported device errors
-
----
-
-## Phase 11 - Example Application
-
-- [ ] Create example application
-- [ ] Add SDK initialization example
-- [ ] Add push notification example
-- [ ] Add user registration example
-- [ ] Add installation example
-- [ ] Add personalization example
-- [ ] Add chat example
-- [ ] Add notification event listener example
-
----
-
-## Phase 12 - Testing
-
-- [ ] Add Dart unit tests
-- [ ] Add MethodChannel tests
-- [ ] Add native Android tests
-- [ ] Test on Huawei device
-- [ ] Test notification foreground flow
-- [ ] Test notification background flow
-- [ ] Test notification terminated-state flow
-- [ ] Test token refresh
-- [ ] Test chat
-- [ ] Test SDK initialization failure cases
-
----
-
-## Phase 13 - Code Quality
-
-- [ ] Run `dart format`
-- [ ] Run `flutter analyze`
-- [ ] Fix analyzer warnings
-- [ ] Remove unused code
-- [ ] Review public API
-- [ ] Review naming conventions
-- [ ] Review native lifecycle handling
-- [ ] Review thread handling
-- [ ] Review error handling
-
----
-
-## Phase 14 - Documentation
-
-- [ ] Complete README
-- [ ] Add installation instructions
-- [ ] Add Huawei configuration instructions
-- [ ] Add initialization example
-- [ ] Add push notification documentation
-- [ ] Add chat documentation
-- [ ] Add API examples
-- [ ] Document known limitations
-- [ ] Add troubleshooting section
-
----
-
-## Phase 15 - Release Preparation
-
-- [ ] Add `CHANGELOG.md`
-- [ ] Add `LICENSE`
-- [ ] Add `pubspec.yaml` metadata
-- [ ] Add package description
-- [ ] Verify package naming
-- [ ] Run `flutter pub publish --dry-run`
-- [ ] Review generated package files
-- [ ] Tag first release
-
----
+- [ ] Document supported APIs, setup, limitations, and troubleshooting
+- [ ] Complete package metadata, changelog, license, and release checks
+- [ ] Run final formatting, analysis, tests, build, and publish validation
 
 ## Progress Rules
 
-Use the following format:
-
-```text
-[X] Completed
-[ ] Not completed
+- `[x]` Completed
+- `[ ]` Not completed
+- Do not mark planned features complete until their implementation and validation are finished.
