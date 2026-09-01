@@ -1,5 +1,6 @@
 import '../notifications/notifications.dart';
 import '../platform/infobip_mobilemessaging_huawei_platform.dart';
+import '../user/user.dart';
 
 /// Entry point for the Infobip Huawei Mobile Messaging plugin.
 final class InfobipMobileMessagingHuawei {
@@ -25,4 +26,31 @@ final class InfobipMobileMessagingHuawei {
       applicationCode: applicationCode,
     );
   }
+
+  /// Returns the locally cached user without making a server request.
+  static Future<User> getUser() =>
+      InfobipMobileMessagingHuaweiPlatform.instance.getUser();
+
+  /// Refreshes and returns the user from Infobip services.
+  static Future<User> fetchUser() =>
+      InfobipMobileMessagingHuaweiPlatform.instance.fetchUser();
+
+  /// Saves the supplied profile and completes with the resulting user.
+  static Future<User> saveUser(User user) =>
+      InfobipMobileMessagingHuaweiPlatform.instance.saveUser(user);
+
+  /// Associates this installation with [userIdentity] and optional attributes.
+  static Future<User> personalize(
+    UserIdentity userIdentity, [
+    UserAttributes? userAttributes,
+    bool forceDepersonalize = false,
+  ]) => InfobipMobileMessagingHuaweiPlatform.instance.personalize(
+    userIdentity,
+    userAttributes,
+    forceDepersonalize: forceDepersonalize,
+  );
+
+  /// Removes the current personalization on the Infobip service.
+  static Future<void> depersonalize() =>
+      InfobipMobileMessagingHuaweiPlatform.instance.depersonalize();
 }

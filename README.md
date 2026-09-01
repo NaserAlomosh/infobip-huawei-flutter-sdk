@@ -2,7 +2,7 @@
 
 An Android-only Flutter plugin being developed as a Flutter-facing wrapper for the official Infobip Huawei Mobile Messaging SDK.
 
-> **Phase 4 status:** Core initialization and verified notification events are implemented. User, Installation, Inbox, and Chat APIs are **not implemented**.
+> **Phase 5 status:** Core initialization, notification events, and User Management are implemented. Installation, Inbox, and Chat APIs are **not implemented**.
 
 ## Requirements
 
@@ -68,6 +68,44 @@ There is no background Dart isolate. The native SDK can continue its own process
 
 Android notification permission and Infobip registration are separate concerns. The official plugin's `registerForAndroidRemoteNotifications()` relates to Android remote-notification/permission behavior; it is not equivalent to native `MobileMessaging.setRegistration(...)`. This plugin does not currently expose a notification-permission API, and the host owns the permission declaration, rationale, and request UX.
 
+## User management
+
+All user calls require a successfully initialized SDK and otherwise fail with
+`not_initialized`. The public API mirrors the official plugin's user workflow:
+
+```dart
+final cached = await InfobipMobileMessagingHuawei.getUser();
+final refreshed = await InfobipMobileMessagingHuawei.fetchUser();
+await InfobipMobileMessagingHuawei.saveUser(refreshed);
+
+await InfobipMobileMessagingHuawei.personalize(
+  const UserIdentity(externalUserId: 'sample-user-id'),
+  const UserAttributes(firstName: 'Sample'),
+);
+await InfobipMobileMessagingHuawei.depersonalize();
+```
+
+`getUser()` returns the Huawei SDK's local snapshot. `fetchUser()` waits for its asynchronous
+server refresh. Save, personalize, and depersonalize likewise complete only after the native SDK
+callback. Personalization keeps identity (`externalUserId`, `phones`, and `emails`) separate from
+profile attributes and supports the SDK's `forceDepersonalize` option.
+
+`User` exposes external user ID, first/middle/last name, gender, birthday, phones, emails, tags,
+and custom attributes. Gender uses stable `male` and `female` channel values. Birthdays use the
+date-only `YYYY-MM-DD` form to avoid time-zone shifts. Custom attributes accept strings, booleans,
+numbers, dates, and lists of those channel-safe values; unsupported objects fail with
+`invalid_argument` rather than being stringified.
+
+User values are never logged or included in errors. Applications should apply the same care to
+their own UI, analytics, crash reporting, and persistence. This plugin does not normalize identity
+values. User update events are not exposed in Phase 5 because the official event parity and a
+dedicated public event contract have not been established. End-to-end identity conflict, server
+merge, and profile persistence behavior require a valid Application Code and configured Huawei
+device.
+
+User operation failures use `user_fetch_failed`, `user_save_failed`, `personalization_failed`,
+`depersonalization_failed`, `invalid_argument`, `not_initialized`, or `native_error`.
+
 ## Native dependencies
 
 The Android library pins the official 8.14.0 artifacts:
@@ -120,7 +158,6 @@ flutter build apk --debug
 
 ## Planned features
 
-- User management
 - Installation management
 - Inbox
 - Chat
@@ -138,7 +175,7 @@ These remain roadmap items, not current capabilities.
 ## Current limitations
 
 - Android/Huawei only; no iOS implementation is registered.
-- No public registration control/state query, HMS token, Installation, User, Inbox, Chat, notification-permission, or background-isolate API is implemented.
+- No public registration control/state query, HMS token, Installation, Inbox, Chat, notification-permission, or background-isolate API is implemented.
 - A real Application Code, configured AGConnect/Huawei application, and compatible Huawei device are required to validate token acquisition, notification display, tap intents, actions, and server registration end to end.
 
 API compatibility has been assessed in `API_COMPATIBILITY.md`. See `CONTRIBUTING.md` for development requirements and `INFOBIP_PHASES.md` for the broader work plan.
