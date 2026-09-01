@@ -1,6 +1,6 @@
 plugins {
-    id("com.android.library") version "8.13.0"
-    id("org.jetbrains.kotlin.android") version "2.1.0"
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
 }
 
 group = "com.infobip.mobilemessaging.huawei"
@@ -12,7 +12,6 @@ android {
 
     defaultConfig {
         minSdk = 26
-        targetSdk = 36
     }
 
     compileOptions {
@@ -35,9 +34,11 @@ dependencies {
     implementation("com.infobip:infobip-mobile-messaging-huawei-sdk:8.14.0@aar") {
         isTransitive = true
     }
+
     implementation("com.infobip:infobip-mobile-messaging-huawei-inbox-sdk:8.14.0@aar") {
         isTransitive = true
     }
+
     implementation("com.infobip:infobip-mobile-messaging-huawei-chat-sdk:8.14.0@aar") {
         isTransitive = true
     }

@@ -2,12 +2,18 @@ pluginManagement {
     val flutterSdkPath = run {
         val properties = java.util.Properties()
         file("local.properties").inputStream().use(properties::load)
+
         val flutterSdkPath = properties.getProperty("flutter.sdk")
-        require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
+
+        require(flutterSdkPath != null) {
+            "flutter.sdk not set in local.properties"
+        }
+
         flutterSdkPath
     }
 
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
     repositories {
         google()
         mavenCentral()
@@ -23,9 +29,15 @@ plugins {
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+
     repositories {
         google()
         mavenCentral()
+
+        // Flutter engine / embedding artifacts
+        maven("https://storage.googleapis.com/download.flutter.io")
+
+        // Huawei HMS dependencies
         maven("https://developer.huawei.com/repo/")
     }
 }

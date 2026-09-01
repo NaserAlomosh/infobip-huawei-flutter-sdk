@@ -8,8 +8,10 @@ final class MethodChannelInfobipMobileMessagingHuawei
   MethodChannelInfobipMobileMessagingHuawei({
     MethodChannel? methodChannel,
     EventChannel? eventChannel,
-  }) : methodChannel = methodChannel ?? const MethodChannel(ChannelContract.methodChannel),
-       eventChannel = eventChannel ?? const EventChannel(ChannelContract.eventChannel);
+  }) : methodChannel =
+           methodChannel ?? const MethodChannel(ChannelContract.methodChannel),
+       eventChannel =
+           eventChannel ?? const EventChannel(ChannelContract.eventChannel);
 
   final MethodChannel methodChannel;
   final EventChannel eventChannel;
