@@ -18,4 +18,11 @@ final class MethodChannelInfobipMobileMessagingHuawei
 
   @override
   Stream<Object?> get events => eventChannel.receiveBroadcastStream();
+
+  @override
+  Future<void> initialize({required String applicationCode}) async {
+    await methodChannel.invokeMethod<void>(ChannelContract.initialize, {
+      ChannelContract.applicationCode: applicationCode,
+    });
+  }
 }

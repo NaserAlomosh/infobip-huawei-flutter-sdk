@@ -2,7 +2,7 @@
 
 An Android-only Flutter plugin being developed as a Flutter-facing wrapper for the official Infobip Huawei Mobile Messaging SDK.
 
-> **Phase 1 status:** project and channel infrastructure only. Infobip initialization, push, notifications, users, installations, Inbox, and Chat are **not implemented**.
+> **Phase 3 status:** Phase 2 compatibility analysis is complete and core SDK initialization is implemented. Push, notifications, users, installations, Inbox, and Chat are **not implemented**.
 
 ## Requirements
 
@@ -28,12 +28,22 @@ Public Dart API
     -> platform interface
         -> MethodChannel / EventChannel implementation
             -> Kotlin FlutterPlugin
-                -> Infobip Huawei SDK (future phases)
+                -> Infobip Huawei SDK 8.14.0
 ```
 
-Channel names are centralized on both platforms. The method channel is reserved for commands and request/response operations; the event channel is registered for future asynchronous notification and Chat events. The native handler deliberately returns `notImplemented` for every method in Phase 1.
+Channel names and method identifiers are centralized on both platforms. Initialization travels through the platform interface and method channel to a focused Kotlin state coordinator. The event channel remains reserved for future notification and Chat events.
 
-The Dart source currently contains only the useful `core` and `platform` boundaries. Future feature work will introduce `notifications`, `user`, `installation`, `inbox`, `chat`, and `models` as those APIs are designed. Native feature packages will follow the same incremental approach rather than adding empty placeholders.
+## Initialization
+
+Provide the Application Code issued for your Infobip application:
+
+```dart
+await InfobipMobileMessagingHuawei.initialize(
+  applicationCode: 'APPLICATION_CODE',
+);
+```
+
+The application code must be non-empty. Initialization is asynchronous and uses Android's application context. Concurrent calls with the same code share one native build, later equivalent calls complete without rebuilding, and calls with a different code fail with `already_initialized`. Failures cross the channel as `PlatformException` with stable codes: `invalid_argument`, `already_initialized`, `initialization_failed`, or `native_error`.
 
 ## Native dependencies
 
@@ -63,13 +73,18 @@ Huawei configuration is an application concern, not a library concern. Before en
 2. Download its real `agconnect-services.json` into the host application's `android/app/` directory. For this example that path is `example/android/app/agconnect-services.json`.
 3. Add the Huawei Maven repository (`https://developer.huawei.com/repo/`) to dependency resolution.
 4. Add the Huawei AGConnect Gradle plugin to the host build and apply it to the host application module, following the current Huawei documentation.
-5. Configure signing/package identity in the host application and configure its Infobip Application Code when feature implementation requires it.
+5. Configure signing/package identity in the host application and provide its Infobip Application Code at runtime.
 
 No AGConnect file, credential, signing key, or Infobip Application Code belongs in this repository. The Phase 1 example intentionally does not apply the AGConnect plugin, so it can validate plugin integration without fake credentials.
 
 ## Example
 
-The `example/` application imports the plugin through a local path and displays an integration status screen. It does not call the Infobip or Huawei APIs.
+The `example/` application accepts its Application Code through a compile-time environment value and shows loading, success, and sanitized failure states. No credential is committed:
+
+```sh
+cd example
+flutter run --dart-define=INFOBIP_APPLICATION_CODE=YOUR_APPLICATION_CODE
+```
 
 ```sh
 flutter pub get
@@ -95,6 +110,13 @@ These are roadmap items, not current capabilities. API compatibility will be ass
 
 1. **Phase 1:** project setup, dependency baseline, platform-channel infrastructure, documentation, and example integration.
 2. **Phase 2:** analyze the official Flutter API against the Huawei native API and populate `API_COMPATIBILITY.md`.
-3. **Later phases:** implement and test approved feature areas incrementally, including device-level Huawei validation.
+3. **Phase 3:** core SDK initialization, idempotent state coordination, structured failures, tests, and example integration.
+4. **Later phases:** implement and test approved feature areas incrementally, beginning with push registration and events.
+
+## Current limitations
+
+- Android/Huawei only; no iOS implementation is registered.
+- HMS token retrieval, push and notification events, User, Installation, Inbox, and Chat APIs are not implemented.
+- A real Application Code, configured Huawei application, and compatible device are required to validate initialization against Infobip and Huawei services.
 
 See `CONTRIBUTING.md` for development requirements and `INFOBIP_PHASES.md` for the broader work plan.

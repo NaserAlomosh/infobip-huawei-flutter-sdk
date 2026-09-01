@@ -31,9 +31,9 @@ This phase is analysis-only. Do not implement features or add public APIs during
 
 ## Phase 3 - Core / SDK Initialization
 
-- [ ] Implement the approved initialization and lifecycle APIs
-- [ ] Map initialization results and failures to Flutter
-- [ ] Validate initialization behavior and repeated calls
+- [x] Implement the approved initialization and lifecycle APIs
+- [x] Map initialization results and failures to Flutter
+- [x] Validate initialization behavior and repeated calls
 
 ## Phase 4 - Push Notifications and Events
 
