@@ -2,6 +2,7 @@ import '../notifications/notifications.dart';
 import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 import '../user/user.dart';
 import '../installation/installation.dart';
+import '../inbox/inbox.dart';
 
 /// Entry point for the Infobip Huawei Mobile Messaging plugin.
 final class InfobipMobileMessagingHuawei {
@@ -66,4 +67,17 @@ final class InfobipMobileMessagingHuawei {
   /// Saves writable installation properties and returns the resulting state.
   static Future<Installation> saveInstallation(Installation installation) =>
       InfobipMobileMessagingHuaweiPlatform.instance.saveInstallation(installation);
+
+  /// Fetches Inbox messages and counters using optional server-side filters.
+  static Future<Inbox> fetchInbox([InboxFilterOptions? options]) =>
+      InfobipMobileMessagingHuaweiPlatform.instance.fetchInbox(options);
+
+  /// Marks the Inbox messages identified by [messageIds] as seen.
+  static Future<void> setInboxMessagesSeen(List<String> messageIds) {
+    if (messageIds.isEmpty || messageIds.any((id) => id.trim().isEmpty)) {
+      throw ArgumentError.value(messageIds, 'messageIds', 'Must not be empty');
+    }
+    return InfobipMobileMessagingHuaweiPlatform.instance
+        .setInboxMessagesSeen(List.unmodifiable(messageIds));
+  }
 }

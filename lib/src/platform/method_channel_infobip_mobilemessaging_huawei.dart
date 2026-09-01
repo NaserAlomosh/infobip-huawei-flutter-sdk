@@ -6,6 +6,8 @@ import '../user/user.dart';
 import '../user/user_codec.dart';
 import '../installation/installation.dart';
 import '../installation/installation_codec.dart';
+import '../inbox/inbox.dart';
+import '../inbox/inbox_codec.dart';
 
 final class MethodChannelInfobipMobileMessagingHuawei
     extends InfobipMobileMessagingHuaweiPlatform {
@@ -101,4 +103,18 @@ final class MethodChannelInfobipMobileMessagingHuawei
           ChannelContract.installation: InstallationCodec.encodeWritable(installation),
         }),
       );
+
+  @override
+  Future<Inbox> fetchInbox(InboxFilterOptions? options) async =>
+      InboxCodec.decode(
+        await methodChannel.invokeMethod<Object?>(ChannelContract.fetchInbox, {
+          ChannelContract.options: InboxCodec.encodeOptions(options),
+        }),
+      );
+
+  @override
+  Future<void> setInboxMessagesSeen(List<String> messageIds) =>
+      methodChannel.invokeMethod<void>(ChannelContract.setInboxMessagesSeen, {
+        ChannelContract.messageIds: messageIds,
+      });
 }

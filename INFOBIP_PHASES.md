@@ -55,8 +55,8 @@ Background Dart isolate delivery is unsupported by this wrapper and is not claim
 
 ## Phase 7 - Inbox
 
-- [ ] Implement approved Inbox APIs
-- [ ] Implement Inbox data mapping and events
+- [x] Implement approved Inbox APIs
+- [x] Implement Inbox data mapping; omit unsupported dedicated Inbox events
 
 ## Phase 8 - Chat
 

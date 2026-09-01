@@ -47,6 +47,25 @@ abstract final class ChannelContract {
   static const deviceTimezoneId = 'deviceTimezoneId';
   static const sdkVersion = 'sdkVersion';
   static const appUserId = 'appUserId';
+  static const fetchInbox = 'fetchInbox';
+  static const setInboxMessagesSeen = 'setInboxMessagesSeen';
+  static const options = 'options';
+  static const from = 'from';
+  static const to = 'to';
+  static const topic = 'topic';
+  static const limit = 'limit';
+  static const countTotal = 'countTotal';
+  static const countUnread = 'countUnread';
+  static const messages = 'messages';
+  static const messageIds = 'messageIds';
+  static const messageId = 'messageId';
+  static const title = 'title';
+  static const body = 'body';
+  static const seen = 'seen';
+  static const receivedTimestamp = 'receivedTimestamp';
+  static const customPayload = 'customPayload';
+  static const deepLink = 'deepLink';
+  static const isSilent = 'isSilent';
 
   static const eventVersion = 1;
   static const messageReceived = 'message_received';

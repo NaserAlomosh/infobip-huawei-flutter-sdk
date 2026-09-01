@@ -2,7 +2,7 @@
 
 An Android-only Flutter plugin being developed as a Flutter-facing wrapper for the official Infobip Huawei Mobile Messaging SDK.
 
-> **Phase 6 status:** Core initialization, notification events, User Management, and Installation Management are implemented. Inbox and Chat APIs are **not implemented**.
+> **Phase 7 status:** Core initialization, notification events, User Management, Installation Management, and Inbox are implemented. Chat APIs are **not implemented**.
 
 ## Requirements
 
@@ -198,7 +198,6 @@ flutter build apk --debug
 
 ## Planned features
 
-- Inbox
 - Chat
 
 These remain roadmap items, not current capabilities.
@@ -211,12 +210,54 @@ These remain roadmap items, not current capabilities.
 4. **Phase 4:** SDK-owned push lifecycle and notification events.
 5. **Phase 5:** User Management.
 6. **Phase 6:** Installation Management and installation events.
-7. **Later phases:** implement and test approved Inbox and Chat areas incrementally.
+7. **Phase 7:** Inbox fetch, filters, counters, message mapping, and seen updates.
+8. **Later phases:** implement and test approved Chat areas incrementally.
 
 ## Current limitations
 
 - Android/Huawei only; no iOS implementation is registered.
-- No public registration control, raw HMS token, Inbox, Chat, notification-permission, or background-isolate API is implemented.
+- No public registration control, raw HMS token, Chat, notification-permission, or background-isolate API is implemented.
+
+## Inbox
+
+Inbox uses the initialized Mobile Messaging lifecycle and never initializes the SDK implicitly:
+
+```dart
+final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
+  InboxFilterOptions(
+    from: DateTime.now().subtract(const Duration(days: 30)),
+    to: DateTime.now(),
+    topic: 'news',
+    limit: 20,
+  ),
+);
+
+await InfobipMobileMessagingHuawei.setInboxMessagesSeen(
+  inbox.messages
+      .where((message) => !message.seen)
+      .map((message) => message.messageId)
+      .toList(),
+);
+```
+
+`Inbox` contains the server-authoritative `countTotal` and `countUnread` values and the returned
+`InboxMessage` collection. Messages expose the supported intersection of the Flutter and Huawei
+models: identifier, title, body, topic, seen state, received timestamp, custom payload, deep link,
+and silent flag. Timestamps are converted as UTC instants and nested payloads are restricted to
+platform-channel-safe values.
+
+Huawei Inbox 8.14.0 supports a single topic, date bounds, and a result limit. The limit is
+server-side; it is not a page number, offset, or cursor, and the plugin does not paginate locally.
+The native SDK exposes seen state and a server-confirmed set-seen operation, but no equivalent
+separate read state, so this plugin does not invent mark-read behavior. The SDK also has no dedicated
+Inbox-updated event equivalent to expose; notification events remain unchanged and never mark Inbox
+messages seen automatically.
+
+Inbox content can be sensitive. The plugin does not log messages, identifiers, topics, payloads, or
+deep links and does not include them in errors. Actual retrieval, counters, personalization rules,
+and seen updates require validation with a configured Infobip application, Inbox data, network, and
+a Huawei-capable device.
+
 - A real Application Code, configured AGConnect/Huawei application, and compatible Huawei device are required to validate token acquisition, notification display, tap intents, actions, and server registration end to end.
 
 API compatibility has been assessed in `API_COMPATIBILITY.md`. See `CONTRIBUTING.md` for development requirements and `INFOBIP_PHASES.md` for the broader work plan.
