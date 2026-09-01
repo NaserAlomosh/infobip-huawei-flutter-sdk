@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:infobip_mobilemessaging_huawei/src/platform/channel_contract.dart';
 import 'package:infobip_mobilemessaging_huawei/src/platform/infobip_mobilemessaging_huawei_platform.dart';
@@ -24,6 +27,8 @@ final class FakePlatform extends InfobipMobileMessagingHuaweiPlatform
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('uses the method-channel implementation by default', () {
     expect(
       InfobipMobileMessagingHuaweiPlatform.instance,
@@ -47,4 +52,61 @@ void main() {
       'com.infobip.mobilemessaging.huawei/events',
     );
   });
+
+  test(
+    'shares one native event subscription and supports re-subscription',
+    () async {
+      const eventChannelName = 'platform-interface-test-events';
+      const codec = StandardMethodCodec();
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      final nativeCalls = <String>[];
+      messenger.setMockMessageHandler(eventChannelName, (message) async {
+        nativeCalls.add(codec.decodeMethodCall(message).method);
+        return codec.encodeSuccessEnvelope(null);
+      });
+      addTearDown(
+        () => messenger.setMockMessageHandler(eventChannelName, null),
+      );
+
+      final platform = MethodChannelInfobipMobileMessagingHuawei(
+        eventChannel: const EventChannel(eventChannelName),
+      );
+      final firstEvents = <Object?>[];
+      final secondEvents = <Object?>[];
+      final first = platform.events.listen(firstEvents.add);
+      final second = platform.events.listen(secondEvents.add);
+      await pumpEventQueue();
+
+      await messenger.handlePlatformMessage(
+        eventChannelName,
+        codec.encodeSuccessEnvelope('first'),
+        (_) {},
+      );
+      await pumpEventQueue();
+      expect(firstEvents, ['first']);
+      expect(secondEvents, ['first']);
+      expect(nativeCalls, ['listen']);
+
+      await first.cancel();
+      expect(nativeCalls, ['listen']);
+      await second.cancel();
+      await pumpEventQueue();
+      expect(nativeCalls, ['listen', 'cancel']);
+
+      final reSubscribedEvents = <Object?>[];
+      final reSubscribed = platform.events.listen(reSubscribedEvents.add);
+      await pumpEventQueue();
+      await messenger.handlePlatformMessage(
+        eventChannelName,
+        codec.encodeSuccessEnvelope('second'),
+        (_) {},
+      );
+      await pumpEventQueue();
+      expect(reSubscribedEvents, ['second']);
+      expect(nativeCalls, ['listen', 'cancel', 'listen']);
+
+      await reSubscribed.cancel();
+    },
+  );
 }

@@ -108,6 +108,25 @@ void main() {
     expect((await registrationFuture).pushRegistrationEnabled, isFalse);
   });
 
+  test('decodes installation updated events', () async {
+    final future = InfobipMobileMessagingHuawei
+        .notifications
+        .onInstallationUpdated
+        .first;
+    platform.eventsController.add(
+      envelope(ChannelContract.installationUpdated, {
+        ChannelContract.installation: {
+          ChannelContract.installationId: 'installation-1',
+          ChannelContract.isPrimaryDevice: true,
+        },
+      }),
+    );
+
+    final installation = await future;
+    expect(installation.installationId, 'installation-1');
+    expect(installation.isPrimaryDevice, isTrue);
+  });
+
   test('ignores malformed and unknown events without closing the stream', () async {
     final future = InfobipMobileMessagingHuawei.notifications.onMessageReceived
         .first;
