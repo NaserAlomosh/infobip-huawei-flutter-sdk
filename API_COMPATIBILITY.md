@@ -196,6 +196,37 @@ Native evidence paths are under
 
 ## Chat
 
+### Phase 8 Part 3 compatibility decision
+
+The current official Flutter contract exposes `getChatUnreadMessageCount` and
+`onChatUnreadMessageCounterUpdated`. Huawei 8.14.0 provides the global
+`MobileChat` unread counter and
+`InAppChatEventsListener.onChangedUnreadMessagesCounter(int)`, so these two capabilities are
+adaptable and public through the focused `InfobipMobileMessagingHuawei.chat` facade. The facade
+keeps global SDK state separate from the view-scoped controller and leaves room for later approved
+Chat APIs without expanding the root class.
+
+| Capability | Official Flutter API | Huawei 8.14.0 API | Parity | Decision |
+| --- | --- | --- | --- | --- |
+| Unread count retrieval | `getChatUnreadMessageCount` | `MobileChat.getUnreadMessagesCounter()` | Adaptable | Public |
+| Unread count changes | `onChatUnreadMessageCounterUpdated` | `InAppChatEventsListener.onChangedUnreadMessagesCounter(int)` | Adaptable | Public |
+| Chat availability | No public equivalent | `MobileChat` configuration/availability callbacks | Huawei-only | Omitted |
+| Loading finished | No public equivalent | Chat/component event callback | Huawei-only | Omitted |
+| Connection resumed/paused | No public equivalent | Chat/component event callbacks | Huawei-only | Omitted |
+| Chat sent | No stable public event model | `InAppChatEventsListener` callback | Huawei-only | Omitted |
+| Thread created/threads received/active thread received | Thread APIs are outside this phase | `InAppChatEventsListener` callbacks | Adaptable later | Omitted |
+| Thread shown/thread list shown | No approved global equivalent | Fragment/View callbacks | Huawei-only, view-specific | Omitted |
+| Raw message received | No stable public message stream | Fragment/View `EventsListener` callback | Unsupported safely | Omitted |
+| View changed/controls visibility changed | No global equivalent | Fragment/View `EventsListener` callbacks | Huawei-only, view-specific | Omitted |
+| URL interacted/attachment preview opened | No approved global equivalent | Fragment/View `EventsListener` callbacks | Huawei-only, view-specific | Omitted |
+| Exit Chat pressed | No approved global equivalent | Fragment/View `EventsListener` callback | Huawei-only, view-specific | Omitted |
+
+Unread updates contain only `{count: int}` in the versioned shared event envelope. They have no
+replay buffer and preserve duplicate native callbacks. The listener is engine-global, registered
+once after successful core initialization, and removed on engine detach. View-specific callbacks
+remain on the PlatformView boundary if they are approved in a later phase; they are not mixed into
+the global event stream or `InfobipHuaweiChatView.onError`.
+
 Huawei Chat 8.14.0 is a **native UI/web-chat integration with reusable UI components and public
 component commands**. It is not limited to a full-screen Activity: `InAppChatActivity`,
 `InAppChatFragment`, and `InAppChatView` provide Activity, Fragment, and directly embeddable View

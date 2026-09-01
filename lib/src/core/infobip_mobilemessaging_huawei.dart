@@ -3,6 +3,7 @@ import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 import '../user/user.dart';
 import '../installation/installation.dart';
 import '../inbox/inbox.dart';
+import '../chat/chat.dart';
 
 /// Entry point for the Infobip Huawei Mobile Messaging plugin.
 final class InfobipMobileMessagingHuawei {
@@ -11,6 +12,9 @@ final class InfobipMobileMessagingHuawei {
   /// Notification and registration lifecycle events.
   static InfobipHuaweiNotifications get notifications =>
       InfobipHuaweiNotifications.instance;
+
+  /// Global Chat state and events.
+  static InfobipHuaweiChat get chat => InfobipHuaweiChat.instance;
 
   /// Initializes the native SDK with an Infobip application code.
   ///

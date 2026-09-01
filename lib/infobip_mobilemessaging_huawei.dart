@@ -11,3 +11,4 @@ export 'src/installation/installation.dart';
 export 'src/inbox/inbox.dart';
 export 'src/chat/chat_view.dart';
 export 'src/chat/chat_error.dart';
+export 'src/chat/chat.dart';

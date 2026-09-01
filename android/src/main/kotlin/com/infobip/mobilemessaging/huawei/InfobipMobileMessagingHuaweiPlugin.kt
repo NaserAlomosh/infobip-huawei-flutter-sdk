@@ -18,6 +18,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.infobip.mobile.messaging.MobileMessaging
 import com.infobip.mobilemessaging.huawei.chat.ChatPlatformViewFactory
+import com.infobip.mobilemessaging.huawei.chat.ChatManager
 
 class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     MethodChannel.MethodCallHandler,
@@ -31,6 +32,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     private var userManager: UserManager? = null
     private var installationManager: InstallationManager? = null
     private var inboxManager: InboxManager? = null
+    private var chatManager: ChatManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private var activity: Activity? = null
 
@@ -47,6 +49,11 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
             initializer?.isInitialized == true
         }
         eventBridge = NativeEventBridge().also { it.register() }
+        chatManager = ChatManager(
+            binding.applicationContext,
+            initialized = { initializer?.isInitialized == true },
+            onUnreadMessageCountChanged = { eventBridge?.emitChatUnreadMessageCount(it) },
+        )
         methodChannel = MethodChannel(binding.binaryMessenger, ChannelContract.METHOD_CHANNEL).also {
             it.setMethodCallHandler(this)
         }
@@ -67,6 +74,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         methodChannel?.setMethodCallHandler(null)
         eventChannel?.setStreamHandler(null)
         eventBridge?.detach()
+        chatManager?.detach()
         methodChannel = null
         eventChannel = null
         initializer = null
@@ -74,6 +82,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         userManager = null
         installationManager = null
         inboxManager = null
+        chatManager = null
         applicationContext = null
         activity = null
     }
@@ -131,6 +140,13 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
                 call.argument<Any?>(ChannelContract.MESSAGE_IDS),
                 result::completeInbox,
             ) ?: detached(result)
+            ChannelContract.GET_CHAT_UNREAD_MESSAGE_COUNT ->
+                chatManager?.getUnreadMessageCount { count, failure ->
+                    mainHandler.post {
+                        if (failure == null) result.success(count)
+                        else result.error(failure.code, failure.message, null)
+                    }
+                } ?: detached(result)
             else -> result.notImplemented()
         }
     }
@@ -234,6 +250,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         initializer?.initialize(applicationCode) { error ->
             mainHandler.post {
                 if (error == null) {
+                    chatManager?.attach()
                     result.success(null)
                 } else {
                     result.error(error.code, error.message, error.details)

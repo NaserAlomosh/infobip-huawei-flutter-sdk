@@ -8,6 +8,7 @@ import org.infobip.mobile.messaging.EventBus
 import org.infobip.mobile.messaging.Installation
 import org.infobip.mobile.messaging.Message
 import com.infobip.mobilemessaging.huawei.installation.InstallationMapper
+import com.infobip.mobilemessaging.huawei.chat.ChatUnreadCount
 
 internal class NativeEventBridge(
     private val mainHandler: Handler = Handler(Looper.getMainLooper()),
@@ -89,5 +90,13 @@ internal class NativeEventBridge(
     private fun emit(type: String, payload: Map<String, Any?>) {
         val event = EventEnvelope.create(type, payload)
         mainHandler.post { sink?.success(event) }
+    }
+
+    fun emitChatUnreadMessageCount(count: Int) {
+        val payload = ChatUnreadCount.eventPayload(count) ?: return
+        emit(
+            ChannelContract.CHAT_UNREAD_MESSAGE_COUNTER_UPDATED,
+            payload,
+        )
     }
 }

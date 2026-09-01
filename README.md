@@ -74,7 +74,29 @@ attached reports `activityUnavailable`. Native controller operation failures use
 `chat_unavailable` platform error code and do not include URLs, thread data, attachment paths,
 tokens, or stack traces.
 
-Phase 8 intentionally does not expose full-screen Chat, availability, unread counts/events, raw-message or internal UI events, threads, programmatic sends, contextual data, language, or runtime theme commands. Although several are available in the Huawei component, the inspected official Flutter contract does not justify expanding the public API without stable portable models. Native attachments remain available from the native composer; Android resource theme configuration remains host-native configuration.
+Global unread state is available independently of an embedded view:
+
+```dart
+final current = await InfobipMobileMessagingHuawei.chat.getUnreadMessageCount();
+final subscription = InfobipMobileMessagingHuawei
+    .chat
+    .onUnreadMessageCounterUpdated
+    .listen((count) { /* update Flutter-owned UI */ });
+```
+
+The method returns `Future<int>` and never substitutes zero for an error. Calls before successful
+initialization fail with `not_initialized`; unavailable Chat and native failures use
+`chat_unavailable` and `native_error`. Updates use the shared global event channel, are delivered on
+the Android main thread, and are not replayed or deduplicated. Use the method for current state and
+the stream for future updates. Malformed and negative updates are ignored without closing the
+stream. One global Huawei listener is installed after initialization and removed at engine detach;
+creating or disposing embedded views does not register listeners.
+
+No other Chat events are public in this phase. Availability has no matching approved official
+Flutter API. Thread, raw-message, send, loading/connection, and component UI callbacks are omitted:
+thread/raw events lack stable public models, while view and control callbacks belong to a specific
+embedded component rather than global Chat state. Native attachments remain available from the
+native composer; Android resource theme configuration remains host-native configuration.
 
 Android PlatformViews require real-device validation for IME resizing, accessibility, attachment permissions, Activity recreation, and route leave/re-entry behavior. No manual keyboard workaround is installed. Chat also requires a correctly configured Infobip application/backend and a Huawei device or suitable HMS environment. Never log Chat content, contextual data, URLs, identity, tokens, or local attachment paths.
 

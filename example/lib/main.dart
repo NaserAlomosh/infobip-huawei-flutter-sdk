@@ -341,6 +341,36 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _controller = InfobipHuaweiChatController();
   InfobipHuaweiChatError? _error;
+  StreamSubscription<int>? _unreadSubscription;
+  int? _unreadCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _unreadSubscription = InfobipMobileMessagingHuawei
+        .chat
+        .onUnreadMessageCounterUpdated
+        .listen((count) {
+          if (mounted) setState(() => _unreadCount = count);
+        });
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final count = await InfobipMobileMessagingHuawei.chat
+          .getUnreadMessageCount();
+      if (mounted) setState(() => _unreadCount = count);
+    } on PlatformException {
+      // The embedded view presents Chat availability failures separately.
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_unreadSubscription?.cancel());
+    super.dispose();
+  }
 
   Future<void> _back() async {
     final handled = await _controller.navigateBackOrCloseChat();
@@ -354,7 +384,7 @@ class _ChatScreenState extends State<ChatScreen> {
     child: Scaffold(
       appBar: AppBar(
         leading: BackButton(onPressed: _back),
-        title: const Text('Chat'),
+        title: Text('Support · unread: ${_unreadCount ?? '—'}'),
         actions: [
           IconButton(
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
