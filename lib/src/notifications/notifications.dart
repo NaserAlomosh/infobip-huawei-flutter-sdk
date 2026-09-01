@@ -4,6 +4,8 @@ import '../platform/channel_contract.dart';
 import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 import 'notification_events.dart';
 import 'push_message.dart';
+import '../installation/installation.dart';
+import '../installation/installation_codec.dart';
 
 /// Notification and registration lifecycle events.
 final class InfobipHuaweiNotifications {
@@ -29,12 +31,15 @@ final class InfobipHuaweiNotifications {
     ),
   );
 
-  Stream<RegistrationUpdatedEvent> get onRegistrationUpdated => _typed(
+  /// Emits the complete installation when push registration changes.
+  Stream<Installation> get onRegistrationUpdated => _typed(
     ChannelContract.registrationUpdated,
-    (payload) => RegistrationUpdatedEvent(
-      isRegistrationEnabled: payload['isRegistrationEnabled'] as bool,
-    ),
+    _installation,
   );
+
+  /// Emits when the native SDK updates the installation.
+  Stream<Installation> get onInstallationUpdated =>
+      _typed(ChannelContract.installationUpdated, _installation);
 
   Stream<T> _typed<T>(
     String type,
@@ -62,4 +67,7 @@ final class InfobipHuaweiNotifications {
     if (message is! Map) throw const FormatException('Missing message');
     return PushMessage.fromMap(message.cast<Object?, Object?>());
   }
+
+  static Installation _installation(Map<Object?, Object?> payload) =>
+      InstallationCodec.decode(payload[ChannelContract.installation]);
 }

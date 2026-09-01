@@ -11,6 +11,10 @@ abstract final class ChannelContract {
   static const saveUser = 'saveUser';
   static const personalize = 'personalize';
   static const depersonalize = 'depersonalize';
+  static const getInstallation = 'getInstallation';
+  static const fetchInstallation = 'fetchInstallation';
+  static const saveInstallation = 'saveInstallation';
+  static const installation = 'installation';
   static const user = 'user';
   static const userIdentity = 'userIdentity';
   static const userAttributes = 'userAttributes';
@@ -28,10 +32,26 @@ abstract final class ChannelContract {
   static const customValueType = '__infobipType';
   static const customValue = 'value';
   static const customDateType = 'date';
+  static const pushRegistrationId = 'pushRegistrationId';
+  static const installationId = 'installationId';
+  static const pushRegistrationEnabled = 'pushRegistrationEnabled';
+  static const isPrimaryDevice = 'isPrimaryDevice';
+  static const notificationsEnabled = 'notificationsEnabled';
+  static const deviceManufacturer = 'deviceManufacturer';
+  static const deviceModel = 'deviceModel';
+  static const deviceSecure = 'deviceSecure';
+  static const applicationVersion = 'applicationVersion';
+  static const operatingSystem = 'operatingSystem';
+  static const operatingSystemVersion = 'operatingSystemVersion';
+  static const language = 'language';
+  static const deviceTimezoneId = 'deviceTimezoneId';
+  static const sdkVersion = 'sdkVersion';
+  static const appUserId = 'appUserId';
 
   static const eventVersion = 1;
   static const messageReceived = 'message_received';
   static const notificationTapped = 'notification_tapped';
   static const notificationActionTapped = 'notification_action_tapped';
   static const registrationUpdated = 'registration_updated';
+  static const installationUpdated = 'installation_updated';
 }

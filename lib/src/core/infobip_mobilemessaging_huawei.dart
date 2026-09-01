@@ -1,6 +1,7 @@
 import '../notifications/notifications.dart';
 import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 import '../user/user.dart';
+import '../installation/installation.dart';
 
 /// Entry point for the Infobip Huawei Mobile Messaging plugin.
 final class InfobipMobileMessagingHuawei {
@@ -53,4 +54,16 @@ final class InfobipMobileMessagingHuawei {
   /// Removes the current personalization on the Infobip service.
   static Future<void> depersonalize() =>
       InfobipMobileMessagingHuaweiPlatform.instance.depersonalize();
+
+  /// Returns the locally cached installation without network access.
+  static Future<Installation> getInstallation() =>
+      InfobipMobileMessagingHuaweiPlatform.instance.getInstallation();
+
+  /// Refreshes and returns the installation from Infobip services.
+  static Future<Installation> fetchInstallation() =>
+      InfobipMobileMessagingHuaweiPlatform.instance.fetchInstallation();
+
+  /// Saves writable installation properties and returns the resulting state.
+  static Future<Installation> saveInstallation(Installation installation) =>
+      InfobipMobileMessagingHuaweiPlatform.instance.saveInstallation(installation);
 }

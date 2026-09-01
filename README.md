@@ -2,7 +2,7 @@
 
 An Android-only Flutter plugin being developed as a Flutter-facing wrapper for the official Infobip Huawei Mobile Messaging SDK.
 
-> **Phase 5 status:** Core initialization, notification events, and User Management are implemented. Installation, Inbox, and Chat APIs are **not implemented**.
+> **Phase 6 status:** Core initialization, notification events, User Management, and Installation Management are implemented. Inbox and Chat APIs are **not implemented**.
 
 ## Requirements
 
@@ -49,7 +49,7 @@ The application code must be non-empty. Initialization is asynchronous and uses 
 
 The Infobip Huawei SDK owns push registration and HMS Push Kit token acquisition and refresh as part of its native lifecycle. The primary Dart API does not expose registration enable/disable methods, a synchronous registration-state query, raw HMS token access, or token injection.
 
-The official Infobip Flutter plugin exposes registration information through its Installation APIs rather than public `setRegistration` or `isRegistrationEnabled` methods. Installation APIs are intentionally deferred to Phase 6; they are not approximated by Huawei-specific public methods in the meantime.
+Registration state is available as `Installation.pushRegistrationEnabled`; Huawei-specific registration controls remain intentionally private.
 
 The following typed streams wrap the SDK 8.14.0 `MESSAGE_RECEIVED`, `NOTIFICATION_TAPPED`, `ACTION_TAPPED`, and `REGISTRATION_UPDATED` events:
 
@@ -58,9 +58,10 @@ InfobipMobileMessagingHuawei.notifications.onMessageReceived;
 InfobipMobileMessagingHuawei.notifications.onNotificationTapped;
 InfobipMobileMessagingHuawei.notifications.onNotificationActionTapped;
 InfobipMobileMessagingHuawei.notifications.onRegistrationUpdated;
+InfobipMobileMessagingHuawei.notifications.onInstallationUpdated;
 ```
 
-Messages contain only message ID, title, body, channel-safe custom payload, deep link, and silent status. `onRegistrationUpdated` currently exposes only the registration-enabled flag; the official plugin's broader Installation-shaped registration information is deferred until the Installation phase. General `INSTALLATION_UPDATED` is also deferred to Phase 6.
+Messages contain only message ID, title, body, channel-safe custom payload, deep link, and silent status. Registration and installation updates carry a typed `Installation`. They are not retained for cold-start replay.
 
 Native listeners are installed once per Flutter engine and removed on detach. Flutter sink delivery is marshalled to Android's main thread. The most recent notification tap is retained when Dart is not listening, replaces any earlier pending tap, is replayed once on listen, and is then cleared. Other events are not buffered.
 
@@ -112,6 +113,38 @@ device.
 
 User operation failures use `user_fetch_failed`, `user_save_failed`, `personalization_failed`,
 `depersonalization_failed`, `invalid_argument`, `not_initialized`, or `native_error`.
+
+## Installation management
+
+All installation calls require successful initialization. `getInstallation()` returns the Huawei
+SDK's local snapshot without network access. `fetchInstallation()` waits for a server refresh, and
+`saveInstallation()` waits for the native save callback:
+
+```dart
+final local = await InfobipMobileMessagingHuawei.getInstallation();
+final refreshed = await InfobipMobileMessagingHuawei.fetchInstallation();
+await InfobipMobileMessagingHuawei.saveInstallation(refreshed);
+
+final registrationEnabled = local.pushRegistrationEnabled;
+```
+
+`isPrimaryDevice` and `customAttributes` are writable. Push registration state and ID, language,
+notification permission state, app user ID, and device/application/OS/SDK
+metadata are native-managed and are never sent by `saveInstallation()`. The push registration ID
+matches the official Installation model and may be read by an application, but this plugin does not
+expose a raw HMS token or token setter and the example does not display identifiers.
+
+Installation custom attributes use the same codec as User attributes: strings, booleans, numbers,
+UTC-instant `DateTime` values, and lists containing those values are supported. Unsupported values
+fail with `invalid_argument`. Installation objects, identifiers, app user IDs, and custom values are
+not logged or included in errors.
+
+`onInstallationUpdated` maps Huawei `INSTALLATION_UPDATED`, while `onRegistrationUpdated` now
+maps Huawei `REGISTRATION_UPDATED` to the complete typed `Installation` rather than the temporary
+Phase 4 flag wrapper. Actual fetch/save persistence and event delivery require a configured Huawei
+application, valid Infobip Application Code, device, and network. Failure codes are
+`installation_fetch_failed`, `installation_save_failed`, `invalid_argument`, `not_initialized`,
+and `native_error`.
 
 ## Native dependencies
 
@@ -165,7 +198,6 @@ flutter build apk --debug
 
 ## Planned features
 
-- Installation management
 - Inbox
 - Chat
 
@@ -177,12 +209,14 @@ These remain roadmap items, not current capabilities.
 2. **Phase 2:** analyze the official Flutter API against the Huawei native API and populate `API_COMPATIBILITY.md`.
 3. **Phase 3:** core SDK initialization, idempotent state coordination, structured failures, tests, and example integration.
 4. **Phase 4:** SDK-owned push lifecycle and notification events.
-5. **Later phases:** implement and test approved User, Installation, Inbox, and Chat areas incrementally.
+5. **Phase 5:** User Management.
+6. **Phase 6:** Installation Management and installation events.
+7. **Later phases:** implement and test approved Inbox and Chat areas incrementally.
 
 ## Current limitations
 
 - Android/Huawei only; no iOS implementation is registered.
-- No public registration control/state query, HMS token, Installation, Inbox, Chat, notification-permission, or background-isolate API is implemented.
+- No public registration control, raw HMS token, Inbox, Chat, notification-permission, or background-isolate API is implemented.
 - A real Application Code, configured AGConnect/Huawei application, and compatible Huawei device are required to validate token acquisition, notification display, tap intents, actions, and server registration end to end.
 
 API compatibility has been assessed in `API_COMPATIBILITY.md`. See `CONTRIBUTING.md` for development requirements and `INFOBIP_PHASES.md` for the broader work plan.

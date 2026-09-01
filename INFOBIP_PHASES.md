@@ -50,8 +50,8 @@ Background Dart isolate delivery is unsupported by this wrapper and is not claim
 
 ## Phase 6 - Installation Management
 
-- [ ] Implement approved installation retrieval and update APIs
-- [ ] Implement approved installation attributes and push status handling
+- [x] Implement approved installation retrieval and update APIs
+- [x] Implement approved installation attributes and push status handling
 
 ## Phase 7 - Inbox
 

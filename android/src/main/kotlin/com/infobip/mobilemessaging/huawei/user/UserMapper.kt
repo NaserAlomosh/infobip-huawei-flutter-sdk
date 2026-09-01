@@ -42,7 +42,7 @@ internal object UserMapper {
             phones = strings(map, ChannelContract.PHONES)?.toSet()
             emails = strings(map, ChannelContract.EMAILS)?.toSet()
             tags = strings(map, ChannelContract.TAGS)?.toSet()
-            customAttributes = customAttributes(map[ChannelContract.CUSTOM_ATTRIBUTES])
+            customAttributes = toNativeCustomAttributes(map[ChannelContract.CUSTOM_ATTRIBUTES])
         }
     }
 
@@ -65,7 +65,7 @@ internal object UserMapper {
             gender = gender(map[ChannelContract.GENDER])
             birthday = date(map[ChannelContract.BIRTHDAY])
             tags = strings(map, ChannelContract.TAGS)?.toSet()
-            customAttributes = customAttributes(map[ChannelContract.CUSTOM_ATTRIBUTES])
+            customAttributes = toNativeCustomAttributes(map[ChannelContract.CUSTOM_ATTRIBUTES])
         }
     }
 
@@ -97,7 +97,7 @@ internal object UserMapper {
         return dateFormat.parse(value) ?: throw IllegalArgumentException("birthday is invalid")
     }
 
-    private fun customAttributes(value: Any?): Map<String, Any?>? {
+    internal fun toNativeCustomAttributes(value: Any?): Map<String, Any?>? {
         if (value == null) return null
         val map = value as? Map<*, *>
             ?: throw IllegalArgumentException("customAttributes must be a map")
@@ -130,7 +130,7 @@ internal object UserMapper {
         }
     }
 
-    private fun channelValue(value: Any?): Any? = when (value) {
+    internal fun channelValue(value: Any?): Any? = when (value) {
         null, is String, is Boolean, is Number -> value
         is Date -> mapOf(
             ChannelContract.CUSTOM_VALUE_TYPE to ChannelContract.CUSTOM_DATE_TYPE,
