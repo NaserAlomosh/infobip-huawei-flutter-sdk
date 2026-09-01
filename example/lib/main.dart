@@ -26,6 +26,7 @@ class _ExampleAppState extends State<ExampleApp> {
   final List<StreamSubscription<Object?>> _subscriptions = [];
   User? _user;
   Installation? _installation;
+  Inbox? _inbox;
 
   @override
   void initState() {
@@ -161,6 +162,38 @@ class _ExampleAppState extends State<ExampleApp> {
     }
   }
 
+  Future<void> _fetchInbox() async {
+    setState(() => _loading = true);
+    try {
+      final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
+        const InboxFilterOptions(limit: 20),
+      );
+      if (mounted) setState(() => _inbox = inbox);
+    } on PlatformException catch (error) {
+      if (mounted) setState(() => _status = 'Inbox fetch failed (${error.code}).');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _markFirstInboxMessageSeen() async {
+    final message = _inbox?.messages.where((item) => !item.seen).firstOrNull;
+    if (message == null) return;
+    setState(() => _loading = true);
+    try {
+      await InfobipMobileMessagingHuawei.setInboxMessagesSeen([
+        message.messageId,
+      ]);
+      await _fetchInbox();
+    } on PlatformException catch (error) {
+      if (mounted) {
+        setState(() => _status = 'Inbox update failed (${error.code}).');
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -211,11 +244,50 @@ class _ExampleAppState extends State<ExampleApp> {
                   spacing: 8,
                   children: [
                     OutlinedButton(
-                      onPressed: _loading ? null : () => _loadInstallation(fetch: false),
+                      onPressed: _loading ? null : _fetchInbox,
+                      child: const Text('Fetch Inbox'),
+                    ),
+                    OutlinedButton(
+                      onPressed: _loading ||
+                              !(_inbox?.messages.any(
+                                    (message) => !message.seen,
+                                  ) ??
+                                  false)
+                          ? null
+                          : _markFirstInboxMessageSeen,
+                      child: const Text('Mark first unseen as seen'),
+                    ),
+                  ],
+                ),
+                Text(
+                  _inbox == null
+                      ? 'No Inbox loaded.'
+                      : 'Inbox: ${_inbox!.countTotal} total, '
+                            '${_inbox!.countUnread} unread.',
+                ),
+                ...?_inbox?.messages.take(5).map(
+                  (message) => ListTile(
+                    title: Text(message.title ?? 'Untitled message'),
+                    subtitle: Text(message.body ?? ''),
+                    trailing: Icon(
+                      message.seen ? Icons.drafts_outlined : Icons.mail_outline,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    OutlinedButton(
+                      onPressed: _loading
+                          ? null
+                          : () => _loadInstallation(fetch: false),
                       child: const Text('Local installation'),
                     ),
                     OutlinedButton(
-                      onPressed: _loading ? null : () => _loadInstallation(fetch: true),
+                      onPressed: _loading
+                          ? null
+                          : () => _loadInstallation(fetch: true),
                       child: const Text('Fetch installation'),
                     ),
                     OutlinedButton(

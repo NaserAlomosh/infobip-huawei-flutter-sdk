@@ -8,6 +8,7 @@ import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import com.infobip.mobilemessaging.huawei.plugin.NativeEventBridge
 import com.infobip.mobilemessaging.huawei.user.UserManager
 import com.infobip.mobilemessaging.huawei.installation.InstallationManager
+import com.infobip.mobilemessaging.huawei.inbox.InboxManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -24,6 +25,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     private var eventBridge: NativeEventBridge? = null
     private var userManager: UserManager? = null
     private var installationManager: InstallationManager? = null
+    private var inboxManager: InboxManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -33,6 +35,9 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
             initializer?.isInitialized == true
         }
         installationManager = InstallationManager(binding.applicationContext) {
+            initializer?.isInitialized == true
+        }
+        inboxManager = InboxManager(binding.applicationContext) {
             initializer?.isInitialized == true
         }
         eventBridge = NativeEventBridge().also { it.register() }
@@ -54,6 +59,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         eventBridge = null
         userManager = null
         installationManager = null
+        inboxManager = null
         applicationContext = null
     }
 
@@ -82,6 +88,14 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
             ChannelContract.SAVE_INSTALLATION -> installationManager?.saveInstallation(
                 call.argument<Any?>(ChannelContract.INSTALLATION),
                 result::completeInstallation,
+            ) ?: detached(result)
+            ChannelContract.FETCH_INBOX -> inboxManager?.fetch(
+                call.argument<Any?>(ChannelContract.OPTIONS),
+                result::completeInbox,
+            ) ?: detached(result)
+            ChannelContract.SET_INBOX_MESSAGES_SEEN -> inboxManager?.setSeen(
+                call.argument<Any?>(ChannelContract.MESSAGE_IDS),
+                result::completeInbox,
             ) ?: detached(result)
             else -> result.notImplemented()
         }
@@ -114,6 +128,14 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         failure: com.infobip.mobilemessaging.huawei.installation.InstallationFailure?,
     ) {
         if (failure == null) success(installation)
+        else error(failure.code, failure.message, null)
+    }
+
+    private fun MethodChannel.Result.completeInbox(
+        inbox: Map<String, Any?>?,
+        failure: com.infobip.mobilemessaging.huawei.inbox.InboxFailure?,
+    ) {
+        if (failure == null) success(inbox)
         else error(failure.code, failure.message, null)
     }
 
