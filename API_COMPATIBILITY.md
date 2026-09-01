@@ -91,7 +91,7 @@ transport is shown for design purposes; names are intentionally not specified in
 | Depersonalized | `Event.DEPERSONALIZED` | Requires Adaptation | Same dual completion/broadcast rule; clear cached Dart identity. |
 | Error event | SDK operation callbacks carry `MobileMessagingError` | Requires Adaptation | MethodChannel error for requested operations; EventChannel only for unsolicited asynchronous failure. |
 | Token received as a standalone event | Registration/installation update, not a distinct stable Flutter-neutral event | Requires Adaptation | Derive from installation transition; do not promise every underlying HMS callback. |
-| Inbox changed/new inbox message | Message received plus explicit `MobileInbox.fetchInbox(...)` | Requires Adaptation | EventChannel can signal invalidation; fetch via MethodChannel. No continuously synchronized inbox stream. |
+| Inbox native events | `MobileInboxEvent` broadcasts | Intentionally Internal | Native count/fetch/seen broadcasts exist, but the official Flutter plugin has no approved public equivalent; the wrapper does not expose an inferred invalidation stream. |
 | Chat unread count changed | `InAppChatEventsListener.onChangedUnreadMessagesCounter(int)` | Requires Adaptation | EventChannel; listener registration/removal must follow engine lifecycle. |
 | Chat connection/state/error events | `InAppChatEventsListener` callbacks available in chat module | Requires Adaptation | EventChannel after converting finite states/errors; exact callback coverage is narrower than a raw web-chat event bus. |
 | Raw Chat message event | `InAppChatFragment.EventsListener.onChatRawMessageReceived(...)` and `InAppChatView.EventsListener.onChatRawMessageReceived(...)` | Requires Adaptation | The embedded components expose the raw callback, but its payload is not a stable, fully typed conversation-message stream. Flutter transport and payload conversion would still be required. |
@@ -171,25 +171,28 @@ notification classes under `.../notification/`.
 
 | Official Flutter Inbox API/capability | Huawei Inbox 8.14.0 native API | Status | Evidence and implementation notes |
 | --- | --- | --- | --- |
-| Fetch inbox | `MobileInbox.getInstance(Context).fetchInbox(...)` | Requires Adaptation | Callback result must become a future and models must be serialized. Source: `mobile-messaging-inbox/.../MobileInbox.java`. |
-| Filter by topics | `InboxFilterOptions` topic filter | Supported | Native server-side filter exists. |
-| Filter by date range | `InboxFilterOptions` date-from/date-to fields | Requires Adaptation | Convert Dart timestamps to Java dates and define inclusive boundary behavior. |
-| Pagination/limit | `InboxFilterOptions` plus fetch result paging parameters | Requires Adaptation | Official Flutter continuation/page shape needs conversion to Huawei result metadata; do not fake client-only pagination. |
+| Fetch inbox | `MobileInbox.getInstance(Context).fetchInbox(externalUserId, filterOptions, listener)` | Requires Adaptation | The required external user ID is explicit and the callback becomes a future. |
+| JWT-authorized fetch | `MobileInbox.fetchInbox(token, externalUserId, filterOptions, listener)` | Supported | Matches the official Flutter capability. The token is request-scoped and never stored or logged. |
+| Filter by topic/topics | Both `MobileInboxFilterOptions(..., String topic, ...)` and `MobileInboxFilterOptions(..., List<String> topics, ...)` | Supported | The public filters are mutually exclusive. |
+| Filter by date range | `MobileInboxFilterOptions` date-from/date-to fields | Requires Adaptation | Dart timestamps are converted to Java `Date` values representing the same UTC instant. |
+| Result limit | `MobileInboxFilterOptions` limit | Requires Adaptation | The limit is server-side; the wrapper does not invent offsets or cursors. |
 | Inbox total count | `Inbox.getCountTotal()` (result count member) | Supported | Map result metadata, not list length. |
 | Inbox unread count | `Inbox.getCountUnread()` | Supported | Map result metadata. |
+| Filtered total/unread counts | `Inbox.getCountTotalFiltered()` / `getCountUnreadFiltered()` | Supported | Exposed for official Flutter model parity; never substituted for global counters. |
 | Inbox messages | `Inbox.getMessages()` / `InboxMessage` | Requires Adaptation | Convert each native model; retain unknown custom payload. |
-| Mark messages seen | `MobileInbox.setSeen(...)` | Requires Adaptation | Async callback and identifier/model collection conversion; update local UI only after success. |
+| Mark messages seen | `MobileInbox.setSeen(externalUserId, messageIds, listener)` | Requires Adaptation | The external user ID is explicit and completion waits for the native callback. |
 | Seen/unseen state | `InboxMessage.isSeen()` | Supported | Boolean field. |
 | Message details/title/body | `InboxMessage` fields | Requires Adaptation | Mostly direct, with date/custom payload/action conversion. |
 | Message topics | `InboxMessage.getTopic()`/topic fields | Supported | Preserve nullable/unknown topic values. |
 | Inbox configuration | Inbox SDK singleton/module configuration | Requires Adaptation | Module must be available and core initialized; configuration is not a free-standing Flutter object. |
-| Inbox change listener | No dedicated continuously synchronized inbox listener | Unsupported | Use message event as invalidation hint and explicitly refetch. |
+| Native Inbox events | `MobileInboxEvent.INBOX_MESSAGES_FETCHED`, `INBOX_COUNT_UNREAD`, `INBOX_COUNT_TOTAL`, `INBOX_SEEN_REPORTED` | Intentionally Internal | Huawei events exist, but no approved official Flutter public event parity was established, so the shared EventChannel is unchanged. |
 | Offline authoritative inbox | No equivalent offline database contract | Unsupported | A cached UI may be built later, but it is not SDK parity. |
 | Inbox error | Inbox callback error (`MobileMessagingError`) | Requires Adaptation | Map network, authorization, validation and native errors consistently. |
 
 Native evidence paths are under
 `mobile-messaging-inbox/src/main/java/org/infobip/mobile/messaging/inbox/`, notably
-`MobileInbox.java`, `Inbox.java`, `InboxMessage.java`, and `InboxFilterOptions.java`.
+`MobileInbox.java`, `MobileInboxFilterOptions.java`, `Inbox.java`, `InboxMessage.java`, and
+`MobileInboxEvent.java` at 8.14.0.
 
 ## Chat
 

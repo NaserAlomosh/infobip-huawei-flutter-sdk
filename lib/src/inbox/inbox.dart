@@ -1,6 +1,12 @@
 /// Server-side options used when fetching Inbox messages.
 final class InboxFilterOptions {
-  const InboxFilterOptions({this.from, this.to, this.topic, this.limit});
+  const InboxFilterOptions({
+    this.from,
+    this.to,
+    this.topic,
+    this.topics,
+    this.limit,
+  });
 
   /// Lower bound for message creation time, forwarded as a UTC instant.
   final DateTime? from;
@@ -11,6 +17,11 @@ final class InboxFilterOptions {
   /// Exact Inbox topic to request.
   final String? topic;
 
+  /// Exact Inbox topics to request.
+  ///
+  /// This cannot be combined with [topic].
+  final List<String>? topics;
+
   /// Maximum number of messages returned by the server.
   final int? limit;
 }
@@ -20,11 +31,15 @@ final class Inbox {
   const Inbox({
     required this.countTotal,
     required this.countUnread,
+    required this.countTotalFiltered,
+    required this.countUnreadFiltered,
     required this.messages,
   });
 
   final int countTotal;
   final int countUnread;
+  final int countTotalFiltered;
+  final int countUnreadFiltered;
   final List<InboxMessage> messages;
 }
 

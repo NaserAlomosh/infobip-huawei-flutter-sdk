@@ -105,16 +105,26 @@ final class MethodChannelInfobipMobileMessagingHuawei
       );
 
   @override
-  Future<Inbox> fetchInbox(InboxFilterOptions? options) async =>
+  Future<Inbox> fetchInbox({
+    required String externalUserId,
+    String? jwt,
+    InboxFilterOptions? options,
+  }) async =>
       InboxCodec.decode(
         await methodChannel.invokeMethod<Object?>(ChannelContract.fetchInbox, {
+          ChannelContract.externalUserId: externalUserId,
+          ChannelContract.jwt: jwt,
           ChannelContract.options: InboxCodec.encodeOptions(options),
         }),
       );
 
   @override
-  Future<void> setInboxMessagesSeen(List<String> messageIds) =>
+  Future<void> setInboxMessagesSeen({
+    required String externalUserId,
+    required List<String> messageIds,
+  }) =>
       methodChannel.invokeMethod<void>(ChannelContract.setInboxMessagesSeen, {
+        ChannelContract.externalUserId: externalUserId,
         ChannelContract.messageIds: messageIds,
       });
 }

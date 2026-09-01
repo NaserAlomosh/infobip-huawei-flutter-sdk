@@ -43,8 +43,15 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
   Future<Installation> saveInstallation(Installation installation) =>
       throw UnimplementedError();
 
-  Future<Inbox> fetchInbox(InboxFilterOptions? options) =>
+  Future<Inbox> fetchInbox({
+    required String externalUserId,
+    String? jwt,
+    InboxFilterOptions? options,
+  }) =>
       throw UnimplementedError();
-  Future<void> setInboxMessagesSeen(List<String> messageIds) =>
+  Future<void> setInboxMessagesSeen({
+    required String externalUserId,
+    required List<String> messageIds,
+  }) =>
       throw UnimplementedError();
 }
