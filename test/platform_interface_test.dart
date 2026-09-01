@@ -6,8 +6,15 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 final class FakePlatform extends InfobipMobileMessagingHuaweiPlatform
     with MockPlatformInterfaceMixin {
+  String? initializedWith;
+
   @override
   Stream<Object?> get events => const Stream.empty();
+
+  @override
+  Future<void> initialize({required String applicationCode}) async {
+    initializedWith = applicationCode;
+  }
 }
 
 void main() {

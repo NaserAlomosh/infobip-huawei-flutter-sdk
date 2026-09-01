@@ -18,4 +18,6 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
   }
 
   Stream<Object?> get events;
+
+  Future<void> initialize({required String applicationCode});
 }
