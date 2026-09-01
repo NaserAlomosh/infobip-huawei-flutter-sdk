@@ -17,6 +17,12 @@ final class InitializationPlatform extends InfobipMobileMessagingHuaweiPlatform
     this.applicationCode = applicationCode;
     if (error case final Object error) throw error;
   }
+
+  @override
+  Future<bool> isRegistrationEnabled() async => false;
+
+  @override
+  Future<void> setRegistration({required bool enabled}) async {}
 }
 
 void main() {

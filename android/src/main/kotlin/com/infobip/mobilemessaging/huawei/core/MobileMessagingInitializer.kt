@@ -33,4 +33,7 @@ internal class MobileMessagingInitializer(context: Context) {
         }
         coordinator.initialize(applicationCode, callback)
     }
+
+    val isInitialized: Boolean
+        get() = coordinator.isInitialized
 }
