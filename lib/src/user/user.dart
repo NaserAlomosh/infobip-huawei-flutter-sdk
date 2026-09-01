@@ -1,5 +1,14 @@
 /// Gender values supported by Infobip user profiles.
-enum Gender { male, female }
+enum Gender {
+  male,
+  female,
+
+  /// A gender value returned by native code that this plugin does not know.
+  ///
+  /// This value is read-only and cannot be sent in user updates because the
+  /// native SDK accepts only its defined gender values.
+  unknown,
+}
 
 /// Identifiers used to associate an installation with an Infobip user.
 final class UserIdentity {
@@ -28,6 +37,12 @@ final class UserAttributes {
   final Gender? gender;
   final DateTime? birthday;
   final List<String>? tags;
+
+  /// Custom values supported by the native SDK.
+  ///
+  /// Values may be strings, booleans, numbers, [DateTime] instances, or lists
+  /// containing those types. A [DateTime] is stored as a native date and
+  /// round-trips as the same UTC instant.
   final Map<String, Object?>? customAttributes;
 }
 
@@ -61,6 +76,7 @@ final class User {
   /// Custom values supported by the native SDK.
   ///
   /// Values may be strings, booleans, numbers, [DateTime] instances, or lists
-  /// containing those scalar types.
+  /// containing those scalar types. A [DateTime] is stored as a native date
+  /// and round-trips as the same UTC instant.
   final Map<String, Object?>? customAttributes;
 }

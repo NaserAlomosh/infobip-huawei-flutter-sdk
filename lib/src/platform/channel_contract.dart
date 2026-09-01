@@ -25,6 +25,9 @@ abstract final class ChannelContract {
   static const emails = 'emails';
   static const tags = 'tags';
   static const customAttributes = 'customAttributes';
+  static const customValueType = '__infobipType';
+  static const customValue = 'value';
+  static const customDateType = 'date';
 
   static const eventVersion = 1;
   static const messageReceived = 'message_received';
