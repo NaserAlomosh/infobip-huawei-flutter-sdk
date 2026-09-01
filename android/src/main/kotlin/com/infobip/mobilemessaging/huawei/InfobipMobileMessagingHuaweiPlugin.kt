@@ -6,6 +6,7 @@ import android.os.Looper
 import com.infobip.mobilemessaging.huawei.core.MobileMessagingInitializer
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import com.infobip.mobilemessaging.huawei.plugin.NativeEventBridge
+import com.infobip.mobilemessaging.huawei.user.UserManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -20,11 +21,15 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     private var initializer: MobileMessagingInitializer? = null
     private var applicationContext: Context? = null
     private var eventBridge: NativeEventBridge? = null
+    private var userManager: UserManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         applicationContext = binding.applicationContext
         initializer = MobileMessagingInitializer(binding.applicationContext)
+        userManager = UserManager(binding.applicationContext) {
+            initializer?.isInitialized == true
+        }
         eventBridge = NativeEventBridge().also { it.register() }
         methodChannel = MethodChannel(binding.binaryMessenger, ChannelContract.METHOD_CHANNEL).also {
             it.setMethodCallHandler(this)
@@ -42,6 +47,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         eventChannel = null
         initializer = null
         eventBridge = null
+        userManager = null
         applicationContext = null
     }
 
@@ -50,8 +56,47 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
             ChannelContract.INITIALIZE -> initialize(call, result)
             ChannelContract.SET_REGISTRATION -> setRegistration(call, result)
             ChannelContract.IS_REGISTRATION_ENABLED -> isRegistrationEnabled(result)
+            ChannelContract.GET_USER -> userManager?.getUser(result::completeUser)
+                ?: detached(result)
+            ChannelContract.FETCH_USER -> userManager?.fetchUser(result::completeUser)
+                ?: detached(result)
+            ChannelContract.SAVE_USER -> userManager?.saveUser(
+                call.argument<Any?>(ChannelContract.USER),
+                result::completeUser,
+            ) ?: detached(result)
+            ChannelContract.PERSONALIZE -> personalize(call, result)
+            ChannelContract.DEPERSONALIZE -> userManager?.depersonalize { _, failure ->
+                if (failure == null) result.success(null)
+                else result.error(failure.code, failure.message, null)
+            } ?: detached(result)
             else -> result.notImplemented()
         }
+    }
+
+    private fun personalize(call: MethodCall, result: MethodChannel.Result) {
+        val force = call.argument<Boolean>(ChannelContract.FORCE_DEPERSONALIZE)
+        if (force == null) {
+            result.error("invalid_argument", "forceDepersonalize must be a boolean", null)
+            return
+        }
+        userManager?.personalize(
+            call.argument<Any?>(ChannelContract.USER_IDENTITY),
+            call.argument<Any?>(ChannelContract.USER_ATTRIBUTES),
+            force,
+            result::completeUser,
+        ) ?: detached(result)
+    }
+
+    private fun MethodChannel.Result.completeUser(
+        user: Map<String, Any?>?,
+        failure: com.infobip.mobilemessaging.huawei.user.UserFailure?,
+    ) {
+        if (failure == null) success(user)
+        else error(failure.code, failure.message, null)
+    }
+
+    private fun detached(result: MethodChannel.Result) {
+        result.error("native_error", "Plugin is not attached to an engine", null)
     }
 
     private fun setRegistration(call: MethodCall, result: MethodChannel.Result) {

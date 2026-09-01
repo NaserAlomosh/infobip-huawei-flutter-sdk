@@ -6,6 +6,25 @@ abstract final class ChannelContract {
   static const isRegistrationEnabled = 'isRegistrationEnabled';
   static const applicationCode = 'applicationCode';
   static const enabled = 'enabled';
+  static const getUser = 'getUser';
+  static const fetchUser = 'fetchUser';
+  static const saveUser = 'saveUser';
+  static const personalize = 'personalize';
+  static const depersonalize = 'depersonalize';
+  static const user = 'user';
+  static const userIdentity = 'userIdentity';
+  static const userAttributes = 'userAttributes';
+  static const forceDepersonalize = 'forceDepersonalize';
+  static const externalUserId = 'externalUserId';
+  static const firstName = 'firstName';
+  static const lastName = 'lastName';
+  static const middleName = 'middleName';
+  static const gender = 'gender';
+  static const birthday = 'birthday';
+  static const phones = 'phones';
+  static const emails = 'emails';
+  static const tags = 'tags';
+  static const customAttributes = 'customAttributes';
 
   static const eventVersion = 1;
   static const messageReceived = 'message_received';

@@ -1,6 +1,7 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'method_channel_infobip_mobilemessaging_huawei.dart';
+import '../user/user.dart';
 
 abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
   InfobipMobileMessagingHuaweiPlatform() : super(token: _token);
@@ -24,4 +25,14 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
   Future<void> setRegistration({required bool enabled});
 
   Future<bool> isRegistrationEnabled();
+
+  Future<User> getUser() => throw UnimplementedError();
+  Future<User> fetchUser() => throw UnimplementedError();
+  Future<User> saveUser(User user) => throw UnimplementedError();
+  Future<User> personalize(
+    UserIdentity userIdentity,
+    UserAttributes? userAttributes, {
+    required bool forceDepersonalize,
+  }) => throw UnimplementedError();
+  Future<void> depersonalize() => throw UnimplementedError();
 }

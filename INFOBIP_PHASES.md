@@ -45,8 +45,8 @@ Background Dart isolate delivery is unsupported by this wrapper and is not claim
 
 ## Phase 5 - User Management
 
-- [ ] Implement approved user registration and profile APIs
-- [ ] Implement approved user identity and attribute handling
+- [x] Implement approved user registration and profile APIs
+- [x] Implement approved user identity and attribute handling
 
 ## Phase 6 - Installation Management
 

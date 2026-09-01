@@ -24,6 +24,7 @@ class _ExampleAppState extends State<ExampleApp> {
   bool _initialized = false;
   final List<String> _events = [];
   final List<StreamSubscription<Object?>> _subscriptions = [];
+  User? _user;
 
   @override
   void initState() {
@@ -93,6 +94,32 @@ class _ExampleAppState extends State<ExampleApp> {
     }
   }
 
+  Future<void> _loadUser({required bool fetch}) async {
+    setState(() => _loading = true);
+    try {
+      final user = fetch
+          ? await InfobipMobileMessagingHuawei.fetchUser()
+          : await InfobipMobileMessagingHuawei.getUser();
+      if (mounted) setState(() => _user = user);
+    } on PlatformException catch (error) {
+      if (mounted) setState(() => _status = 'User operation failed (${error.code}).');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _depersonalize() async {
+    setState(() => _loading = true);
+    try {
+      await InfobipMobileMessagingHuawei.depersonalize();
+      if (mounted) setState(() => _user = null);
+    } on PlatformException catch (error) {
+      if (mounted) setState(() => _status = 'Depersonalization failed (${error.code}).');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -115,6 +142,29 @@ class _ExampleAppState extends State<ExampleApp> {
               if (_initialized) ...[
                 const SizedBox(height: 16),
                 const Text('Listening for notification events.'),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    OutlinedButton(
+                      onPressed: _loading ? null : () => _loadUser(fetch: false),
+                      child: const Text('Local user'),
+                    ),
+                    OutlinedButton(
+                      onPressed: _loading ? null : () => _loadUser(fetch: true),
+                      child: const Text('Fetch user'),
+                    ),
+                    OutlinedButton(
+                      onPressed: _loading ? null : _depersonalize,
+                      child: const Text('Depersonalize'),
+                    ),
+                  ],
+                ),
+                Text(
+                  _user == null
+                      ? 'No user loaded.'
+                      : 'User loaded (${_user!.tags?.length ?? 0} tags).',
+                ),
                 const SizedBox(height: 16),
                 ..._events.take(5).map(Text.new),
               ],
