@@ -53,9 +53,13 @@ abstract final class ChannelContract {
   static const from = 'from';
   static const to = 'to';
   static const topic = 'topic';
+  static const topics = 'topics';
   static const limit = 'limit';
   static const countTotal = 'countTotal';
   static const countUnread = 'countUnread';
+  static const countTotalFiltered = 'countTotalFiltered';
+  static const countUnreadFiltered = 'countUnreadFiltered';
+  static const jwt = 'jwt';
   static const messages = 'messages';
   static const messageIds = 'messageIds';
   static const messageId = 'messageId';

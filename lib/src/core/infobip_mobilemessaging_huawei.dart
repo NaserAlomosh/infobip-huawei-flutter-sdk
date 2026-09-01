@@ -68,16 +68,54 @@ final class InfobipMobileMessagingHuawei {
   static Future<Installation> saveInstallation(Installation installation) =>
       InfobipMobileMessagingHuaweiPlatform.instance.saveInstallation(installation);
 
-  /// Fetches Inbox messages and counters using optional server-side filters.
-  static Future<Inbox> fetchInbox([InboxFilterOptions? options]) =>
-      InfobipMobileMessagingHuaweiPlatform.instance.fetchInbox(options);
+  /// Fetches Inbox messages for [externalUserId].
+  ///
+  /// When supplied, [jwt] is forwarded only for this request and is not stored.
+  static Future<Inbox> fetchInbox({
+    required String externalUserId,
+    String? jwt,
+    InboxFilterOptions? options,
+  }) {
+    if (externalUserId.trim().isEmpty) {
+      throw ArgumentError.value(
+        externalUserId,
+        'externalUserId',
+        'Must not be empty or whitespace-only',
+      );
+    }
+    if (jwt != null && jwt.trim().isEmpty) {
+      throw ArgumentError.value(
+        jwt,
+        'jwt',
+        'Must not be empty or whitespace-only',
+      );
+    }
+    return InfobipMobileMessagingHuaweiPlatform.instance.fetchInbox(
+      externalUserId: externalUserId,
+      jwt: jwt,
+      options: options,
+    );
+  }
 
   /// Marks the Inbox messages identified by [messageIds] as seen.
-  static Future<void> setInboxMessagesSeen(List<String> messageIds) {
+  static Future<void> setInboxMessagesSeen({
+    required String externalUserId,
+    required List<String> messageIds,
+  }) {
+    if (externalUserId.trim().isEmpty) {
+      throw ArgumentError.value(
+        externalUserId,
+        'externalUserId',
+        'Must not be empty or whitespace-only',
+      );
+    }
     if (messageIds.isEmpty || messageIds.any((id) => id.trim().isEmpty)) {
       throw ArgumentError.value(messageIds, 'messageIds', 'Must not be empty');
     }
     return InfobipMobileMessagingHuaweiPlatform.instance
-        .setInboxMessagesSeen(List.unmodifiable(messageIds));
+        .setInboxMessagesSeen(
+          externalUserId: externalUserId,
+          messageIds: List.unmodifiable(messageIds),
+        );
   }
 }

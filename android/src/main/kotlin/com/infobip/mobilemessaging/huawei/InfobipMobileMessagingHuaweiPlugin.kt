@@ -90,10 +90,13 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
                 result::completeInstallation,
             ) ?: detached(result)
             ChannelContract.FETCH_INBOX -> inboxManager?.fetch(
+                call.argument<Any?>(ChannelContract.EXTERNAL_USER_ID),
+                call.argument<Any?>(ChannelContract.JWT),
                 call.argument<Any?>(ChannelContract.OPTIONS),
                 result::completeInbox,
             ) ?: detached(result)
             ChannelContract.SET_INBOX_MESSAGES_SEEN -> inboxManager?.setSeen(
+                call.argument<Any?>(ChannelContract.EXTERNAL_USER_ID),
                 call.argument<Any?>(ChannelContract.MESSAGE_IDS),
                 result::completeInbox,
             ) ?: detached(result)

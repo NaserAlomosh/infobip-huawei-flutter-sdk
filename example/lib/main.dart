@@ -17,6 +17,9 @@ class _ExampleAppState extends State<ExampleApp> {
   static const _applicationCode = String.fromEnvironment(
     'INFOBIP_APPLICATION_CODE',
   );
+  static const _inboxExternalUserId = String.fromEnvironment(
+    'INFOBIP_INBOX_EXTERNAL_USER_ID',
+  );
   String _status = _applicationCode.isEmpty
       ? 'Provide INFOBIP_APPLICATION_CODE with --dart-define.'
       : 'Ready to initialize.';
@@ -166,7 +169,8 @@ class _ExampleAppState extends State<ExampleApp> {
     setState(() => _loading = true);
     try {
       final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
-        const InboxFilterOptions(limit: 20),
+        externalUserId: _inboxExternalUserId,
+        options: const InboxFilterOptions(limit: 20),
       );
       if (mounted) setState(() => _inbox = inbox);
     } on PlatformException catch (error) {
@@ -181,9 +185,10 @@ class _ExampleAppState extends State<ExampleApp> {
     if (message == null) return;
     setState(() => _loading = true);
     try {
-      await InfobipMobileMessagingHuawei.setInboxMessagesSeen([
-        message.messageId,
-      ]);
+      await InfobipMobileMessagingHuawei.setInboxMessagesSeen(
+        externalUserId: _inboxExternalUserId,
+        messageIds: [message.messageId],
+      );
       await _fetchInbox();
     } on PlatformException catch (error) {
       if (mounted) {
@@ -244,11 +249,14 @@ class _ExampleAppState extends State<ExampleApp> {
                   spacing: 8,
                   children: [
                     OutlinedButton(
-                      onPressed: _loading ? null : _fetchInbox,
+                      onPressed: _loading || _inboxExternalUserId.isEmpty
+                          ? null
+                          : _fetchInbox,
                       child: const Text('Fetch Inbox'),
                     ),
                     OutlinedButton(
                       onPressed: _loading ||
+                              _inboxExternalUserId.isEmpty ||
                               !(_inbox?.messages.any(
                                     (message) => !message.seen,
                                   ) ??

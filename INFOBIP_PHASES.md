@@ -55,8 +55,9 @@ Background Dart isolate delivery is unsupported by this wrapper and is not claim
 
 ## Phase 7 - Inbox
 
-- [x] Implement approved Inbox APIs
-- [x] Implement Inbox data mapping; omit unsupported dedicated Inbox events
+- [x] Implement approved Inbox APIs with explicit external user ID and optional JWT fetch
+- [x] Use typed Huawei 8.14.0 Inbox APIs, filters, counters, and message mapping
+- [x] Keep Huawei native Inbox events internal because official Flutter event parity is not established
 
 ## Phase 8 - Chat
 

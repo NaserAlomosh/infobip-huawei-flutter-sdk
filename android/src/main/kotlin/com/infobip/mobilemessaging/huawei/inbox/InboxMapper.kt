@@ -3,8 +3,23 @@ package com.infobip.mobilemessaging.huawei.inbox
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import java.time.Instant
 import java.util.Date
+import org.infobip.mobile.messaging.inbox.Inbox
+import org.infobip.mobile.messaging.inbox.InboxMessage
+import org.infobip.mobile.messaging.inbox.MobileInboxFilterOptions
+import org.json.JSONArray
+import org.json.JSONObject
 
 internal object InboxMapper {
+    fun requiredExternalUserId(value: Any?): String =
+        (value as? String)?.takeUnless { it.isBlank() }
+            ?: throw IllegalArgumentException("externalUserId must not be empty")
+
+    fun optionalJwt(value: Any?): String? {
+        if (value == null) return null
+        return (value as? String)?.takeUnless { it.isBlank() }
+            ?: throw IllegalArgumentException("jwt must not be empty")
+    }
+
     fun parseOptions(value: Any?): InboxOptions {
         if (value == null) return InboxOptions()
         val map = value as? Map<*, *> ?: throw IllegalArgumentException("options must be a map")
@@ -16,14 +31,25 @@ internal object InboxMapper {
         val topic = optionalString(map, ChannelContract.TOPIC)?.also {
             if (it.isBlank()) throw IllegalArgumentException("topic must not be empty")
         }
+        val topics = optionalStrings(map, ChannelContract.TOPICS)
+        if (topic != null && topics != null) {
+            throw IllegalArgumentException("topic and topics are mutually exclusive")
+        }
         val limit = (map[ChannelContract.LIMIT] as? Number)?.toInt().also {
             if (map[ChannelContract.LIMIT] != null && it == null) {
                 throw IllegalArgumentException("limit must be an integer")
             }
             if (it != null && it <= 0) throw IllegalArgumentException("limit must be positive")
         }
-        return InboxOptions(from, to, topic, limit)
+        return InboxOptions(from, to, topic, topics, limit)
     }
+
+    fun nativeOptions(options: InboxOptions): MobileInboxFilterOptions =
+        if (options.topics == null) {
+            MobileInboxFilterOptions(options.from, options.to, options.topic, options.limit)
+        } else {
+            MobileInboxFilterOptions(options.from, options.to, options.topics, options.limit)
+        }
 
     fun messageIds(value: Any?): List<String> {
         val values = value as? List<*> ?: throw IllegalArgumentException("messageIds must be a list")
@@ -33,28 +59,39 @@ internal object InboxMapper {
         return values.filterIsInstance<String>()
     }
 
-    fun inbox(value: Any): Map<String, Any?> = mapOf(
-        ChannelContract.COUNT_TOTAL to requiredNumber(value, "getCountTotal").toInt(),
-        ChannelContract.COUNT_UNREAD to requiredNumber(value, "getCountUnread").toInt(),
-        ChannelContract.MESSAGES to (getter(value, "getMessages") as? Iterable<*>)
-            ?.filterNotNull()?.map(::message).orEmpty(),
+    fun inbox(value: Inbox): Map<String, Any?> = mapOf(
+        ChannelContract.COUNT_TOTAL to value.countTotal,
+        ChannelContract.COUNT_UNREAD to value.countUnread,
+        ChannelContract.COUNT_TOTAL_FILTERED to value.countTotalFiltered,
+        ChannelContract.COUNT_UNREAD_FILTERED to value.countUnreadFiltered,
+        ChannelContract.MESSAGES to value.messages.map(::message),
     )
 
-    internal fun message(value: Any): Map<String, Any?> = mapOf(
-        ChannelContract.MESSAGE_ID to requiredString(value, "getMessageId"),
-        ChannelContract.TITLE to getter(value, "getTitle") as? String,
-        ChannelContract.BODY to getter(value, "getBody") as? String,
-        ChannelContract.TOPIC to getter(value, "getTopic") as? String,
-        ChannelContract.SEEN to (getter(value, "isSeen") as? Boolean ?: false),
-        ChannelContract.RECEIVED_TIMESTAMP to timestamp(getter(value, "getReceivedTimestamp")),
-        ChannelContract.CUSTOM_PAYLOAD to safeMap(getter(value, "getCustomPayload")),
-        ChannelContract.DEEP_LINK to getter(value, "getDeeplink") as? String,
-        ChannelContract.IS_SILENT to (getter(value, "isSilent") as? Boolean ?: false),
+    internal fun message(value: InboxMessage): Map<String, Any?> = mapOf(
+        ChannelContract.MESSAGE_ID to value.messageId,
+        ChannelContract.TITLE to value.title,
+        ChannelContract.BODY to value.body,
+        ChannelContract.TOPIC to value.topic,
+        ChannelContract.SEEN to value.isSeen,
+        ChannelContract.RECEIVED_TIMESTAMP to timestamp(value.receivedTimestamp),
+        ChannelContract.CUSTOM_PAYLOAD to jsonObject(value.customPayload),
+        ChannelContract.DEEP_LINK to value.deeplink,
+        ChannelContract.IS_SILENT to value.isSilent,
     )
 
     private fun optionalString(map: Map<*, *>, key: String): String? {
         val value = map[key] ?: return null
         return value as? String ?: throw IllegalArgumentException("$key must be a string")
+    }
+
+    private fun optionalStrings(map: Map<*, *>, key: String): List<String>? {
+        val value = map[key] ?: return null
+        val values = value as? List<*>
+            ?: throw IllegalArgumentException("$key must be a list")
+        if (values.isEmpty() || values.any { it !is String || it.isBlank() }) {
+            throw IllegalArgumentException("$key must contain non-empty strings")
+        }
+        return values.filterIsInstance<String>()
     }
 
     private fun instant(value: Any?, key: String): Date? {
@@ -67,34 +104,21 @@ internal object InboxMapper {
         }
     }
 
-    private fun getter(value: Any, name: String): Any? =
-        value.javaClass.methods.firstOrNull { it.name == name && it.parameterCount == 0 }?.invoke(value)
+    private fun timestamp(value: Long): String = Instant.ofEpochMilli(value).toString()
 
-    private fun requiredString(value: Any, name: String): String =
-        getter(value, name) as? String ?: throw IllegalArgumentException("Invalid Inbox message")
-
-    private fun requiredNumber(value: Any, name: String): Number =
-        getter(value, name) as? Number ?: throw IllegalArgumentException("Invalid Inbox result")
-
-    private fun timestamp(value: Any?): String? = when (value) {
-        is Date -> value.toInstant().toString()
-        is Number -> Instant.ofEpochMilli(value.toLong()).toString()
-        else -> null
+    private fun jsonObject(value: JSONObject?): Map<String, Any?> {
+        if (value == null) return emptyMap()
+        return value.keys().asSequence().associateWith { key -> jsonValue(value.opt(key)) }
     }
 
-    private fun safeMap(value: Any?): Map<String, Any?> {
-        val map = value as? Map<*, *> ?: return emptyMap()
-        return map.entries.mapNotNull { (key, item) ->
-            val stringKey = key as? String ?: return@mapNotNull null
-            stringKey to safeValue(item)
-        }.toMap()
-    }
+    private fun jsonArray(value: JSONArray): List<Any?> =
+        (0 until value.length()).map { index -> jsonValue(value.opt(index)) }
 
-    private fun safeValue(value: Any?): Any? = when (value) {
-        null, is String, is Boolean, is Int, is Long, is Double, is Float -> value
-        is Map<*, *> -> safeMap(value)
-        is Iterable<*> -> value.map(::safeValue)
-        is Array<*> -> value.map(::safeValue)
+    private fun jsonValue(value: Any?): Any? = when (value) {
+        null, JSONObject.NULL -> null
+        is String, is Boolean, is Number -> value
+        is JSONObject -> jsonObject(value)
+        is JSONArray -> jsonArray(value)
         else -> null
     }
 }
@@ -103,5 +127,6 @@ internal data class InboxOptions(
     val from: Date? = null,
     val to: Date? = null,
     val topic: String? = null,
+    val topics: List<String>? = null,
     val limit: Int? = null,
 )

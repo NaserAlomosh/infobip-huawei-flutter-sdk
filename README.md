@@ -224,7 +224,8 @@ Inbox uses the initialized Mobile Messaging lifecycle and never initializes the 
 
 ```dart
 final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
-  InboxFilterOptions(
+  externalUserId: externalUserId,
+  options: InboxFilterOptions(
     from: DateTime.now().subtract(const Duration(days: 30)),
     to: DateTime.now(),
     topic: 'news',
@@ -233,25 +234,35 @@ final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
 );
 
 await InfobipMobileMessagingHuawei.setInboxMessagesSeen(
-  inbox.messages
+  externalUserId: externalUserId,
+  messageIds: inbox.messages
       .where((message) => !message.seen)
       .map((message) => message.messageId)
       .toList(),
 );
 ```
 
-`Inbox` contains the server-authoritative `countTotal` and `countUnread` values and the returned
+The caller must supply the same non-empty external user ID used for the Inbox audience. The plugin
+does not derive it from the locally personalized user. The official Flutter Inbox API also supports
+JWT-authorized fetches, so an optional `jwt` can be supplied to `fetchInbox`; it is forwarded to the
+Huawei token overload for that request and is never stored or logged.
+
+`Inbox` contains the server-authoritative `countTotal`, `countUnread`, `countTotalFiltered`, and
+`countUnreadFiltered` values and the returned
 `InboxMessage` collection. Messages expose the supported intersection of the Flutter and Huawei
 models: identifier, title, body, topic, seen state, received timestamp, custom payload, deep link,
 and silent flag. Timestamps are converted as UTC instants and nested payloads are restricted to
 platform-channel-safe values.
 
-Huawei Inbox 8.14.0 supports a single topic, date bounds, and a result limit. The limit is
+Huawei Inbox 8.14.0 supports either `topic` or `topics`, date bounds, and a result limit. Single and
+multiple topic filters are mutually exclusive and empty topic values are rejected. The limit is
 server-side; it is not a page number, offset, or cursor, and the plugin does not paginate locally.
 The native SDK exposes seen state and a server-confirmed set-seen operation, but no equivalent
-separate read state, so this plugin does not invent mark-read behavior. The SDK also has no dedicated
-Inbox-updated event equivalent to expose; notification events remain unchanged and never mark Inbox
-messages seen automatically.
+separate read state, so this plugin does not invent mark-read behavior. Huawei 8.14.0 defines
+`MobileInboxEvent.INBOX_MESSAGES_FETCHED`, `INBOX_COUNT_UNREAD`, `INBOX_COUNT_TOTAL`, and
+`INBOX_SEEN_REPORTED`. This wrapper intentionally does not expose them because no approved official
+Flutter public Inbox event parity was established. Existing notification events remain unchanged
+and never mark Inbox messages seen automatically.
 
 Inbox content can be sensitive. The plugin does not log messages, identifiers, topics, payloads, or
 deep links and does not include them in errors. Actual retrieval, counters, personalization rules,

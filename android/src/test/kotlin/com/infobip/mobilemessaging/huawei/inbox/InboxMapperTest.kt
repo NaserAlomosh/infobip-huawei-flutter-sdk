@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import org.infobip.mobile.messaging.inbox.MobileInboxFilterOptions
 
 class InboxMapperTest {
     @Test
@@ -20,6 +21,10 @@ class InboxMapperTest {
         assertEquals("2026-09-01T12:00:00Z", options.from?.toInstant().toString())
         assertEquals("news", options.topic)
         assertEquals(25, options.limit)
+        assertEquals(
+            MobileInboxFilterOptions::class.java,
+            InboxMapper.nativeOptions(options)::class.java,
+        )
     }
 
     @Test
@@ -28,6 +33,7 @@ class InboxMapperTest {
         assertNull(options.from)
         assertNull(options.to)
         assertNull(options.topic)
+        assertNull(options.topics)
         assertNull(options.limit)
     }
 
@@ -48,5 +54,29 @@ class InboxMapperTest {
         assertEquals(listOf("one", "two"), InboxMapper.messageIds(listOf("one", "two")))
         assertThrows(IllegalArgumentException::class.java) { InboxMapper.messageIds(emptyList<String>()) }
         assertThrows(IllegalArgumentException::class.java) { InboxMapper.messageIds(listOf("")) }
+    }
+
+    @Test
+    fun `constructs real filter options for multiple topics`() {
+        val options = InboxMapper.parseOptions(
+            mapOf("topics" to listOf("news", "offers"), "limit" to 10),
+        )
+
+        assertEquals(listOf("news", "offers"), options.topics)
+        assertEquals(
+            MobileInboxFilterOptions::class.java,
+            InboxMapper.nativeOptions(options)::class.java,
+        )
+    }
+
+    @Test
+    fun `validates identity and mutually exclusive topic filters`() {
+        assertEquals("user", InboxMapper.requiredExternalUserId("user"))
+        assertThrows(IllegalArgumentException::class.java) {
+            InboxMapper.requiredExternalUserId(" ")
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            InboxMapper.parseOptions(mapOf("topic" to "one", "topics" to listOf("two")))
+        }
     }
 }

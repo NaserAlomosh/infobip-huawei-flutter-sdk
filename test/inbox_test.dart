@@ -13,14 +13,15 @@ void main() {
       InboxFilterOptions(
         from: DateTime.parse('2026-09-01T15:00:00+03:00'),
         to: DateTime.parse('2026-09-02T12:00:00Z'),
-        topic: 'offers',
+        topics: const ['offers', 'news'],
         limit: 20,
       ),
     );
     expect(encoded, {
       'from': '2026-09-01T12:00:00.000Z',
       'to': '2026-09-02T12:00:00.000Z',
-      'topic': 'offers',
+      'topic': null,
+      'topics': ['offers', 'news'],
       'limit': 20,
     });
   });
@@ -49,6 +50,8 @@ void main() {
     final inbox = InboxCodec.decode({
       'countTotal': 4,
       'countUnread': 2,
+      'countTotalFiltered': 3,
+      'countUnreadFiltered': 1,
       'messages': [
         {
           'messageId': 'message-1',
@@ -67,11 +70,58 @@ void main() {
     });
     expect(inbox.countTotal, 4);
     expect(inbox.countUnread, 2);
+    expect(inbox.countTotalFiltered, 3);
+    expect(inbox.countUnreadFiltered, 1);
     expect(inbox.messages.single.messageId, 'message-1');
     expect(inbox.messages.single.receivedTimestamp, DateTime.utc(2026, 9, 1, 12));
     expect(inbox.messages.single.customPayload['nested'], {'enabled': true});
     expect(inbox.messages.single.seen, isFalse);
     expect(inbox.messages.single.isSilent, isTrue);
+  });
+
+  test('rejects conflicting or invalid topic filters', () {
+    expect(
+      () => InboxCodec.encodeOptions(
+        const InboxFilterOptions(topic: 'one', topics: ['two']),
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => InboxCodec.encodeOptions(const InboxFilterOptions(topics: [])),
+      throwsArgumentError,
+    );
+    expect(
+      () => InboxCodec.encodeOptions(const InboxFilterOptions(topics: [' '])),
+      throwsArgumentError,
+    );
+  });
+
+  test('rejects invalid Inbox identity and message identifiers', () {
+    expect(
+      () => InfobipMobileMessagingHuawei.fetchInbox(externalUserId: ' '),
+      throwsArgumentError,
+    );
+    expect(
+      () => InfobipMobileMessagingHuawei.fetchInbox(
+        externalUserId: 'user',
+        jwt: ' ',
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => InfobipMobileMessagingHuawei.setInboxMessagesSeen(
+        externalUserId: '',
+        messageIds: const ['one'],
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => InfobipMobileMessagingHuawei.setInboxMessagesSeen(
+        externalUserId: 'user',
+        messageIds: const [' '],
+      ),
+      throwsArgumentError,
+    );
   });
 
   test('rejects malformed native Inbox results', () {
@@ -80,6 +130,8 @@ void main() {
       () => InboxCodec.decode({
         'countTotal': 1,
         'countUnread': 0,
+        'countTotalFiltered': 1,
+        'countUnreadFiltered': 0,
         'messages': const ['bad'],
       }),
       throwsFormatException,
@@ -88,13 +140,20 @@ void main() {
 
   test('delegates fetch and seen operations over the channel', () async {
     final calls = <MethodCall>[];
-    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(
       const MethodChannel(ChannelContract.methodChannel),
       (call) async {
         calls.add(call);
         if (call.method == ChannelContract.fetchInbox) {
-          return {'countTotal': 0, 'countUnread': 0, 'messages': <Object?>[]};
+          return {
+            'countTotal': 0,
+            'countUnread': 0,
+            'countTotalFiltered': 0,
+            'countUnreadFiltered': 0,
+            'messages': <Object?>[],
+          };
         }
         return null;
       },
@@ -107,24 +166,73 @@ void main() {
     );
 
     final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
-      const InboxFilterOptions(topic: 'news', limit: 10),
+      externalUserId: 'user',
+      jwt: 'jwt',
+      options: const InboxFilterOptions(topic: 'news', limit: 10),
     );
-    await InfobipMobileMessagingHuawei.setInboxMessagesSeen(['one', 'two']);
+    await InfobipMobileMessagingHuawei.setInboxMessagesSeen(
+      externalUserId: 'user',
+      messageIds: ['one', 'two'],
+    );
 
     expect(inbox.messages, isEmpty);
     expect(calls.map((call) => call.method), [
       ChannelContract.fetchInbox,
       ChannelContract.setInboxMessagesSeen,
     ]);
+    expect(calls.first.arguments, {
+      ChannelContract.externalUserId: 'user',
+      ChannelContract.jwt: 'jwt',
+      ChannelContract.options: {
+        'from': null,
+        'to': null,
+        'topic': 'news',
+        'topics': null,
+        'limit': 10,
+      },
+    });
     expect(calls.last.arguments, {
+      ChannelContract.externalUserId: 'user',
       ChannelContract.messageIds: ['one', 'two'],
     });
   });
 
   test('rejects an empty seen update without invoking native code', () {
     expect(
-      () => InfobipMobileMessagingHuawei.setInboxMessagesSeen(const []),
+      () => InfobipMobileMessagingHuawei.setInboxMessagesSeen(
+        externalUserId: 'user',
+        messageIds: const [],
+      ),
       throwsArgumentError,
+    );
+  });
+
+  test('propagates native PlatformException', () async {
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(
+      const MethodChannel(ChannelContract.methodChannel),
+      (_) => throw PlatformException(
+        code: 'inbox_fetch_failed',
+        message: 'Unable to fetch Inbox',
+      ),
+    );
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(
+        const MethodChannel(ChannelContract.methodChannel),
+        null,
+      ),
+    );
+
+    await expectLater(
+      InfobipMobileMessagingHuawei.fetchInbox(externalUserId: 'user'),
+      throwsA(
+        isA<PlatformException>().having(
+          (error) => error.code,
+          'code',
+          'inbox_fetch_failed',
+        ),
+      ),
     );
   });
 }

@@ -12,6 +12,18 @@ abstract final class InboxCodec {
     if (options.topic != null && options.topic!.trim().isEmpty) {
       throw ArgumentError.value(options.topic, 'topic', 'Must not be empty');
     }
+    if (options.topic != null && options.topics != null) {
+      throw ArgumentError('topic and topics are mutually exclusive');
+    }
+    if (options.topics != null &&
+        (options.topics!.isEmpty ||
+            options.topics!.any((topic) => topic.trim().isEmpty))) {
+      throw ArgumentError.value(
+        options.topics,
+        'topics',
+        'Must contain non-empty values',
+      );
+    }
     if (options.limit != null && options.limit! <= 0) {
       throw ArgumentError.value(options.limit, 'limit', 'Must be positive');
     }
@@ -19,6 +31,7 @@ abstract final class InboxCodec {
       ChannelContract.from: options.from?.toUtc().toIso8601String(),
       ChannelContract.to: options.to?.toUtc().toIso8601String(),
       ChannelContract.topic: options.topic,
+      ChannelContract.topics: options.topics,
       ChannelContract.limit: options.limit,
     };
   }
@@ -30,6 +43,14 @@ abstract final class InboxCodec {
     return Inbox(
       countTotal: _integer(map[ChannelContract.countTotal], 'countTotal'),
       countUnread: _integer(map[ChannelContract.countUnread], 'countUnread'),
+      countTotalFiltered: _integer(
+        map[ChannelContract.countTotalFiltered],
+        'countTotalFiltered',
+      ),
+      countUnreadFiltered: _integer(
+        map[ChannelContract.countUnreadFiltered],
+        'countUnreadFiltered',
+      ),
       messages: List.unmodifiable(messages.map(_decodeMessage)),
     );
   }
