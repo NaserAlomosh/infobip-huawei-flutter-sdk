@@ -7,10 +7,3 @@ final class NotificationActionEvent {
   final String? actionId;
   final PushMessage message;
 }
-
-/// A change to the SDK's push registration state.
-final class RegistrationUpdatedEvent {
-  const RegistrationUpdatedEvent({required this.isRegistrationEnabled});
-
-  final bool isRegistrationEnabled;
-}

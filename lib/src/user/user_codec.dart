@@ -4,6 +4,18 @@ import '../platform/channel_contract.dart';
 import 'user.dart';
 
 abstract final class UserCodec {
+  static Map<String, Object?>? encodeCustomAttributes(
+    Map<String, Object?>? value,
+  ) => _encodeCustomAttributes(value);
+
+  static Map<String, Object?>? decodeCustomAttributes(Object? value) {
+    if (value == null) return null;
+    if (value is! Map || value.keys.any((key) => key is! String)) {
+      throw const FormatException('customAttributes must be a string-keyed map');
+    }
+    return _decodeCustomAttributes(value);
+  }
+
   static Map<String, Object?> encodeIdentity(UserIdentity identity) =>
       <String, Object?>{
         ChannelContract.externalUserId: identity.externalUserId,

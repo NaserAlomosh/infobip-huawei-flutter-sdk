@@ -2,6 +2,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'method_channel_infobip_mobilemessaging_huawei.dart';
 import '../user/user.dart';
+import '../installation/installation.dart';
 
 abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
   InfobipMobileMessagingHuaweiPlatform() : super(token: _token);
@@ -35,4 +36,9 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
     required bool forceDepersonalize,
   }) => throw UnimplementedError();
   Future<void> depersonalize() => throw UnimplementedError();
+
+  Future<Installation> getInstallation() => throw UnimplementedError();
+  Future<Installation> fetchInstallation() => throw UnimplementedError();
+  Future<Installation> saveInstallation(Installation installation) =>
+      throw UnimplementedError();
 }

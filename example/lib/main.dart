@@ -25,6 +25,7 @@ class _ExampleAppState extends State<ExampleApp> {
   final List<String> _events = [];
   final List<StreamSubscription<Object?>> _subscriptions = [];
   User? _user;
+  Installation? _installation;
 
   @override
   void initState() {
@@ -47,8 +48,13 @@ class _ExampleAppState extends State<ExampleApp> {
                 _addEvent('Action tapped: ${event.actionId ?? 'unknown'}'),
           ),
       InfobipMobileMessagingHuawei.notifications.onRegistrationUpdated.listen(
-        (event) => _addEvent(
-          'Registration updated: ${event.isRegistrationEnabled}',
+        (installation) => _addEvent(
+          'Registration updated: ${installation.pushRegistrationEnabled}',
+        ),
+      ),
+      InfobipMobileMessagingHuawei.notifications.onInstallationUpdated.listen(
+        (installation) => _addEvent(
+          'Installation updated (language: ${installation.language ?? 'unset'}).',
         ),
       ),
     ]);
@@ -120,6 +126,41 @@ class _ExampleAppState extends State<ExampleApp> {
     }
   }
 
+  Future<void> _loadInstallation({required bool fetch}) async {
+    setState(() => _loading = true);
+    try {
+      final installation = fetch
+          ? await InfobipMobileMessagingHuawei.fetchInstallation()
+          : await InfobipMobileMessagingHuawei.getInstallation();
+      if (mounted) setState(() => _installation = installation);
+    } on PlatformException catch (error) {
+      if (mounted) {
+        setState(() => _status = 'Installation operation failed (${error.code}).');
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _saveInstallation() async {
+    final installation = _installation;
+    if (installation == null) return;
+    setState(() => _loading = true);
+    try {
+      final saved = await InfobipMobileMessagingHuawei.saveInstallation(
+        Installation(
+          isPrimaryDevice: installation.isPrimaryDevice,
+          customAttributes: installation.customAttributes,
+        ),
+      );
+      if (mounted) setState(() => _installation = saved);
+    } on PlatformException catch (error) {
+      if (mounted) setState(() => _status = 'Installation save failed (${error.code}).');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -164,6 +205,32 @@ class _ExampleAppState extends State<ExampleApp> {
                   _user == null
                       ? 'No user loaded.'
                       : 'User loaded (${_user!.tags?.length ?? 0} tags).',
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    OutlinedButton(
+                      onPressed: _loading ? null : () => _loadInstallation(fetch: false),
+                      child: const Text('Local installation'),
+                    ),
+                    OutlinedButton(
+                      onPressed: _loading ? null : () => _loadInstallation(fetch: true),
+                      child: const Text('Fetch installation'),
+                    ),
+                    OutlinedButton(
+                      onPressed: _loading || _installation == null
+                          ? null
+                          : _saveInstallation,
+                      child: const Text('Save installation'),
+                    ),
+                  ],
+                ),
+                Text(
+                  _installation == null
+                      ? 'No installation loaded.'
+                      : 'Registration enabled: '
+                            '${_installation!.pushRegistrationEnabled ?? 'unknown'}',
                 ),
                 const SizedBox(height: 16),
                 ..._events.take(5).map(Text.new),

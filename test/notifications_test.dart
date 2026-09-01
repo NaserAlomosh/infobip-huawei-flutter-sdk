@@ -99,11 +99,13 @@ void main() {
       )
       ..add(
         envelope(ChannelContract.registrationUpdated, {
-          'isRegistrationEnabled': false,
+          ChannelContract.installation: {
+            ChannelContract.pushRegistrationEnabled: false,
+          },
         }),
       );
     expect((await actionFuture).actionId, 'accept');
-    expect((await registrationFuture).isRegistrationEnabled, isFalse);
+    expect((await registrationFuture).pushRegistrationEnabled, isFalse);
   });
 
   test('ignores malformed and unknown events without closing the stream', () async {

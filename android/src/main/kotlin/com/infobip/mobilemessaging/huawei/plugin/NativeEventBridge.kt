@@ -7,6 +7,7 @@ import org.infobip.mobile.messaging.Event
 import org.infobip.mobile.messaging.EventBus
 import org.infobip.mobile.messaging.Installation
 import org.infobip.mobile.messaging.Message
+import com.infobip.mobilemessaging.huawei.installation.InstallationMapper
 
 internal class NativeEventBridge(
     private val mainHandler: Handler = Handler(Looper.getMainLooper()),
@@ -39,7 +40,13 @@ internal class NativeEventBridge(
     private val registrationUpdatedListener = EventBus.EventListener<Installation> { installation ->
         emit(
             ChannelContract.REGISTRATION_UPDATED,
-            mapOf("isRegistrationEnabled" to installation.isPushRegistrationEnabled),
+            mapOf(ChannelContract.INSTALLATION to InstallationMapper.toMap(installation)),
+        )
+    }
+    private val installationUpdatedListener = EventBus.EventListener<Installation> { installation ->
+        emit(
+            ChannelContract.INSTALLATION_UPDATED,
+            mapOf(ChannelContract.INSTALLATION to InstallationMapper.toMap(installation)),
         )
     }
 
@@ -50,6 +57,7 @@ internal class NativeEventBridge(
         EventBus.getInstance().register(Event.NOTIFICATION_TAPPED, notificationTappedListener)
         EventBus.getInstance().register(Event.ACTION_TAPPED, actionTappedListener)
         EventBus.getInstance().register(Event.REGISTRATION_UPDATED, registrationUpdatedListener)
+        EventBus.getInstance().register(Event.INSTALLATION_UPDATED, installationUpdatedListener)
         registered = true
     }
 
@@ -71,6 +79,7 @@ internal class NativeEventBridge(
             EventBus.getInstance().unregister(Event.NOTIFICATION_TAPPED, notificationTappedListener)
             EventBus.getInstance().unregister(Event.ACTION_TAPPED, actionTappedListener)
             EventBus.getInstance().unregister(Event.REGISTRATION_UPDATED, registrationUpdatedListener)
+            EventBus.getInstance().unregister(Event.INSTALLATION_UPDATED, installationUpdatedListener)
             registered = false
         }
         sink = null

@@ -7,6 +7,7 @@ import com.infobip.mobilemessaging.huawei.core.MobileMessagingInitializer
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import com.infobip.mobilemessaging.huawei.plugin.NativeEventBridge
 import com.infobip.mobilemessaging.huawei.user.UserManager
+import com.infobip.mobilemessaging.huawei.installation.InstallationManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -22,12 +23,16 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     private var applicationContext: Context? = null
     private var eventBridge: NativeEventBridge? = null
     private var userManager: UserManager? = null
+    private var installationManager: InstallationManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         applicationContext = binding.applicationContext
         initializer = MobileMessagingInitializer(binding.applicationContext)
         userManager = UserManager(binding.applicationContext) {
+            initializer?.isInitialized == true
+        }
+        installationManager = InstallationManager(binding.applicationContext) {
             initializer?.isInitialized == true
         }
         eventBridge = NativeEventBridge().also { it.register() }
@@ -48,6 +53,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         initializer = null
         eventBridge = null
         userManager = null
+        installationManager = null
         applicationContext = null
     }
 
@@ -69,6 +75,14 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
                 if (failure == null) result.success(null)
                 else result.error(failure.code, failure.message, null)
             } ?: detached(result)
+            ChannelContract.GET_INSTALLATION -> installationManager?.getInstallation(result::completeInstallation)
+                ?: detached(result)
+            ChannelContract.FETCH_INSTALLATION -> installationManager?.fetchInstallation(result::completeInstallation)
+                ?: detached(result)
+            ChannelContract.SAVE_INSTALLATION -> installationManager?.saveInstallation(
+                call.argument<Any?>(ChannelContract.INSTALLATION),
+                result::completeInstallation,
+            ) ?: detached(result)
             else -> result.notImplemented()
         }
     }
@@ -92,6 +106,14 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
         failure: com.infobip.mobilemessaging.huawei.user.UserFailure?,
     ) {
         if (failure == null) success(user)
+        else error(failure.code, failure.message, null)
+    }
+
+    private fun MethodChannel.Result.completeInstallation(
+        installation: Map<String, Any?>?,
+        failure: com.infobip.mobilemessaging.huawei.installation.InstallationFailure?,
+    ) {
+        if (failure == null) success(installation)
         else error(failure.code, failure.message, null)
     }
 
