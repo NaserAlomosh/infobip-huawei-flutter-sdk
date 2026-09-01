@@ -114,9 +114,9 @@ and `.../EventBus.java`; chat evidence:
 | Identity by phone/email | `UserIdentity` phone/email fields | Supported | Normalize/validate using SDK constraints; do not infer identity merge policy. |
 | First/last name | `UserAttributes` / `User` name properties | Supported | Direct scalar mapping. |
 | Gender enum | `User.Gender` | Requires Adaptation | Convert enum names defensively and preserve unknown future values. |
-| Birthday | `User`/`UserAttributes` birthday (`Date`) | Requires Adaptation | Use an unambiguous UTC/ISO-8601 contract; native value is a Java date. |
+| Birthday | `User`/`UserAttributes` birthday (`Date`) | Requires Adaptation | Treat it as a date-only `YYYY-MM-DD` value; it is separate from timestamp-valued custom attributes. |
 | Tags | `User.getTags()` and user update model | Requires Adaptation | Convert collection and preserve replacement/merge behavior documented by SDK. |
-| Custom attributes | `User.getCustomAttributes()` / update model | Requires Adaptation | Native supported value types must be encoded explicitly; nested arbitrary JSON is not guaranteed. |
+| Custom attributes | `User.getCustomAttributes()` / update model | Requires Adaptation | Huawei 8.14.0 supports strings, booleans, numbers, `Date`, and lists of supported values. Encode dates with an internal type tag so they cannot be confused with strings; arbitrary nested maps are unsupported. |
 | Merge/link users | `personalize(..., forceDepersonalize, ...)` identity rules | Requires Adaptation | Capability is workflow-level, not a direct generic `mergeUsers` primitive. Surface conflict rather than auto-merging. |
 | Clear individual user property | `saveUser` with supported nullable field/update semantics | Requires Adaptation | Requires deliberate null-vs-omitted encoding. |
 | Delete server user | No public delete-user API | Unsupported | Depersonalization only disconnects/reset identity according to SDK semantics. |

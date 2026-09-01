@@ -91,10 +91,17 @@ callback. Personalization keeps identity (`externalUserId`, `phones`, and `email
 profile attributes and supports the SDK's `forceDepersonalize` option.
 
 `User` exposes external user ID, first/middle/last name, gender, birthday, phones, emails, tags,
-and custom attributes. Gender uses stable `male` and `female` channel values. Birthdays use the
-date-only `YYYY-MM-DD` form to avoid time-zone shifts. Custom attributes accept strings, booleans,
-numbers, dates, and lists of those channel-safe values; unsupported objects fail with
-`invalid_argument` rather than being stringified.
+and custom attributes. Gender uses stable `male` and `female` channel values. A null gender means
+that the profile has no gender, while an unrecognized future native string decodes as
+`Gender.unknown`. Because Huawei 8.14.0 accepts only its defined gender enum, `Gender.unknown` is
+read-only: attempting to save it fails with `invalid_argument` instead of overwriting profile data.
+
+Birthdays retain date-only `YYYY-MM-DD` semantics and do not carry a time or time zone. Huawei
+8.14.0 custom attributes support strings, booleans, numbers, native dates, and lists containing
+those values. Dart `DateTime` values are transmitted as native `Date` values and round-trip as UTC
+instants; ordinary strings, including ISO-8601-looking strings, remain strings. Null values retain
+the SDK's patch/clearing semantics. Unsupported objects fail with `invalid_argument` rather than
+being stringified.
 
 User values are never logged or included in errors. Applications should apply the same care to
 their own UI, analytics, crash reporting, and persistence. This plugin does not normalize identity

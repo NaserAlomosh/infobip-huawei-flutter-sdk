@@ -5,6 +5,7 @@ import org.infobip.mobile.messaging.User
 import org.infobip.mobile.messaging.UserAttributes
 import org.infobip.mobile.messaging.UserIdentity
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -96,7 +97,6 @@ internal object UserMapper {
         return dateFormat.parse(value) ?: throw IllegalArgumentException("birthday is invalid")
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun customAttributes(value: Any?): Map<String, Any?>? {
         if (value == null) return null
         val map = value as? Map<*, *>
@@ -104,21 +104,38 @@ internal object UserMapper {
         if (map.keys.any { it !is String }) {
             throw IllegalArgumentException("customAttributes keys must be strings")
         }
-        map.values.forEach(::validateChannelValue)
-        return map as Map<String, Any?>
+        return map.entries.associate { (key, item) ->
+            key as String to nativeCustomValue(item)
+        }
     }
 
-    private fun validateChannelValue(value: Any?) {
-        when (value) {
-            null, is String, is Boolean, is Number -> Unit
-            is List<*> -> value.forEach(::validateChannelValue)
-            else -> throw IllegalArgumentException("customAttributes contains an unsupported value")
+    private fun nativeCustomValue(value: Any?): Any? = when (value) {
+        null, is String, is Boolean, is Number -> value
+        is List<*> -> value.map(::nativeCustomValue)
+        is Map<*, *> -> taggedDate(value)
+        else -> throw IllegalArgumentException("customAttributes contains an unsupported value")
+    }
+
+    private fun taggedDate(value: Map<*, *>): Date {
+        if (value.size != 2 ||
+            value[ChannelContract.CUSTOM_VALUE_TYPE] != ChannelContract.CUSTOM_DATE_TYPE ||
+            value[ChannelContract.CUSTOM_VALUE] !is String
+        ) {
+            throw IllegalArgumentException("customAttributes contains a malformed date value")
+        }
+        return try {
+            Date.from(Instant.parse(value[ChannelContract.CUSTOM_VALUE] as String))
+        } catch (_: Exception) {
+            throw IllegalArgumentException("customAttributes contains a malformed date value")
         }
     }
 
     private fun channelValue(value: Any?): Any? = when (value) {
         null, is String, is Boolean, is Number -> value
-        is Date -> value.toInstant().toString()
+        is Date -> mapOf(
+            ChannelContract.CUSTOM_VALUE_TYPE to ChannelContract.CUSTOM_DATE_TYPE,
+            ChannelContract.CUSTOM_VALUE to value.toInstant().toString(),
+        )
         is List<*> -> value.map(::channelValue)
         is Set<*> -> value.map(::channelValue)
         is Map<*, *> -> value.entries.associate { (key, item) ->

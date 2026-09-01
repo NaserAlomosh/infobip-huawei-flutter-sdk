@@ -16,7 +16,7 @@ abstract final class UserCodec {
         ChannelContract.firstName: attributes.firstName,
         ChannelContract.lastName: attributes.lastName,
         ChannelContract.middleName: attributes.middleName,
-        ChannelContract.gender: attributes.gender?.name,
+        ChannelContract.gender: _encodeGender(attributes.gender),
         ChannelContract.birthday: attributes.birthday == null
             ? null
             : _dateOnly(attributes.birthday!),
@@ -31,7 +31,7 @@ abstract final class UserCodec {
     ChannelContract.firstName: user.firstName,
     ChannelContract.lastName: user.lastName,
     ChannelContract.middleName: user.middleName,
-    ChannelContract.gender: user.gender?.name,
+    ChannelContract.gender: _encodeGender(user.gender),
     ChannelContract.birthday: user.birthday == null
         ? null
         : _dateOnly(user.birthday!),
@@ -83,8 +83,18 @@ abstract final class UserCodec {
     null => null,
     'male' => Gender.male,
     'female' => Gender.female,
-    String() => null,
+    String() => Gender.unknown,
     _ => throw const FormatException('gender must be a string.'),
+  };
+
+  static String? _encodeGender(Gender? value) => switch (value) {
+    null => null,
+    Gender.male => 'male',
+    Gender.female => 'female',
+    Gender.unknown => throw PlatformException(
+      code: 'invalid_argument',
+      message: 'Gender.unknown cannot be sent to the native SDK.',
+    ),
   };
 
   static DateTime? _birthday(Object? value) {
@@ -114,7 +124,12 @@ abstract final class UserCodec {
     if (value == null || value is String || value is bool || value is num) {
       return value;
     }
-    if (value is DateTime) return value.toUtc().toIso8601String();
+    if (value is DateTime) {
+      return <String, Object>{
+        ChannelContract.customValueType: ChannelContract.customDateType,
+        ChannelContract.customValue: value.toUtc().toIso8601String(),
+      };
+    }
     if (value is List) {
       return value.map((item) => _encodeCustomValue(item, key)).toList();
     }
@@ -143,6 +158,22 @@ abstract final class UserCodec {
     if (value is List) {
       return List<Object?>.unmodifiable(value.map(_decodeCustomValue));
     }
+    if (value is Map) return _decodeTaggedCustomValue(value);
     throw const FormatException('Unsupported custom attribute value.');
+  }
+
+  static DateTime _decodeTaggedCustomValue(Map<Object?, Object?> value) {
+    if (value.length != 2 ||
+        value[ChannelContract.customValueType] !=
+            ChannelContract.customDateType ||
+        value[ChannelContract.customValue] is! String) {
+      throw const FormatException('Malformed custom attribute date value.');
+    }
+    final encoded = value[ChannelContract.customValue] as String;
+    final parsed = DateTime.tryParse(encoded);
+    if (parsed == null || !parsed.isUtc) {
+      throw const FormatException('Malformed custom attribute date value.');
+    }
+    return parsed.toUtc();
   }
 }

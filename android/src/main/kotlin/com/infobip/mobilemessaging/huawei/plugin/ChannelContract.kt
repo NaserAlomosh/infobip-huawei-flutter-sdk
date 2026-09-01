@@ -27,6 +27,9 @@ internal object ChannelContract {
     const val EMAILS = "emails"
     const val TAGS = "tags"
     const val CUSTOM_ATTRIBUTES = "customAttributes"
+    const val CUSTOM_VALUE_TYPE = "__infobipType"
+    const val CUSTOM_VALUE = "value"
+    const val CUSTOM_DATE_TYPE = "date"
 
     const val EVENT_VERSION = 1
     const val MESSAGE_RECEIVED = "message_received"
