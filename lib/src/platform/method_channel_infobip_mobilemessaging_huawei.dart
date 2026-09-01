@@ -16,7 +16,7 @@ final class MethodChannelInfobipMobileMessagingHuawei
            methodChannel ?? const MethodChannel(ChannelContract.methodChannel),
        eventChannel =
            eventChannel ?? const EventChannel(ChannelContract.eventChannel) {
-    _events = this.eventChannel.receiveBroadcastStream().asBroadcastStream();
+    _events = this.eventChannel.receiveBroadcastStream();
   }
 
   final MethodChannel methodChannel;
