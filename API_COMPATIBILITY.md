@@ -13,6 +13,15 @@ was not treated as evidence unless it is present in the `8.14.0` release. Overlo
 parameters are shortened in tables, but class and method names are retained. The Gradle coordinates
 used to establish the release boundary are recorded in this repository's `android/build.gradle.kts`.
 
+The official Flutter public source exposes `getInstallation()`, `fetchInstallation()`, and
+`saveInstallation(...)` for installation and registration information. It does not expose public
+`setRegistration(...)` or `isRegistrationEnabled()` methods. Its
+`registerForAndroidRemoteNotifications()` API concerns Android remote-notification permission and
+registration behavior and is not equivalent to the Huawei SDK's server-side
+`MobileMessaging.setRegistration(...)`. The official callback surface includes registration
+updates, so a minimal registration event remains appropriate until the full Installation model is
+implemented.
+
 Statuses have these precise meanings:
 
 - **Supported** — 8.14.0 has an API with effectively equivalent behavior.
@@ -20,6 +29,8 @@ Statuses have these precise meanings:
   event transformation, multiple calls, or a Flutter abstraction.
 - **Unsupported** — 8.14.0 has no equivalent capability.
 - **Under Investigation** — evidence is insufficient; no implementation should be approved yet.
+- **Intentionally Internal** — the native capability is retained below the primary Dart surface.
+- **Deferred to Installation** — expose the capability only with the later Installation API.
 
 > “Official Flutter API” denotes the public capability, not a proposed API for this package.
 > Event transport recommendations describe feasibility only; no event or channel name is declared.
@@ -44,8 +55,8 @@ Statuses have these precise meanings:
 
 | Official Flutter API/capability | Huawei 8.14.0 native API | Status | Evidence and implementation notes |
 | --- | --- | --- | --- |
-| Enable/disable push registration | `MobileMessaging.setRegistration(boolean, ResultListener<Installation>)` | Supported | Equivalent server-side installation registration switch. Source: `MobileMessaging.java`. |
-| Query push registration | `MobileMessaging.getInstallation()` → `Installation.isPushRegistrationEnabled()` | Requires Adaptation | Local installation snapshot must be serialized; fetching current server state first may be needed where freshness matters. |
+| Public enable/disable push registration | `MobileMessaging.setRegistration(boolean, ResultListener<Installation>)` | Intentionally Internal | The official Flutter plugin does not expose public `setRegistration`; native support alone is not sufficient reason to add it to the primary Dart API. The bridge remains internal for future Installation work. |
+| Public synchronous registration-state query | `MobileMessaging.getInstallation()` → `Installation.isPushRegistrationEnabled()` | Deferred to Installation | The official Flutter plugin does not expose public `isRegistrationEnabled`; registration information belongs in its Installation APIs. Do not publish a temporary state getter before that phase. |
 | Obtain HMS push token | Huawei Push Kit integration inside SDK; `HmsMessageService`-based token flow | Requires Adaptation | Token ownership belongs to HMS/SDK. Flutter should observe the resulting registration event rather than call FCM APIs. |
 | Supply arbitrary push token | No public general-purpose Flutter token setter equivalent | Unsupported | Do not introduce a token injection API unless a public 8.14.0 Huawei method is subsequently evidenced. |
 | Token refresh | SDK HMS service updates installation/token | Requires Adaptation | Background refresh is native. Surface completion through transformed registration/installation events; it is not a synchronous Dart call. |
@@ -65,7 +76,7 @@ Statuses have these precise meanings:
 
 ## Event system
 
-The official plugin's event stream is conceptually backed by Android SDK events. The recommended
+The official plugin exposes registration callbacks alongside message and notification callbacks; its event stream is conceptually backed by Android SDK events. The recommended
 transport is shown for design purposes; names are intentionally not specified in Phase 2.
 
 | Official Flutter event/capability | Huawei 8.14.0 source | Status | Feasible transport and payload |

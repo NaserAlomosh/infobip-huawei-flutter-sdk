@@ -37,7 +37,7 @@ This phase is analysis-only. Do not implement features or add public APIs during
 
 ## Phase 4 - Push Notifications and Events
 
-- [x] Implement approved push registration and SDK-owned token handling
+- [x] Preserve the SDK-owned push registration lifecycle and token handling without exposing Huawei-only controls
 - [x] Implement approved notification payload and action handling
 - [x] Expose approved foreground, opened, action, and registration events
 

@@ -22,7 +22,6 @@ class _ExampleAppState extends State<ExampleApp> {
       : 'Ready to initialize.';
   bool _loading = false;
   bool _initialized = false;
-  bool? _registrationEnabled;
   final List<String> _events = [];
   final List<StreamSubscription<Object?>> _subscriptions = [];
 
@@ -80,7 +79,6 @@ class _ExampleAppState extends State<ExampleApp> {
           _initialized = true;
           _status = 'Initialization succeeded.';
         });
-        await _refreshRegistration();
       }
     } on PlatformException catch (error) {
       if (mounted) {
@@ -93,25 +91,6 @@ class _ExampleAppState extends State<ExampleApp> {
         setState(() => _loading = false);
       }
     }
-  }
-
-  Future<void> _setRegistration(bool enabled) async {
-    try {
-      await InfobipMobileMessagingHuawei.notifications.setRegistration(
-        enabled: enabled,
-      );
-      await _refreshRegistration();
-    } on PlatformException catch (error) {
-      if (mounted) {
-        setState(() => _status = 'Registration failed (${error.code}).');
-      }
-    }
-  }
-
-  Future<void> _refreshRegistration() async {
-    final enabled = await InfobipMobileMessagingHuawei.notifications
-        .isRegistrationEnabled();
-    if (mounted) setState(() => _registrationEnabled = enabled);
   }
 
   @override
@@ -135,20 +114,7 @@ class _ExampleAppState extends State<ExampleApp> {
                 ),
               if (_initialized) ...[
                 const SizedBox(height: 16),
-                Text('Push registration: ${_registrationEnabled ?? 'unknown'}'),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    FilledButton(
-                      onPressed: () => _setRegistration(true),
-                      child: const Text('Enable push'),
-                    ),
-                    OutlinedButton(
-                      onPressed: () => _setRegistration(false),
-                      child: const Text('Disable push'),
-                    ),
-                  ],
-                ),
+                const Text('Listening for notification events.'),
                 const SizedBox(height: 16),
                 ..._events.take(5).map(Text.new),
               ],

@@ -5,7 +5,7 @@ import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 final class InfobipMobileMessagingHuawei {
   InfobipMobileMessagingHuawei._();
 
-  /// Push registration and notification events.
+  /// Notification and registration lifecycle events.
   static InfobipHuaweiNotifications get notifications =>
       InfobipHuaweiNotifications.instance;
 
