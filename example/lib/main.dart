@@ -313,6 +313,14 @@ class _ExampleAppState extends State<ExampleApp> {
                             '${_installation!.pushRegistrationEnabled ?? 'unknown'}',
                 ),
                 const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => Navigator.of(context).push<void>(
+                    MaterialPageRoute(builder: (_) => const ChatScreen()),
+                  ),
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('Open embedded Chat'),
+                ),
+                const SizedBox(height: 16),
                 ..._events.take(5).map(Text.new),
               ],
             ],
@@ -321,4 +329,42 @@ class _ExampleAppState extends State<ExampleApp> {
       ),
     );
   }
+}
+
+class ChatScreen extends StatefulWidget {
+  const ChatScreen({super.key});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final _controller = InfobipHuaweiChatController();
+
+  Future<void> _back() async {
+    final handled = await _controller.navigateBackOrCloseChat();
+    if (!handled && mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: false,
+    onPopInvokedWithResult: (_, _) => _back(),
+    child: Scaffold(
+      appBar: AppBar(
+        leading: BackButton(onPressed: _back),
+        title: const Text('Chat'),
+        actions: [
+          IconButton(
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Flutter business action')),
+            ),
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Business action',
+          ),
+        ],
+      ),
+      body: InfobipHuaweiChatView(controller: _controller),
+    ),
+  );
 }
