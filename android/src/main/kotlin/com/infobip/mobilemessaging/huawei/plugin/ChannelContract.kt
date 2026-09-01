@@ -6,6 +6,8 @@ internal object ChannelContract {
     const val CHAT_VIEW = "com.infobip.mobilemessaging.huawei/chat_view"
     const val CHAT_VIEW_CHANNEL = "com.infobip.mobilemessaging.huawei/chat_view/"
     const val CHAT_NAVIGATE_BACK = "navigateBackOrCloseChat"
+    const val CHAT_VIEW_READY = "viewReady"
+    const val CHAT_ON_ERROR = "onError"
     const val INITIALIZE = "initialize"
     const val SET_REGISTRATION = "setRegistration"
     const val IS_REGISTRATION_ENABLED = "isRegistrationEnabled"

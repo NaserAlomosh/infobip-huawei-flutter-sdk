@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.TextView
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -22,12 +21,17 @@ internal class ChatPlatformView(
     private val channel = MethodChannel(messenger, ChannelContract.CHAT_VIEW_CHANNEL + viewId)
     private var chatView: InAppChatView? = null
     private val root: View
+    private val pendingError = PendingChatViewError()
 
     init {
         root = when {
-            !initialized -> errorView(context, "not_initialized")
-            activity == null -> errorView(context, "activity_unavailable")
-            else -> InAppChatView(activity).also { chatView = it }
+            !initialized -> neutralView(context, ChatViewError("not_initialized"))
+            activity == null -> neutralView(context, ChatViewError("activity_unavailable"))
+            else -> try {
+                InAppChatView(activity).also { chatView = it }
+            } catch (_: RuntimeException) {
+                neutralView(context, ChatViewError("native_error", "Chat could not be created"))
+            }
         }
         channel.setMethodCallHandler(this)
     }
@@ -35,6 +39,13 @@ internal class ChatPlatformView(
     override fun getView(): View = root
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        if (call.method == ChannelContract.CHAT_VIEW_READY) {
+            pendingError.take()?.let {
+                channel.invokeMethod(ChannelContract.CHAT_ON_ERROR, it.toMap())
+            }
+            result.success(null)
+            return
+        }
         val view = chatView
         if (view == null) {
             result.error("chat_unavailable", "Chat view is unavailable", null)
@@ -51,13 +62,13 @@ internal class ChatPlatformView(
         chatView = null
     }
 
-    private fun errorView(context: Context, code: String): View =
-        TextView(context).apply {
-            text = code
-            contentDescription = code
+    private fun neutralView(context: Context, error: ChatViewError): View {
+        pendingError.set(error)
+        return FrameLayout(context).apply {
             layoutParams = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT,
             )
         }
+    }
 }

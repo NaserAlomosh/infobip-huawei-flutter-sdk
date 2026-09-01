@@ -44,13 +44,35 @@ final chatController = InfobipHuaweiChatController();
 
 Scaffold(
   appBar: AppBar(title: const Text('Chat'), actions: [businessAction]),
-  body: InfobipHuaweiChatView(controller: chatController),
+  body: InfobipHuaweiChatView(
+    controller: chatController,
+    onError: (error) {
+      // Update Flutter-owned UI with a friendly availability message.
+    },
+  ),
 );
 ```
 
 For Flutter-owned back navigation, call `navigateBackOrCloseChat()` first and pop the Flutter route only when it returns `false`. A controller is bound to one PlatformView ID, is detached when its widget is disposed, and never targets a global or previously disposed Chat view. Each view uses the SDK-managed Chat singleton; the plugin does not create another `MobileMessaging` instance.
 
-Creation without completed initialization renders the deterministic `not_initialized` state; creation while no Activity is attached renders `activity_unavailable`. Native operation failures use `chat_unavailable` and do not include messages, URLs, thread data, attachment paths, tokens, or stack traces.
+`onError` receives an `InfobipHuaweiChatError` with a typed
+`InfobipHuaweiChatErrorCode`: `notInitialized`, `activityUnavailable`,
+`chatUnavailable`, `nativeError`, or `unknown`. Unknown future native codes and malformed payloads
+map safely to `unknown`. Creation and view-lifecycle availability failures invoke `onError` once
+per native view instance; the native placeholder stays visually neutral so the application can
+own its error presentation. Android-only behavior is unchanged on unsupported platforms, where
+the widget continues to show its existing static availability message rather than reporting a
+native lifecycle error.
+
+The callback describes the embedded view lifecycle. An explicit controller operation such as
+`navigateBackOrCloseChat()` instead completes its `Future` with `PlatformException` when its
+attached native view cannot execute the command. Such command failures are not also sent to
+`onError`, avoiding duplicate notifications.
+
+Creation without completed initialization reports `notInitialized`; creation while no Activity is
+attached reports `activityUnavailable`. Native controller operation failures use the
+`chat_unavailable` platform error code and do not include URLs, thread data, attachment paths,
+tokens, or stack traces.
 
 Phase 8 intentionally does not expose full-screen Chat, availability, unread counts/events, raw-message or internal UI events, threads, programmatic sends, contextual data, language, or runtime theme commands. Although several are available in the Huawei component, the inspected official Flutter contract does not justify expanding the public API without stable portable models. Native attachments remain available from the native composer; Android resource theme configuration remains host-native configuration.
 
