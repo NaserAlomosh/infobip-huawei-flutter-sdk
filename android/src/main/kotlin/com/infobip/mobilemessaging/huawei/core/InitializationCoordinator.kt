@@ -16,6 +16,9 @@ internal class InitializationCoordinator(
     private var attempt = 0
     private val callbacks = mutableListOf<(InitializationError?) -> Unit>()
 
+    val isInitialized: Boolean
+        get() = synchronized(this) { state == State.INITIALIZED }
+
     fun initialize(code: String, callback: (InitializationError?) -> Unit) {
         var attemptToStart: Int? = null
         var shouldCompleteImmediately = false

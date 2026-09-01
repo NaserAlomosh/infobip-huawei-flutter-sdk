@@ -37,9 +37,11 @@ This phase is analysis-only. Do not implement features or add public APIs during
 
 ## Phase 4 - Push Notifications and Events
 
-- [ ] Implement approved push registration and token handling
-- [ ] Implement approved notification payload and action handling
-- [ ] Expose approved foreground, background, opened, and token events
+- [x] Implement approved push registration and SDK-owned token handling
+- [x] Implement approved notification payload and action handling
+- [x] Expose approved foreground, opened, action, and registration events
+
+Background Dart isolate delivery is unsupported by this wrapper and is not claimed as a completed event capability.
 
 ## Phase 5 - User Management
 

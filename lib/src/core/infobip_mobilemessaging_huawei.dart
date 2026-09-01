@@ -1,8 +1,13 @@
+import '../notifications/notifications.dart';
 import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 
 /// Entry point for the Infobip Huawei Mobile Messaging plugin.
 final class InfobipMobileMessagingHuawei {
   InfobipMobileMessagingHuawei._();
+
+  /// Push registration and notification events.
+  static InfobipHuaweiNotifications get notifications =>
+      InfobipHuaweiNotifications.instance;
 
   /// Initializes the native SDK with an Infobip application code.
   ///

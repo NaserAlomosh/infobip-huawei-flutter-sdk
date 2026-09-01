@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:infobip_mobilemessaging_huawei/infobip_mobilemessaging_huawei.dart';
@@ -19,6 +21,50 @@ class _ExampleAppState extends State<ExampleApp> {
       ? 'Provide INFOBIP_APPLICATION_CODE with --dart-define.'
       : 'Ready to initialize.';
   bool _loading = false;
+  bool _initialized = false;
+  bool? _registrationEnabled;
+  final List<String> _events = [];
+  final List<StreamSubscription<Object?>> _subscriptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _subscriptions.addAll([
+      InfobipMobileMessagingHuawei.notifications.onMessageReceived.listen(
+        (message) =>
+            _addEvent('Message received: ${message.messageId ?? 'unknown'}'),
+      ),
+      InfobipMobileMessagingHuawei.notifications.onNotificationTapped.listen(
+        (message) => _addEvent(
+          'Notification tapped: ${message.messageId ?? 'unknown'}',
+        ),
+      ),
+      InfobipMobileMessagingHuawei
+          .notifications
+          .onNotificationActionTapped
+          .listen(
+            (event) =>
+                _addEvent('Action tapped: ${event.actionId ?? 'unknown'}'),
+          ),
+      InfobipMobileMessagingHuawei.notifications.onRegistrationUpdated.listen(
+        (event) => _addEvent(
+          'Registration updated: ${event.isRegistrationEnabled}',
+        ),
+      ),
+    ]);
+  }
+
+  @override
+  void dispose() {
+    for (final subscription in _subscriptions) {
+      unawaited(subscription.cancel());
+    }
+    super.dispose();
+  }
+
+  void _addEvent(String event) {
+    if (mounted) setState(() => _events.insert(0, event));
+  }
 
   Future<void> _initialize() async {
     setState(() {
@@ -30,7 +76,11 @@ class _ExampleAppState extends State<ExampleApp> {
         applicationCode: _applicationCode,
       );
       if (mounted) {
-        setState(() => _status = 'Initialization succeeded.');
+        setState(() {
+          _initialized = true;
+          _status = 'Initialization succeeded.';
+        });
+        await _refreshRegistration();
       }
     } on PlatformException catch (error) {
       if (mounted) {
@@ -43,6 +93,25 @@ class _ExampleAppState extends State<ExampleApp> {
         setState(() => _loading = false);
       }
     }
+  }
+
+  Future<void> _setRegistration(bool enabled) async {
+    try {
+      await InfobipMobileMessagingHuawei.notifications.setRegistration(
+        enabled: enabled,
+      );
+      await _refreshRegistration();
+    } on PlatformException catch (error) {
+      if (mounted) {
+        setState(() => _status = 'Registration failed (${error.code}).');
+      }
+    }
+  }
+
+  Future<void> _refreshRegistration() async {
+    final enabled = await InfobipMobileMessagingHuawei.notifications
+        .isRegistrationEnabled();
+    if (mounted) setState(() => _registrationEnabled = enabled);
   }
 
   @override
@@ -64,6 +133,25 @@ class _ExampleAppState extends State<ExampleApp> {
                   onPressed: _applicationCode.isEmpty ? null : _initialize,
                   child: const Text('Initialize SDK'),
                 ),
+              if (_initialized) ...[
+                const SizedBox(height: 16),
+                Text('Push registration: ${_registrationEnabled ?? 'unknown'}'),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    FilledButton(
+                      onPressed: () => _setRegistration(true),
+                      child: const Text('Enable push'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => _setRegistration(false),
+                      child: const Text('Disable push'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ..._events.take(5).map(Text.new),
+              ],
             ],
           ),
         ),
