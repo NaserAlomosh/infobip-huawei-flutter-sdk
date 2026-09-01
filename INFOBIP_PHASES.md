@@ -63,7 +63,8 @@ Background Dart isolate delivery is unsupported by this wrapper and is not claim
 
 - [x] Implement embedded `InAppChatView` and view-scoped back controller
 - [ ] Implement remaining approved Chat APIs
-- [ ] Implement Chat models, unread-count updates, and events
+- [x] Implement global Chat unread-count retrieval and updates
+- [ ] Implement later approved Chat models and events
 
 ## Phase 9 - Models, Mappers, and Error Handling
 

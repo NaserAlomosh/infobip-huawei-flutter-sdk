@@ -77,6 +77,8 @@ internal object ChannelContract {
     const val CUSTOM_PAYLOAD = "customPayload"
     const val DEEP_LINK = "deepLink"
     const val IS_SILENT = "isSilent"
+    const val GET_CHAT_UNREAD_MESSAGE_COUNT = "getChatUnreadMessageCount"
+    const val COUNT = "count"
 
     const val EVENT_VERSION = 1
     const val MESSAGE_RECEIVED = "message_received"
@@ -84,4 +86,5 @@ internal object ChannelContract {
     const val NOTIFICATION_ACTION_TAPPED = "notification_action_tapped"
     const val REGISTRATION_UPDATED = "registration_updated"
     const val INSTALLATION_UPDATED = "installation_updated"
+    const val CHAT_UNREAD_MESSAGE_COUNTER_UPDATED = "chat_unread_message_counter_updated"
 }

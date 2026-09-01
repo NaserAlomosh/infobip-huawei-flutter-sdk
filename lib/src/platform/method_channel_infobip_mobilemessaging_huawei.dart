@@ -29,6 +29,17 @@ final class MethodChannelInfobipMobileMessagingHuawei
   Stream<Object?> get events => _events;
 
   @override
+  Future<int> getChatUnreadMessageCount() async {
+    final result = await methodChannel.invokeMethod<Object?>(
+      ChannelContract.getChatUnreadMessageCount,
+    );
+    if (result is! int || result < 0) {
+      throw const FormatException('Invalid Chat unread message count');
+    }
+    return result;
+  }
+
+  @override
   Future<void> initialize({required String applicationCode}) async {
     await methodChannel.invokeMethod<void>(ChannelContract.initialize, {
       ChannelContract.applicationCode: applicationCode,

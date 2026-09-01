@@ -77,6 +77,8 @@ abstract final class ChannelContract {
   static const customPayload = 'customPayload';
   static const deepLink = 'deepLink';
   static const isSilent = 'isSilent';
+  static const getChatUnreadMessageCount = 'getChatUnreadMessageCount';
+  static const count = 'count';
 
   static const eventVersion = 1;
   static const messageReceived = 'message_received';
@@ -84,4 +86,6 @@ abstract final class ChannelContract {
   static const notificationActionTapped = 'notification_action_tapped';
   static const registrationUpdated = 'registration_updated';
   static const installationUpdated = 'installation_updated';
+  static const chatUnreadMessageCounterUpdated =
+      'chat_unread_message_counter_updated';
 }
