@@ -28,8 +28,9 @@ them.
 - Reject iOS/APNS options instead of accepting and ignoring them.
 - Do not expose SDK shutdown, installation/user deletion, arbitrary token injection, or background
   Dart message execution because no equivalent is established.
-- Represent Chat as native UI integration plus availability, contextual data and unread count. Do
-  not expose headless send/receive/history/conversation/attachment APIs.
+- Represent Chat as native UI integration with verified component commands and listeners. Preserve the
+  distinction between component-scoped sending/threads/attachments and an unavailable complete
+  headless history or message repository.
 - Separate server registration from Android notification permission/settings.
 - Make Android resource-based notification and Chat theme configuration host-owned rather than
   pretending that resource identifiers are portable Dart values.
@@ -96,14 +97,47 @@ personal data. Preserve module-specific details without creating unrelated excep
 
 ## 10. Chat architecture concerns
 
-Chat must remain native-UI-first. Presentation requires a currently attached foreground Activity and
-main-thread execution. The implementation must survive Activity recreation, detach listeners when
-the Flutter engine detaches, avoid retaining Context/Activity references, coordinate the native back
-stack, and prevent concurrent presentation. Personalization changes affect the SDK-managed session.
-Unread count is an asynchronous state and unavailable/offline must not be represented as zero.
-PlatformView/Fragment embedding should be deferred until native Activity presentation is stable;
-it introduces fragment-manager, view lifecycle, keyboard, accessibility and state-restoration risk.
-No public Flutter chat-message or attachment model should be created for 8.14.0.
+Chat remains native-UI-first, but Huawei 8.14.0 is not limited to a full-screen Activity. The
+recommended first embedded architecture to evaluate is:
+
+```text
+Flutter widget tree (Scaffold, AppBar, controls)
+    ↓
+Android PlatformView
+    ↓
+InAppChatView
+```
+
+This keeps the Flutter `AppBar`, navigation presentation, and business controls in Flutter while
+embedding the reusable Infobip Chat UI. `InAppChatView` should be evaluated before Fragment hosting
+because a View-backed PlatformView may avoid a nested FragmentManager and Fragment transaction/state
+restoration layer. This is a recommendation for the later design phase, not an implementation claim:
+the adapter must first verify and correctly supply the lifecycle required by
+`InAppChatView.init(Lifecycle)`, including recreation, attachment/detachment, disposal, and the
+Flutter engine versus Activity lifecycle boundary.
+
+`InAppChatFragment` remains a valid alternative. Its verified `withToolbar` option can remove the
+native toolbar so Flutter retains the app bar, and `withInput` permits a custom input. The native
+input should remain enabled by default. The Fragment may provide more conventional Android lifecycle
+and state restoration, but embedding it inside a PlatformView requires a compatible
+FragmentActivity/FragmentManager, a stable container ID, transaction timing, saved-state handling,
+and coordinated disposal. It can therefore be preferable only after those host constraints are
+weighed against the View lifecycle adapter.
+
+For either component, forward Flutter/system back and toolbar actions through
+`navigateBackOrCloseChat()` and `showThreadList()` rather than blindly popping the Flutter route.
+Component commands such as `send(MessagePayload)`, thread operations, contextual data, language, and
+widget theme require deliberate model conversion and main-thread dispatch. Component event listeners
+can later feed selected Flutter events, but `onChatRawMessageReceived` is not a complete typed message
+history stream. Attachment support likewise distinguishes native UI handling and preview callbacks
+from a fully custom Flutter upload/download workflow.
+
+The eventual implementation must avoid retaining Context/Activity references, detach listeners with
+the owning engine/view, coordinate keyboard and accessibility behavior, survive Activity recreation,
+and prevent concurrent presentation. Personalization changes affect the SDK-managed Chat session.
+Unread count is asynchronous, and unavailable/offline must not be represented as zero. The native
+Activity remains a supported fallback for simple full-screen presentation; no public Flutter Chat
+API, PlatformView, channel method, event, or model is introduced by this Phase 2 decision.
 
 ## 11. Inbox architecture concerns
 
