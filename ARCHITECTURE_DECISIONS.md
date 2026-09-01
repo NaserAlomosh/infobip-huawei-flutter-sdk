@@ -13,11 +13,14 @@ implementation contract.
   Android-specific options object and report unsupported iOS use clearly.
 - Add APIs incrementally by module. Do not publish placeholders for Chat data capabilities that the
   native SDK cannot provide.
+- Do not automatically publish functionality merely because Huawei SDK 8.14.0 exposes it. Match the
+  official Flutter API first, adapt only where Huawei semantics require it, and introduce clearly
+  identified Huawei-specific APIs only for a demonstrated real-world requirement.
 
 ## 2. APIs to mirror exactly
 
 Mirror the official plugin's intent and naming where semantics match: initialization with an
-application code; registration enablement; cached/fetched/saved User and Installation operations;
+application code; cached/fetched/saved User and Installation operations;
 personalize/depersonalize; message, notification-tap, registration, user and installation events;
 Inbox fetch/filters/counts/seen state; native Chat presentation; and unread-count observation.
 Exact mirroring includes nullability and asynchronous behavior only when Huawei 8.14.0 can preserve
@@ -38,7 +41,7 @@ them.
 ## 4. Implementation order
 
 1. Core initialization, lifecycle state, common result/error mapping.
-2. Installation registration and cached/fetched Installation model.
+2. Cached/fetched Installation model and registration information.
 3. User fetch/save and personalization lifecycle.
 4. Foreground native events, tap replay, and Message mapping.
 5. Inbox fetch/filter/seen flows.

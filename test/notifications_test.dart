@@ -9,8 +9,6 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 final class NotificationsPlatform extends InfobipMobileMessagingHuaweiPlatform
     with MockPlatformInterfaceMixin {
   final eventsController = StreamController<Object?>.broadcast();
-  bool? registrationArgument;
-  bool registrationEnabled = true;
 
   @override
   Stream<Object?> get events => eventsController.stream;
@@ -19,12 +17,10 @@ final class NotificationsPlatform extends InfobipMobileMessagingHuaweiPlatform
   Future<void> initialize({required String applicationCode}) async {}
 
   @override
-  Future<bool> isRegistrationEnabled() async => registrationEnabled;
+  Future<bool> isRegistrationEnabled() async => false;
 
   @override
-  Future<void> setRegistration({required bool enabled}) async {
-    registrationArgument = enabled;
-  }
+  Future<void> setRegistration({required bool enabled}) async {}
 }
 
 Map<String, Object?> envelope(String type, Map<String, Object?> payload) => {
@@ -43,18 +39,6 @@ void main() {
   });
 
   tearDown(() => platform.eventsController.close());
-
-  test('delegates registration operations', () async {
-    await InfobipMobileMessagingHuawei.notifications.setRegistration(
-      enabled: false,
-    );
-    expect(platform.registrationArgument, isFalse);
-    expect(
-      await InfobipMobileMessagingHuawei.notifications
-          .isRegistrationEnabled(),
-      isTrue,
-    );
-  });
 
   test('decodes message received events', () async {
     final future = InfobipMobileMessagingHuawei.notifications.onMessageReceived
@@ -75,6 +59,26 @@ void main() {
     expect(message.messageId, 'message-1');
     expect(message.customPayload, {'orderId': 42});
     expect(message.isSilent, isTrue);
+  });
+
+  test('decodes notification tapped events', () async {
+    final future = InfobipMobileMessagingHuawei
+        .notifications
+        .onNotificationTapped
+        .first;
+    platform.eventsController.add(
+      envelope(ChannelContract.notificationTapped, {
+        'message': {
+          'messageId': 'message-tapped',
+          'title': 'Opened',
+          'isSilent': false,
+        },
+      }),
+    );
+
+    final message = await future;
+    expect(message.messageId, 'message-tapped');
+    expect(message.title, 'Opened');
   });
 
   test('decodes action and registration events', () async {

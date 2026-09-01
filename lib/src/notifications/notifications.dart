@@ -5,7 +5,7 @@ import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 import 'notification_events.dart';
 import 'push_message.dart';
 
-/// Push registration and notification events.
+/// Notification and registration lifecycle events.
 final class InfobipHuaweiNotifications {
   InfobipHuaweiNotifications._();
 
@@ -14,17 +14,6 @@ final class InfobipHuaweiNotifications {
 
   Stream<Object?> get _events =>
       InfobipMobileMessagingHuaweiPlatform.instance.events;
-
-  /// Enables or disables Infobip push registration.
-  Future<void> setRegistration({required bool enabled}) =>
-      InfobipMobileMessagingHuaweiPlatform.instance.setRegistration(
-        enabled: enabled,
-      );
-
-  /// Reads the registration flag from the SDK's cached installation snapshot.
-  Future<bool> isRegistrationEnabled() => InfobipMobileMessagingHuaweiPlatform
-      .instance
-      .isRegistrationEnabled();
 
   Stream<PushMessage> get onMessageReceived =>
       _typed(ChannelContract.messageReceived, _message);

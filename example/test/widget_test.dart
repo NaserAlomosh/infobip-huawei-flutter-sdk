@@ -9,5 +9,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Initialize SDK'), findsOneWidget);
+    expect(find.text('Enable push'), findsNothing);
+    expect(find.text('Disable push'), findsNothing);
   });
 }
