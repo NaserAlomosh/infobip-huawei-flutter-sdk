@@ -24,11 +24,7 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
 
   Future<void> initialize({required String applicationCode});
 
-  Future<void> setRegistration({required bool enabled});
-
   Future<int> getChatUnreadMessageCount() => throw UnimplementedError();
-
-  Future<bool> isRegistrationEnabled();
 
   Future<User> getUser() => throw UnimplementedError();
   Future<User> fetchUser() => throw UnimplementedError();

@@ -47,21 +47,6 @@ final class MethodChannelInfobipMobileMessagingHuawei
   }
 
   @override
-  Future<void> setRegistration({required bool enabled}) async {
-    await methodChannel.invokeMethod<void>(ChannelContract.setRegistration, {
-      ChannelContract.enabled: enabled,
-    });
-  }
-
-  @override
-  Future<bool> isRegistrationEnabled() async {
-    return await methodChannel.invokeMethod<bool>(
-          ChannelContract.isRegistrationEnabled,
-        ) ??
-        false;
-  }
-
-  @override
   Future<User> getUser() async => UserCodec.decode(
     await methodChannel.invokeMethod<Object?>(ChannelContract.getUser),
   );
