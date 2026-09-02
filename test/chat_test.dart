@@ -231,6 +231,27 @@ void main() {
       expect(await controller.getWidgetTheme(), 'support');
     });
 
+    testWidgets('controller preserves an absent widget theme', (tester) async {
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      expect(await controller.getWidgetTheme(), isNull);
+    });
+
+    testWidgets('navigation rejects a missing native boolean', (tester) async {
+      messenger.setMockMethodCallHandler(
+        const MethodChannel(channelName),
+        (_) async => null,
+      );
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await expectLater(
+        controller.navigateBackOrCloseChat(),
+        throwsFormatException,
+      );
+    });
+
     testWidgets('controller validates language and theme values', (
       tester,
     ) async {

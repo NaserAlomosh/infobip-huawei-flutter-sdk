@@ -2,7 +2,7 @@
 
 An Android-only Flutter plugin being developed as a Flutter-facing wrapper for the official Infobip Huawei Mobile Messaging SDK.
 
-> **Phase 8 status:** Core initialization, notifications, User Management, Installation Management, Inbox, and embedded Chat are implemented.
+> **Phase 9 status:** Core initialization, notifications, User Management, Installation Management, Inbox, and embedded Chat are implemented and SDK-wide model/channel contracts are hardened.
 
 ## Requirements
 
@@ -139,7 +139,8 @@ such as `en-US` or `ar-AE`; Android resolves that code with
 returned enum's `widgetCode` back to Dart. Unsupported codes fail with `invalid_argument` instead of
 falling back to English. Widget theme continues to use Huawei's string identifier. Dart does not
 persist either setting or apply it to future views. A widget theme is not Android `Theme`, a resource
-ID, or Flutter `ThemeData`.
+ID, or Flutter `ThemeData`. `getWidgetTheme()` returns `null` when Huawei reports
+that no explicit widget theme is active; absence is not treated as a native failure.
 
 Thread commands remain intentionally omitted. Huawei 8.14.0 exposes them on the embedded component,
 but the inspected official Flutter source does not provide the stable thread models and operation

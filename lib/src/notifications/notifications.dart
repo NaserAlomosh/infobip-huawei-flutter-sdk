@@ -4,6 +4,7 @@ import '../platform/channel_contract.dart';
 import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 import 'notification_events.dart';
 import 'push_message.dart';
+import 'push_message_codec.dart';
 import '../installation/installation.dart';
 import '../installation/installation_codec.dart';
 
@@ -65,7 +66,7 @@ final class InfobipHuaweiNotifications {
   static PushMessage _message(Map<Object?, Object?> payload) {
     final message = payload['message'];
     if (message is! Map) throw const FormatException('Missing message');
-    return PushMessage.fromMap(message.cast<Object?, Object?>());
+    return PushMessageCodec.decode(message.cast<Object?, Object?>());
   }
 
   static Installation _installation(Map<Object?, Object?> payload) =>

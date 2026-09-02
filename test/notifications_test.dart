@@ -134,4 +134,33 @@ void main() {
       );
     expect((await future).messageId, 'valid');
   });
+
+  test('ignores malformed booleans and nested payloads', () async {
+    final future = InfobipMobileMessagingHuawei.notifications.onMessageReceived
+        .first;
+    platform.eventsController
+      ..add(
+        envelope(ChannelContract.messageReceived, {
+          'message': {'messageId': 'bad-bool', 'isSilent': null},
+        }),
+      )
+      ..add(
+        envelope(ChannelContract.messageReceived, {
+          'message': {
+            'messageId': 'bad-payload',
+            'isSilent': false,
+            'customPayload': {
+              'nested': {1: 'invalid'},
+            },
+          },
+        }),
+      )
+      ..add(
+        envelope(ChannelContract.messageReceived, {
+          'message': {'messageId': 'valid', 'isSilent': false},
+        }),
+      );
+
+    expect((await future).messageId, 'valid');
+  });
 }

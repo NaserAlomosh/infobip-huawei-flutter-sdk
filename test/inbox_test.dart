@@ -136,6 +136,18 @@ void main() {
       }),
       throwsFormatException,
     );
+    expect(
+      () => InboxCodec.decode({
+        'countTotal': 1,
+        'countUnread': 0,
+        'countTotalFiltered': 1,
+        'countUnreadFiltered': 0,
+        'messages': [
+          {'messageId': 'message', 'seen': false, 'isSilent': null},
+        ],
+      }),
+      throwsFormatException,
+    );
   });
 
   test('delegates fetch and seen operations over the channel', () async {
