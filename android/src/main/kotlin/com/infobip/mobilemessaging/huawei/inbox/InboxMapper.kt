@@ -35,11 +35,8 @@ internal object InboxMapper {
         if (topic != null && topics != null) {
             throw IllegalArgumentException("topic and topics are mutually exclusive")
         }
-        val limit = (map[ChannelContract.LIMIT] as? Number)?.toInt().also {
-            if (map[ChannelContract.LIMIT] != null && it == null) {
-                throw IllegalArgumentException("limit must be an integer")
-            }
-            if (it != null && it <= 0) throw IllegalArgumentException("limit must be positive")
+        val limit = integer(map[ChannelContract.LIMIT], ChannelContract.LIMIT)?.also {
+            if (it <= 0) throw IllegalArgumentException("limit must be positive")
         }
         return InboxOptions(from, to, topic, topics, limit)
     }
@@ -92,6 +89,14 @@ internal object InboxMapper {
             throw IllegalArgumentException("$key must contain non-empty strings")
         }
         return values.filterIsInstance<String>()
+    }
+
+    private fun integer(value: Any?, key: String): Int? = when (value) {
+        null -> null
+        is Int -> value
+        is Long -> value.takeIf { it in Int.MIN_VALUE..Int.MAX_VALUE }?.toInt()
+            ?: throw IllegalArgumentException("$key is out of range")
+        else -> throw IllegalArgumentException("$key must be an integer")
     }
 
     private fun instant(value: Any?, key: String): Date? {

@@ -17,7 +17,9 @@ internal object MessageMapper {
 
     private fun channelSafe(value: Any?): Any? = when (value) {
         null, is String, is Boolean, is Int, is Long, is Double, is Float -> value
-        is Map<*, *> -> value.entries.associate { it.key.toString() to channelSafe(it.value) }
+        is Map<*, *> -> value.entries.mapNotNull { (key, item) ->
+            (key as? String)?.let { it to channelSafe(item) }
+        }.toMap()
         is Iterable<*> -> value.map(::channelSafe)
         is Array<*> -> value.map(::channelSafe)
         else -> null

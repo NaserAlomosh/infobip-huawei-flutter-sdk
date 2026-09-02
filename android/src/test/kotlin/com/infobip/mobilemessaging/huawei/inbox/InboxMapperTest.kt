@@ -1,5 +1,6 @@
 package com.infobip.mobilemessaging.huawei.inbox
 
+import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
@@ -7,6 +8,17 @@ import org.junit.Test
 import org.infobip.mobile.messaging.inbox.MobileInboxFilterOptions
 
 class InboxMapperTest {
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `options reject fractional limits instead of truncating`() {
+        InboxMapper.parseOptions(mapOf(ChannelContract.LIMIT to 1.5))
+    }
+
+    @Test
+    fun `options accept long limits in integer range`() {
+        assertEquals(20, InboxMapper.parseOptions(mapOf(ChannelContract.LIMIT to 20L)).limit)
+    }
+
     @Test
     fun `parses UTC filters`() {
         val options = InboxMapper.parseOptions(

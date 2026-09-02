@@ -52,7 +52,9 @@ internal class ChatPlatformView(
             return
         }
         when (call.method) {
-            ChannelContract.CHAT_NAVIGATE_BACK -> result.success(view.navigateBackOrCloseChat())
+            ChannelContract.CHAT_NAVIGATE_BACK -> readFromView(view, result) {
+                view.navigateBackOrCloseChat()
+            }
             ChannelContract.CHAT_SEND -> handleSend(call, result, view)
             ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, view)
             ChannelContract.CHAT_SET_LANGUAGE -> handleLanguage(call, result, view)
@@ -151,7 +153,7 @@ internal class ChatPlatformView(
     private fun readFromView(
         view: InAppChatView,
         result: MethodChannel.Result,
-        operation: () -> String,
+        operation: () -> Any?,
     ) {
         view.post {
             if (chatView !== view) {
