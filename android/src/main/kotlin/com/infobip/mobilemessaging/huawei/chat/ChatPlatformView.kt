@@ -9,8 +9,8 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
-import org.infobip.mobile.messaging.chat.view.InAppChatView
 import org.infobip.mobile.messaging.chat.InAppChat
+import org.infobip.mobile.messaging.chat.view.InAppChatView
 
 internal class ChatPlatformView(
     context: Context,
@@ -18,7 +18,8 @@ internal class ChatPlatformView(
     messenger: BinaryMessenger,
     activity: Activity?,
     initialized: Boolean,
-) : PlatformView, MethodChannel.MethodCallHandler {
+) : PlatformView,
+    MethodChannel.MethodCallHandler {
     private val channel = MethodChannel(messenger, ChannelContract.CHAT_VIEW_CHANNEL + viewId)
     private var chatView: InAppChatView? = null
     private val root: View
@@ -26,21 +27,33 @@ internal class ChatPlatformView(
     private val inAppChat = InAppChat.getInstance(context.applicationContext)
 
     init {
-        root = when {
-            !initialized -> neutralView(context, ChatViewError("not_initialized"))
-            activity == null -> neutralView(context, ChatViewError("activity_unavailable"))
-            else -> try {
-                InAppChatView(activity).also { chatView = it }
-            } catch (_: RuntimeException) {
-                neutralView(context, ChatViewError("native_error", "Chat could not be created"))
+        root =
+            when {
+                !initialized -> {
+                    neutralView(context, ChatViewError("not_initialized"))
+                }
+
+                activity == null -> {
+                    neutralView(context, ChatViewError("activity_unavailable"))
+                }
+
+                else -> {
+                    try {
+                        InAppChatView(activity).also { chatView = it }
+                    } catch (_: RuntimeException) {
+                        neutralView(context, ChatViewError("native_error", "Chat could not be created"))
+                    }
+                }
             }
-        }
         channel.setMethodCallHandler(this)
     }
 
     override fun getView(): View = root
 
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+    override fun onMethodCall(
+        call: MethodCall,
+        result: MethodChannel.Result,
+    ) {
         if (call.method == ChannelContract.CHAT_VIEW_READY) {
             pendingError.take()?.let {
                 channel.invokeMethod(ChannelContract.CHAT_ON_ERROR, it.toMap())
@@ -54,30 +67,53 @@ internal class ChatPlatformView(
             return
         }
         when (call.method) {
-            ChannelContract.CHAT_NAVIGATE_BACK -> readFromView(view, result) {
-                if (view.isMultiThread) {
-                    view.showThreadList()
-                    true
-                } else {
-                    false
+            ChannelContract.CHAT_NAVIGATE_BACK -> {
+                readFromView(view, result) {
+                    if (view.isMultiThread) {
+                        view.showThreadList()
+                        true
+                    } else {
+                        false
+                    }
                 }
             }
-            ChannelContract.CHAT_SEND -> handleSend(call, result, view)
-            ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, view)
-            ChannelContract.CHAT_SET_LANGUAGE -> handleLanguage(call, result, view)
-            ChannelContract.CHAT_GET_LANGUAGE -> readFromView(view, result) {
-                ChatLanguageMapper.toWidgetCode(inAppChat.getLanguage())
+
+            ChannelContract.CHAT_SEND -> {
+                handleSend(call, result, view)
             }
-            ChannelContract.CHAT_SET_WIDGET_THEME -> handleStringArgument(
-                call,
-                result,
-                view,
-                ChannelContract.WIDGET_THEME,
-            ) { inAppChat.setWidgetTheme(it) }
-            ChannelContract.CHAT_GET_WIDGET_THEME -> readFromView(view, result) {
-                inAppChat.getWidgetTheme()
+
+            ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> {
+                handleContextualData(call, result, view)
             }
-            else -> result.notImplemented()
+
+            ChannelContract.CHAT_SET_LANGUAGE -> {
+                handleLanguage(call, result, view)
+            }
+
+            ChannelContract.CHAT_GET_LANGUAGE -> {
+                readFromView(view, result) {
+                    ChatLanguageMapper.toWidgetCode(inAppChat.getLanguage())
+                }
+            }
+
+            ChannelContract.CHAT_SET_WIDGET_THEME -> {
+                handleStringArgument(
+                    call,
+                    result,
+                    view,
+                    ChannelContract.WIDGET_THEME,
+                ) { inAppChat.setWidgetTheme(it) }
+            }
+
+            ChannelContract.CHAT_GET_WIDGET_THEME -> {
+                readFromView(view, result) {
+                    inAppChat.getWidgetTheme()
+                }
+            }
+
+            else -> {
+                result.notImplemented()
+            }
         }
     }
 
@@ -114,13 +150,18 @@ internal class ChatPlatformView(
         runOnView(view, result) { operation(value) }
     }
 
-    private fun handleSend(call: MethodCall, result: MethodChannel.Result, view: InAppChatView) {
-        val payload = try {
-            ChatMapper.messagePayload(call.arguments)
-        } catch (error: IllegalArgumentException) {
-            result.error("invalid_argument", error.message, null)
-            return
-        }
+    private fun handleSend(
+        call: MethodCall,
+        result: MethodChannel.Result,
+        view: InAppChatView,
+    ) {
+        val payload =
+            try {
+                ChatMapper.messagePayload(call.arguments)
+            } catch (error: IllegalArgumentException) {
+                result.error("invalid_argument", error.message, null)
+                return
+            }
         runOnView(view, result) { view.send(payload) }
     }
 
@@ -129,12 +170,13 @@ internal class ChatPlatformView(
         result: MethodChannel.Result,
         view: InAppChatView,
     ) {
-        val data = try {
-            ChatMapper.contextualData(call.arguments)
-        } catch (error: IllegalArgumentException) {
-            result.error("invalid_argument", error.message, null)
-            return
-        }
+        val data =
+            try {
+                ChatMapper.contextualData(call.arguments)
+            } catch (error: IllegalArgumentException) {
+                result.error("invalid_argument", error.message, null)
+                return
+            }
         runOnView(view, result) { inAppChat.sendContextualData(data) }
     }
 
@@ -180,13 +222,17 @@ internal class ChatPlatformView(
         chatView = null
     }
 
-    private fun neutralView(context: Context, error: ChatViewError): View {
+    private fun neutralView(
+        context: Context,
+        error: ChatViewError,
+    ): View {
         pendingError.set(error)
         return FrameLayout(context).apply {
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT,
-            )
+            layoutParams =
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                )
         }
     }
 }

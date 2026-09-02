@@ -89,15 +89,20 @@ final class MethodChannelInfobipMobileMessagingHuawei
 
   @override
   Future<Installation> fetchInstallation() async => InstallationCodec.decode(
-    await methodChannel.invokeMethod<Object?>(ChannelContract.fetchInstallation),
+    await methodChannel.invokeMethod<Object?>(
+      ChannelContract.fetchInstallation,
+    ),
   );
 
   @override
   Future<Installation> saveInstallation(Installation installation) async =>
       InstallationCodec.decode(
-        await methodChannel.invokeMethod<Object?>(ChannelContract.saveInstallation, {
-          ChannelContract.installation: InstallationCodec.encodeWritable(installation),
-        }),
+        await methodChannel
+            .invokeMethod<Object?>(ChannelContract.saveInstallation, {
+              ChannelContract.installation: InstallationCodec.encodeWritable(
+                installation,
+              ),
+            }),
       );
 
   @override
@@ -105,22 +110,20 @@ final class MethodChannelInfobipMobileMessagingHuawei
     required String externalUserId,
     String? jwt,
     InboxFilterOptions? options,
-  }) async =>
-      InboxCodec.decode(
-        await methodChannel.invokeMethod<Object?>(ChannelContract.fetchInbox, {
-          ChannelContract.externalUserId: externalUserId,
-          ChannelContract.jwt: jwt,
-          ChannelContract.options: InboxCodec.encodeOptions(options),
-        }),
-      );
+  }) async => InboxCodec.decode(
+    await methodChannel.invokeMethod<Object?>(ChannelContract.fetchInbox, {
+      ChannelContract.externalUserId: externalUserId,
+      ChannelContract.jwt: jwt,
+      ChannelContract.options: InboxCodec.encodeOptions(options),
+    }),
+  );
 
   @override
   Future<void> setInboxMessagesSeen({
     required String externalUserId,
     required List<String> messageIds,
-  }) =>
-      methodChannel.invokeMethod<void>(ChannelContract.setInboxMessagesSeen, {
-        ChannelContract.externalUserId: externalUserId,
-        ChannelContract.messageIds: messageIds,
-      });
+  }) => methodChannel.invokeMethod<void>(ChannelContract.setInboxMessagesSeen, {
+    ChannelContract.externalUserId: externalUserId,
+    ChannelContract.messageIds: messageIds,
+  });
 }

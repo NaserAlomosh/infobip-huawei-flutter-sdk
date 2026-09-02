@@ -28,8 +28,8 @@ class _UserScreenState extends State<UserScreen> {
     } on PlatformException catch (error) {
       if (mounted) {
         setState(
-          () => _result =
-              '${error.code}: ${error.message ?? 'Operation failed'}',
+          () =>
+              _result = '${error.code}: ${error.message ?? 'Operation failed'}',
         );
       }
     } on ArgumentError catch (error) {
@@ -80,19 +80,23 @@ class _UserScreenState extends State<UserScreen> {
                   OutlinedButton(
                     onPressed: _loading
                         ? null
-                        : () => _run(() async => _setUser(
+                        : () => _run(
+                            () async => _setUser(
                               await InfobipMobileMessagingHuawei.getUser(),
                               'Cached user read',
-                            )),
+                            ),
+                          ),
                     child: const Text('Get cached user'),
                   ),
                   OutlinedButton(
                     onPressed: _loading
                         ? null
-                        : () => _run(() async => _setUser(
+                        : () => _run(
+                            () async => _setUser(
                               await InfobipMobileMessagingHuawei.fetchUser(),
                               'Server user fetch',
-                            )),
+                            ),
+                          ),
                     child: const Text('Fetch from server'),
                   ),
                 ],
@@ -115,23 +119,23 @@ class _UserScreenState extends State<UserScreen> {
                 onPressed: _loading
                     ? null
                     : () => _run(() async {
-                          final saved =
-                              await InfobipMobileMessagingHuawei.saveUser(
-                            User(
-                              externalUserId: _user?.externalUserId,
-                              firstName: _firstName.text.trim(),
-                              lastName: _lastName.text.trim(),
-                              middleName: _user?.middleName,
-                              gender: _user?.gender,
-                              birthday: _user?.birthday,
-                              phones: _user?.phones,
-                              emails: _user?.emails,
-                              tags: _user?.tags,
-                              customAttributes: _user?.customAttributes,
-                            ),
-                          );
-                          _setUser(saved, 'User save');
-                        }),
+                        final saved =
+                            await InfobipMobileMessagingHuawei.saveUser(
+                              User(
+                                externalUserId: _user?.externalUserId,
+                                firstName: _firstName.text.trim(),
+                                lastName: _lastName.text.trim(),
+                                middleName: _user?.middleName,
+                                gender: _user?.gender,
+                                birthday: _user?.birthday,
+                                phones: _user?.phones,
+                                emails: _user?.emails,
+                                tags: _user?.tags,
+                                customAttributes: _user?.customAttributes,
+                              ),
+                            );
+                        _setUser(saved, 'User save');
+                      }),
                 child: const Text('Save user'),
               ),
             ],
@@ -157,35 +161,37 @@ class _UserScreenState extends State<UserScreen> {
                     onPressed: _loading || _externalUserId.text.trim().isEmpty
                         ? null
                         : () => _run(() async {
-                              final user = await InfobipMobileMessagingHuawei
-                                  .personalize(
-                                UserIdentity(
-                                  externalUserId: _externalUserId.text.trim(),
-                                ),
-                                UserAttributes(
-                                  firstName: _firstName.text.trim().isEmpty
-                                      ? null
-                                      : _firstName.text.trim(),
-                                  lastName: _lastName.text.trim().isEmpty
-                                      ? null
-                                      : _lastName.text.trim(),
-                                ),
-                              );
-                              _setUser(user, 'Personalization');
-                            }),
+                            final user =
+                                await InfobipMobileMessagingHuawei.personalize(
+                                  UserIdentity(
+                                    externalUserId: _externalUserId.text.trim(),
+                                  ),
+                                  UserAttributes(
+                                    firstName: _firstName.text.trim().isEmpty
+                                        ? null
+                                        : _firstName.text.trim(),
+                                    lastName: _lastName.text.trim().isEmpty
+                                        ? null
+                                        : _lastName.text.trim(),
+                                  ),
+                                );
+                            _setUser(user, 'Personalization');
+                          }),
                     child: const Text('Personalize'),
                   ),
                   OutlinedButton(
                     onPressed: _loading
                         ? null
                         : () => _run(() async {
-                              await InfobipMobileMessagingHuawei.depersonalize();
-                              if (mounted) setState(() {
+                            await InfobipMobileMessagingHuawei.depersonalize();
+                            if (mounted) {
+                              setState(() {
                                 _user = null;
                                 _externalUserId.clear();
                                 _result = 'Depersonalization succeeded.';
                               });
-                            }),
+                            }
+                          }),
                     child: const Text('Depersonalize'),
                   ),
                 ],

@@ -39,7 +39,9 @@ abstract final class InboxCodec {
   static Inbox decode(Object? value) {
     final map = _map(value, 'Inbox result');
     final messages = map[ChannelContract.messages];
-    if (messages is! List) throw const FormatException('Invalid Inbox messages');
+    if (messages is! List) {
+      throw const FormatException('Invalid Inbox messages');
+    }
     return Inbox(
       countTotal: _integer(map[ChannelContract.countTotal], 'countTotal'),
       countUnread: _integer(map[ChannelContract.countUnread], 'countUnread'),
@@ -98,7 +100,9 @@ abstract final class InboxCodec {
 
   static DateTime? _date(Object? value) {
     if (value == null) return null;
-    if (value is! String) throw const FormatException('Invalid Inbox timestamp');
+    if (value is! String) {
+      throw const FormatException('Invalid Inbox timestamp');
+    }
     return DateTime.tryParse(value)?.toUtc() ??
         (throw const FormatException('Invalid Inbox timestamp'));
   }

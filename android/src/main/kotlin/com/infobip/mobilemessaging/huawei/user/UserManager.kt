@@ -22,8 +22,11 @@ internal class UserManager(
         if (!initialized(callback)) return
         execute("native_error", callback) {
             val user = mobileMessaging.user
-            if (user == null) mainHandler.post { callback(null, null) }
-            else complete(callback, user)
+            if (user == null) {
+                mainHandler.post { callback(null, null) }
+            } else {
+                complete(callback, user)
+            }
         }
     }
 
@@ -34,7 +37,10 @@ internal class UserManager(
         }
     }
 
-    fun saveUser(value: Any?, callback: (Map<String, Any?>?, UserFailure?) -> Unit) {
+    fun saveUser(
+        value: Any?,
+        callback: (Map<String, Any?>?, UserFailure?) -> Unit,
+    ) {
         if (!initialized(callback)) return
         execute("invalid_argument", callback) {
             val user = UserMapper.toUser(value)
@@ -55,11 +61,12 @@ internal class UserManager(
         execute("invalid_argument", callback) {
             val identity: UserIdentity = UserMapper.toIdentity(identityValue)
             val attributes: UserAttributes? = UserMapper.toAttributes(attributesValue)
-            val listener = userListener(
-                callback,
-                "personalization_failed",
-                "Unable to personalize user",
-            )
+            val listener =
+                userListener(
+                    callback,
+                    "personalization_failed",
+                    "Unable to personalize user",
+                )
             mobileMessaging.personalize(identity, attributes, forceDepersonalize, listener)
         }
     }
@@ -67,12 +74,17 @@ internal class UserManager(
     fun depersonalize(callback: (Map<String, Any?>?, UserFailure?) -> Unit) {
         if (!initialized(callback)) return
         execute("depersonalization_failed", callback) {
-            mobileMessaging.depersonalize(object : MobileMessaging.ResultListener<SuccessPending>() {
-                override fun onResult(result: Result<SuccessPending, MobileMessagingError>) {
-                    if (result.isSuccess) mainHandler.post { callback(emptyMap(), null) }
-                    else fail(callback, "depersonalization_failed", "Unable to depersonalize user")
-                }
-            })
+            mobileMessaging.depersonalize(
+                object : MobileMessaging.ResultListener<SuccessPending>() {
+                    override fun onResult(result: Result<SuccessPending, MobileMessagingError>) {
+                        if (result.isSuccess) {
+                            mainHandler.post { callback(emptyMap(), null) }
+                        } else {
+                            fail(callback, "depersonalization_failed", "Unable to depersonalize user")
+                        }
+                    }
+                },
+            )
         }
     }
 
@@ -82,11 +94,18 @@ internal class UserManager(
         return false
     }
 
-    private fun complete(callback: (Map<String, Any?>?, UserFailure?) -> Unit, user: org.infobip.mobile.messaging.User) {
+    private fun complete(
+        callback: (Map<String, Any?>?, UserFailure?) -> Unit,
+        user: org.infobip.mobile.messaging.User,
+    ) {
         mainHandler.post { callback(UserMapper.toMap(user), null) }
     }
 
-    private fun fail(callback: (Map<String, Any?>?, UserFailure?) -> Unit, code: String, message: String) {
+    private fun fail(
+        callback: (Map<String, Any?>?, UserFailure?) -> Unit,
+        code: String,
+        message: String,
+    ) {
         mainHandler.post { callback(null, UserFailure(code, message)) }
     }
 
@@ -97,8 +116,11 @@ internal class UserManager(
     ) = object : MobileMessaging.ResultListener<User>() {
         override fun onResult(result: Result<User, MobileMessagingError>) {
             val user = result.data
-            if (result.isSuccess && user != null) complete(callback, user)
-            else fail(callback, code, message)
+            if (result.isSuccess && user != null) {
+                complete(callback, user)
+            } else {
+                fail(callback, code, message)
+            }
         }
     }
 
@@ -117,4 +139,7 @@ internal class UserManager(
     }
 }
 
-internal data class UserFailure(val code: String, val message: String)
+internal data class UserFailure(
+    val code: String,
+    val message: String,
+)

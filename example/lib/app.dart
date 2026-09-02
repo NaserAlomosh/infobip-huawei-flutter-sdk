@@ -36,7 +36,8 @@ class _ExampleAppState extends State<ExampleApp> {
       if (mounted) {
         setState(() {
           _state = InitializationState.failed;
-          _failure = '${error.code}: ${error.message ?? 'Initialization failed'}';
+          _failure =
+              '${error.code}: ${error.message ?? 'Initialization failed'}';
         });
       }
     } on ArgumentError catch (error) {

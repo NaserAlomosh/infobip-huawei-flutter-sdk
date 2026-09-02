@@ -5,32 +5,44 @@ import android.content.Context
 import org.infobip.mobile.messaging.MobileMessaging
 import org.infobip.mobile.messaging.mobileapi.InternalSdkError
 
-internal class MobileMessagingInitializer(context: Context) {
+internal class MobileMessagingInitializer(
+    context: Context,
+) {
     private val application = context.applicationContext as Application
-    private val coordinator = InitializationCoordinator { applicationCode, complete ->
-        try {
-            MobileMessaging.Builder(application)
-                .withApplicationCode(applicationCode)
-                .build(object : MobileMessaging.InitListener {
-                    override fun onSuccess() {
-                        complete(null)
-                    }
+    private val coordinator =
+        InitializationCoordinator { applicationCode, complete ->
+            try {
+                MobileMessaging
+                    .Builder(application)
+                    .withApplicationCode(applicationCode)
+                    .build(
+                        object : MobileMessaging.InitListener {
+                            override fun onSuccess() {
+                                complete(null)
+                            }
 
-                    override fun onError(error: InternalSdkError, errorCode: Int?) {
-                        complete(
-                            InitializationError(
-                                "initialization_failed",
-                                "Infobip SDK initialization failed",
-                            ),
-                        )
-                    }
-                })
-        } catch (_: Exception) {
-            complete(InitializationError("native_error", "Unable to initialize the Infobip SDK"))
+                            override fun onError(
+                                error: InternalSdkError,
+                                errorCode: Int?,
+                            ) {
+                                complete(
+                                    InitializationError(
+                                        "initialization_failed",
+                                        "Infobip SDK initialization failed",
+                                    ),
+                                )
+                            }
+                        },
+                    )
+            } catch (_: Exception) {
+                complete(InitializationError("native_error", "Unable to initialize the Infobip SDK"))
+            }
         }
-    }
 
-    fun initialize(applicationCode: String, callback: (InitializationError?) -> Unit) {
+    fun initialize(
+        applicationCode: String,
+        callback: (InitializationError?) -> Unit,
+    ) {
         if (applicationCode.isBlank()) {
             callback(InitializationError("invalid_argument", "applicationCode must not be empty"))
             return

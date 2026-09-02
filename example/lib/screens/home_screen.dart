@@ -26,18 +26,27 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final initialized = initializationState == InitializationState.initialized;
     final status = switch (initializationState) {
-      InitializationState.notInitialized => applicationCodeConfigured
-          ? 'Not initialized. Select Initialize SDK to begin.'
-          : 'Not initialized. Provide INFOBIP_APPLICATION_CODE with --dart-define.',
+      InitializationState.notInitialized =>
+        applicationCodeConfigured
+            ? 'Not initialized. Select Initialize SDK to begin.'
+            : 'Not initialized. Provide INFOBIP_APPLICATION_CODE with --dart-define.',
       InitializationState.initializing => 'Initializing…',
       InitializationState.initialized => 'Initialized',
       InitializationState.failed =>
         'Initialization failed: ${initializationFailure ?? 'Unknown error'}',
     };
     final destinations = <(String, IconData, Widget)>[
-      ('Notifications', Icons.notifications_outlined, const NotificationsScreen()),
+      (
+        'Notifications',
+        Icons.notifications_outlined,
+        const NotificationsScreen(),
+      ),
       ('User', Icons.person_outline, const UserScreen()),
-      ('Installation', Icons.phone_android_outlined, const InstallationScreen()),
+      (
+        'Installation',
+        Icons.phone_android_outlined,
+        const InstallationScreen(),
+      ),
       ('Inbox', Icons.inbox_outlined, const InboxScreen()),
       ('Chat', Icons.chat_bubble_outline, const ChatScreen()),
     ];
@@ -51,7 +60,8 @@ class HomeScreen extends StatelessWidget {
             ResultCard(title: 'SDK initialization', message: status),
             const SizedBox(height: 8),
             FilledButton(
-              onPressed: applicationCodeConfigured &&
+              onPressed:
+                  applicationCodeConfigured &&
                       initializationState != InitializationState.initializing &&
                       !initialized
                   ? onInitialize
@@ -64,7 +74,10 @@ class HomeScreen extends StatelessWidget {
                   : const Text('Initialize SDK'),
             ),
             const SizedBox(height: 16),
-            Text('Feature examples', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Feature examples',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             ...destinations.map(
               (item) => Card(
@@ -73,11 +86,13 @@ class HomeScreen extends StatelessWidget {
                   title: Text(item.$1),
                   subtitle: initialized
                       ? null
-                      : const Text('Initialize the SDK before running operations.'),
+                      : const Text(
+                          'Initialize the SDK before running operations.',
+                        ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push<void>(
-                    MaterialPageRoute(builder: (_) => item.$3),
-                  ),
+                  onTap: () => Navigator.of(
+                    context,
+                  ).push<void>(MaterialPageRoute(builder: (_) => item.$3)),
                 ),
               ),
             ),

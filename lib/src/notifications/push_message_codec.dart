@@ -16,9 +16,7 @@ abstract final class PushMessageCodec {
       throw const FormatException('customPayload must be a string-keyed map');
     }
     return Map.unmodifiable(
-      value.map(
-        (key, item) => MapEntry(key as String, _payloadValue(item)),
-      ),
+      value.map((key, item) => MapEntry(key as String, _payloadValue(item))),
     );
   }
 

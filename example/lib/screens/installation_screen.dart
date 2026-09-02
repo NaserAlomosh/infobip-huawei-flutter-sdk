@@ -26,8 +26,8 @@ class _InstallationScreenState extends State<InstallationScreen> {
     } on PlatformException catch (error) {
       if (mounted) {
         setState(
-          () => _result =
-              '${error.code}: ${error.message ?? 'Operation failed'}',
+          () =>
+              _result = '${error.code}: ${error.message ?? 'Operation failed'}',
         );
       }
     } finally {
@@ -61,8 +61,7 @@ class _InstallationScreenState extends State<InstallationScreen> {
                           ? null
                           : () => _run(() async {
                               _show(
-                                await InfobipMobileMessagingHuawei
-                                    .getInstallation(),
+                                await InfobipMobileMessagingHuawei.getInstallation(),
                                 'Cached installation read',
                               );
                             }),
@@ -73,8 +72,7 @@ class _InstallationScreenState extends State<InstallationScreen> {
                           ? null
                           : () => _run(() async {
                               _show(
-                                await InfobipMobileMessagingHuawei
-                                    .fetchInstallation(),
+                                await InfobipMobileMessagingHuawei.fetchInstallation(),
                                 'Server installation fetch',
                               );
                             }),
@@ -116,14 +114,16 @@ class _InstallationScreenState extends State<InstallationScreen> {
                   onPressed: installation == null || _loading
                       ? null
                       : () => _run(() async {
-                            final saved = await InfobipMobileMessagingHuawei.saveInstallation(
-                              Installation(
-                                isPrimaryDevice: _isPrimaryDevice,
-                                customAttributes: installation.customAttributes,
-                              ),
-                            );
-                            _show(saved, 'Installation save');
-                          }),
+                          final saved =
+                              await InfobipMobileMessagingHuawei.saveInstallation(
+                                Installation(
+                                  isPrimaryDevice: _isPrimaryDevice,
+                                  customAttributes:
+                                      installation.customAttributes,
+                                ),
+                              );
+                          _show(saved, 'Installation save');
+                        }),
                   child: const Text('Save installation'),
                 ),
               ],

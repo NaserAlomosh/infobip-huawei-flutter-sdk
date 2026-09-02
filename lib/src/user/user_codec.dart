@@ -11,7 +11,9 @@ abstract final class UserCodec {
   static Map<String, Object?>? decodeCustomAttributes(Object? value) {
     if (value == null) return null;
     if (value is! Map || value.keys.any((key) => key is! String)) {
-      throw const FormatException('customAttributes must be a string-keyed map');
+      throw const FormatException(
+        'customAttributes must be a string-keyed map',
+      );
     }
     return _decodeCustomAttributes(value);
   }
@@ -154,7 +156,9 @@ abstract final class UserCodec {
   static Map<String, Object?>? _decodeCustomAttributes(Object? value) {
     if (value == null) return null;
     if (value is! Map || value.keys.any((key) => key is! String)) {
-      throw const FormatException('customAttributes must be a string-keyed map.');
+      throw const FormatException(
+        'customAttributes must be a string-keyed map.',
+      );
     }
     return Map<String, Object?>.unmodifiable(
       value.cast<String, Object?>().map(

@@ -27,17 +27,23 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
   Future<int> getChatUnreadMessageCount() => throw UnimplementedError();
 
   Future<User> getUser() => throw UnimplementedError();
+
   Future<User> fetchUser() => throw UnimplementedError();
+
   Future<User> saveUser(User user) => throw UnimplementedError();
+
   Future<User> personalize(
     UserIdentity userIdentity,
     UserAttributes? userAttributes, {
     required bool forceDepersonalize,
   }) => throw UnimplementedError();
+
   Future<void> depersonalize() => throw UnimplementedError();
 
   Future<Installation> getInstallation() => throw UnimplementedError();
+
   Future<Installation> fetchInstallation() => throw UnimplementedError();
+
   Future<Installation> saveInstallation(Installation installation) =>
       throw UnimplementedError();
 
@@ -45,11 +51,10 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
     required String externalUserId,
     String? jwt,
     InboxFilterOptions? options,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
+
   Future<void> setInboxMessagesSeen({
     required String externalUserId,
     required List<String> messageIds,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 }

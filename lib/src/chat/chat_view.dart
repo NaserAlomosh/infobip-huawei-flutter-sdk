@@ -8,9 +8,8 @@ import '../platform/channel_contract.dart';
 import 'chat_error.dart';
 import 'chat_message_payload.dart';
 
-typedef InfobipHuaweiChatErrorCallback = void Function(
-  InfobipHuaweiChatError error,
-);
+typedef InfobipHuaweiChatErrorCallback =
+    void Function(InfobipHuaweiChatError error);
 
 final class _ChatViewBridge {
   _ChatViewBridge(this.viewId, this._onError)

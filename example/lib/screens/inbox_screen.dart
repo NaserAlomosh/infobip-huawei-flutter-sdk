@@ -38,10 +38,12 @@ class _InboxScreenState extends State<InboxScreen> {
           topic: _topic.text.trim().isEmpty ? null : _topic.text.trim(),
         ),
       );
-      if (mounted) setState(() {
-        _inbox = inbox;
-        _result = 'Inbox fetch succeeded.';
-      });
+      if (mounted) {
+        setState(() {
+          _inbox = inbox;
+          _result = 'Inbox fetch succeeded.';
+        });
+      }
     } on PlatformException catch (error) {
       if (mounted) {
         setState(
@@ -64,7 +66,9 @@ class _InboxScreenState extends State<InboxScreen> {
         externalUserId: _externalUserId.text.trim(),
         messageIds: [message.messageId],
       );
-      if (mounted) setState(() => _result = 'Message marked seen on the server.');
+      if (mounted) {
+        setState(() => _result = 'Message marked seen on the server.');
+      }
       await _fetchAfterUpdate();
     } on PlatformException catch (error) {
       if (mounted) {
@@ -142,7 +146,10 @@ class _InboxScreenState extends State<InboxScreen> {
                   decoration: const InputDecoration(labelText: 'Limit'),
                 ),
                 const SizedBox(height: 8),
-                FilledButton(onPressed: _loading ? null : _fetch, child: const Text('Fetch Inbox')),
+                FilledButton(
+                  onPressed: _loading ? null : _fetch,
+                  child: const Text('Fetch Inbox'),
+                ),
               ],
             ),
             if (_loading) const Center(child: CircularProgressIndicator()),
@@ -159,13 +166,18 @@ class _InboxScreenState extends State<InboxScreen> {
                 (message) => Card(
                   child: ListTile(
                     title: Text(message.title ?? 'Untitled message'),
-                    subtitle: Text([
-                      if (message.body != null) message.body!,
-                      'Topic: ${message.topic ?? 'none'}',
-                      'Received: ${message.receivedTimestamp?.toLocal() ?? 'unknown'}',
-                    ].join('\n')),
+                    subtitle: Text(
+                      [
+                        if (message.body != null) message.body!,
+                        'Topic: ${message.topic ?? 'none'}',
+                        'Received: ${message.receivedTimestamp?.toLocal() ?? 'unknown'}',
+                      ].join('\n'),
+                    ),
                     trailing: message.seen
-                        ? const Icon(Icons.drafts_outlined, semanticLabel: 'Seen')
+                        ? const Icon(
+                            Icons.drafts_outlined,
+                            semanticLabel: 'Seen',
+                          )
                         : TextButton(
                             onPressed: _loading
                                 ? null

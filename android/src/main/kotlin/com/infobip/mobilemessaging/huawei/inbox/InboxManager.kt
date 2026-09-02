@@ -39,7 +39,11 @@ internal class InboxManager(
         }
     }
 
-    fun setSeen(externalUserIdValue: Any?, idsValue: Any?, callback: InboxCallback) {
+    fun setSeen(
+        externalUserIdValue: Any?,
+        idsValue: Any?,
+        callback: InboxCallback,
+    ) {
         if (!initialized(callback)) return
         try {
             val externalUserId = InboxMapper.requiredExternalUserId(externalUserIdValue)
@@ -49,8 +53,11 @@ internal class InboxManager(
                 ids,
                 object : MobileMessaging.ResultListener<Array<String>>() {
                     override fun onResult(result: Result<Array<String>, MobileMessagingError>) {
-                        if (result.isSuccess) complete(callback, null)
-                        else fail(callback, "inbox_update_failed", "Unable to update Inbox")
+                        if (result.isSuccess) {
+                            complete(callback, null)
+                        } else {
+                            fail(callback, "inbox_update_failed", "Unable to update Inbox")
+                        }
                     }
                 },
             )
@@ -65,8 +72,11 @@ internal class InboxManager(
         object : MobileMessaging.ResultListener<Inbox>() {
             override fun onResult(result: Result<Inbox, MobileMessagingError>) {
                 val inbox = result.data
-                if (result.isSuccess && inbox != null) complete(callback, InboxMapper.inbox(inbox))
-                else fail(callback, "inbox_fetch_failed", "Unable to fetch Inbox")
+                if (result.isSuccess && inbox != null) {
+                    complete(callback, InboxMapper.inbox(inbox))
+                } else {
+                    fail(callback, "inbox_fetch_failed", "Unable to fetch Inbox")
+                }
             }
         }
 
@@ -76,14 +86,25 @@ internal class InboxManager(
         return false
     }
 
-    private fun complete(callback: InboxCallback, value: Map<String, Any?>?) {
+    private fun complete(
+        callback: InboxCallback,
+        value: Map<String, Any?>?,
+    ) {
         mainHandler.post { callback(value, null) }
     }
 
-    private fun fail(callback: InboxCallback, code: String, message: String) {
+    private fun fail(
+        callback: InboxCallback,
+        code: String,
+        message: String,
+    ) {
         mainHandler.post { callback(null, InboxFailure(code, message)) }
     }
 }
 
 internal typealias InboxCallback = (Map<String, Any?>?, InboxFailure?) -> Unit
-internal data class InboxFailure(val code: String, val message: String)
+
+internal data class InboxFailure(
+    val code: String,
+    val message: String,
+)

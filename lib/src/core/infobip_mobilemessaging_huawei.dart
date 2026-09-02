@@ -70,7 +70,9 @@ final class InfobipMobileMessagingHuawei {
 
   /// Saves writable installation properties and returns the resulting state.
   static Future<Installation> saveInstallation(Installation installation) =>
-      InfobipMobileMessagingHuaweiPlatform.instance.saveInstallation(installation);
+      InfobipMobileMessagingHuaweiPlatform.instance.saveInstallation(
+        installation,
+      );
 
   /// Fetches Inbox messages for [externalUserId].
   ///
@@ -116,10 +118,9 @@ final class InfobipMobileMessagingHuawei {
     if (messageIds.isEmpty || messageIds.any((id) => id.trim().isEmpty)) {
       throw ArgumentError.value(messageIds, 'messageIds', 'Must not be empty');
     }
-    return InfobipMobileMessagingHuaweiPlatform.instance
-        .setInboxMessagesSeen(
-          externalUserId: externalUserId,
-          messageIds: List.unmodifiable(messageIds),
-        );
+    return InfobipMobileMessagingHuaweiPlatform.instance.setInboxMessagesSeen(
+      externalUserId: externalUserId,
+      messageIds: List.unmodifiable(messageIds),
+    );
   }
 }

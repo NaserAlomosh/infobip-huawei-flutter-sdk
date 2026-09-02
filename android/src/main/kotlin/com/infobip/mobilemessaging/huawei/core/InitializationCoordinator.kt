@@ -19,21 +19,31 @@ internal class InitializationCoordinator(
     val isInitialized: Boolean
         get() = synchronized(this) { state == State.INITIALIZED }
 
-    fun initialize(code: String, callback: (InitializationError?) -> Unit) {
+    fun initialize(
+        code: String,
+        callback: (InitializationError?) -> Unit,
+    ) {
         var attemptToStart: Int? = null
         var shouldCompleteImmediately = false
         var immediateError: InitializationError? = null
         synchronized(this) {
             if (applicationCode != null && applicationCode != code) {
                 shouldCompleteImmediately = true
-                immediateError = InitializationError(
-                    "already_initialized",
-                    "Initialization already started with a different application code",
-                )
+                immediateError =
+                    InitializationError(
+                        "already_initialized",
+                        "Initialization already started with a different application code",
+                    )
             } else {
                 when (state) {
-                    State.INITIALIZED -> shouldCompleteImmediately = true
-                    State.INITIALIZING -> callbacks += callback
+                    State.INITIALIZED -> {
+                        shouldCompleteImmediately = true
+                    }
+
+                    State.INITIALIZING -> {
+                        callbacks += callback
+                    }
+
                     State.NOT_INITIALIZED, State.FAILED -> {
                         if (applicationCode == null) applicationCode = code
                         state = State.INITIALIZING
@@ -50,7 +60,10 @@ internal class InitializationCoordinator(
         }
     }
 
-    private fun complete(completedAttempt: Int, error: InitializationError?) {
+    private fun complete(
+        completedAttempt: Int,
+        error: InitializationError?,
+    ) {
         val pending: List<(InitializationError?) -> Unit>
         synchronized(this) {
             if (state != State.INITIALIZING || completedAttempt != attempt) return

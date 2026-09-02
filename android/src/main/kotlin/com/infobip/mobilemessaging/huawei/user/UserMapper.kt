@@ -1,10 +1,10 @@
 package com.infobip.mobilemessaging.huawei.user
 
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
+import org.infobip.mobile.messaging.CustomAttributeValue
 import org.infobip.mobile.messaging.User
 import org.infobip.mobile.messaging.UserAttributes
 import org.infobip.mobile.messaging.UserIdentity
-import org.infobip.mobile.messaging.CustomAttributeValue
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.Date
@@ -13,23 +13,25 @@ import java.util.TimeZone
 
 internal object UserMapper {
     private val dateFormat: SimpleDateFormat
-        get() = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).apply {
-            isLenient = false
-            timeZone = TimeZone.getTimeZone("UTC")
-        }
+        get() =
+            SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).apply {
+                isLenient = false
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
 
-    fun toMap(user: User): Map<String, Any?> = mapOf(
-        ChannelContract.EXTERNAL_USER_ID to user.externalUserId,
-        ChannelContract.FIRST_NAME to user.firstName,
-        ChannelContract.LAST_NAME to user.lastName,
-        ChannelContract.MIDDLE_NAME to user.middleName,
-        ChannelContract.GENDER to user.gender?.name?.lowercase(Locale.ROOT),
-        ChannelContract.BIRTHDAY to user.birthday?.let(dateFormat::format),
-        ChannelContract.PHONES to user.phones?.toList(),
-        ChannelContract.EMAILS to user.emails?.toList(),
-        ChannelContract.TAGS to user.tags?.toList(),
-        ChannelContract.CUSTOM_ATTRIBUTES to channelCustomAttributes(user.customAttributes),
-    )
+    fun toMap(user: User): Map<String, Any?> =
+        mapOf(
+            ChannelContract.EXTERNAL_USER_ID to user.externalUserId,
+            ChannelContract.FIRST_NAME to user.firstName,
+            ChannelContract.LAST_NAME to user.lastName,
+            ChannelContract.MIDDLE_NAME to user.middleName,
+            ChannelContract.GENDER to user.gender?.name?.lowercase(Locale.ROOT),
+            ChannelContract.BIRTHDAY to user.birthday?.let(dateFormat::format),
+            ChannelContract.PHONES to user.phones?.toList(),
+            ChannelContract.EMAILS to user.emails?.toList(),
+            ChannelContract.TAGS to user.tags?.toList(),
+            ChannelContract.CUSTOM_ATTRIBUTES to channelCustomAttributes(user.customAttributes),
+        )
 
     fun toUser(value: Any?): User {
         val map = requireMap(value, ChannelContract.USER)
@@ -70,28 +72,37 @@ internal object UserMapper {
         }
     }
 
-    private fun requireMap(value: Any?, name: String): Map<*, *> =
-        value as? Map<*, *> ?: throw IllegalArgumentException("$name must be a map")
+    private fun requireMap(
+        value: Any?,
+        name: String,
+    ): Map<*, *> = value as? Map<*, *> ?: throw IllegalArgumentException("$name must be a map")
 
-    private fun string(map: Map<*, *>, key: String): String? {
+    private fun string(
+        map: Map<*, *>,
+        key: String,
+    ): String? {
         val value = map[key] ?: return null
         return value as? String ?: throw IllegalArgumentException("$key must be a string")
     }
 
-    private fun strings(map: Map<*, *>, key: String): List<String>? {
+    private fun strings(
+        map: Map<*, *>,
+        key: String,
+    ): List<String>? {
         val value = map[key] ?: return null
         val values = value as? List<*> ?: throw IllegalArgumentException("$key must be a list")
         if (values.any { it !is String }) throw IllegalArgumentException("$key must contain strings")
         return values.filterIsInstance<String>()
     }
 
-    private fun gender(value: Any?): UserAttributes.Gender? = when (value) {
-        null -> null
-        "male" -> UserAttributes.Gender.Male
-        "female" -> UserAttributes.Gender.Female
-        "unknown" -> null
-        else -> throw IllegalArgumentException("gender is invalid")
-    }
+    private fun gender(value: Any?): UserAttributes.Gender? =
+        when (value) {
+            null -> null
+            "male" -> UserAttributes.Gender.Male
+            "female" -> UserAttributes.Gender.Female
+            "unknown" -> null
+            else -> throw IllegalArgumentException("gender is invalid")
+        }
 
     private fun date(value: Any?): Date? {
         if (value == null) return null
@@ -101,8 +112,9 @@ internal object UserMapper {
 
     internal fun toNativeCustomAttributes(value: Any?): Map<String, CustomAttributeValue>? {
         if (value == null) return null
-        val map = value as? Map<*, *>
-            ?: throw IllegalArgumentException("customAttributes must be a map")
+        val map =
+            value as? Map<*, *>
+                ?: throw IllegalArgumentException("customAttributes must be a map")
         if (map.keys.any { it !is String }) {
             throw IllegalArgumentException("customAttributes keys must be strings")
         }
@@ -111,17 +123,17 @@ internal object UserMapper {
         }
     }
 
-    private fun channelCustomAttributes(
-        value: Map<String, CustomAttributeValue>?,
-    ): Map<String, Any?>? = value?.mapValues { channelValue(it.value) }
+    private fun channelCustomAttributes(value: Map<String, CustomAttributeValue>?): Map<String, Any?>? =
+        value?.mapValues { channelValue(it.value) }
 
-    private fun nativeCustomValue(value: Any?): CustomAttributeValue = when (value) {
-        is String -> CustomAttributeValue(value)
-        is Boolean -> CustomAttributeValue(value)
-        is Number -> CustomAttributeValue(value)
-        is Map<*, *> -> CustomAttributeValue(CustomAttributeValue.DateTime(taggedDate(value)))
-        else -> throw IllegalArgumentException("customAttributes contains an unsupported value")
-    }
+    private fun nativeCustomValue(value: Any?): CustomAttributeValue =
+        when (value) {
+            is String -> CustomAttributeValue(value)
+            is Boolean -> CustomAttributeValue(value)
+            is Number -> CustomAttributeValue(value)
+            is Map<*, *> -> CustomAttributeValue(CustomAttributeValue.DateTime(taggedDate(value)))
+            else -> throw IllegalArgumentException("customAttributes contains an unsupported value")
+        }
 
     private fun taggedDate(value: Map<*, *>): Date {
         if (value.size != 2 ||
@@ -137,31 +149,53 @@ internal object UserMapper {
         }
     }
 
-    internal fun channelValue(value: Any?): Any? = when (value) {
-        null, is String, is Boolean, is Number -> value
-        is CustomAttributeValue -> when (value.type) {
-            CustomAttributeValue.Type.String -> value.stringValue()
-            CustomAttributeValue.Type.Number -> value.numberValue()
-            CustomAttributeValue.Type.Date -> taggedChannelDate(value.dateValue())
-            CustomAttributeValue.Type.DateTime -> taggedChannelDate(value.dateTimeValue().date)
-            CustomAttributeValue.Type.Boolean -> value.booleanValue()
-            CustomAttributeValue.Type.CustomList -> null
+    internal fun channelValue(value: Any?): Any? =
+        when (value) {
+            null, is String, is Boolean, is Number -> {
+                value
+            }
+
+            is CustomAttributeValue -> {
+                when (value.type) {
+                    CustomAttributeValue.Type.String -> value.stringValue()
+                    CustomAttributeValue.Type.Number -> value.numberValue()
+                    CustomAttributeValue.Type.Date -> taggedChannelDate(value.dateValue())
+                    CustomAttributeValue.Type.DateTime -> taggedChannelDate(value.dateTimeValue().date)
+                    CustomAttributeValue.Type.Boolean -> value.booleanValue()
+                    CustomAttributeValue.Type.CustomList -> null
+                }
+            }
+
+            is Date -> {
+                mapOf(
+                    ChannelContract.CUSTOM_VALUE_TYPE to ChannelContract.CUSTOM_DATE_TYPE,
+                    ChannelContract.CUSTOM_VALUE to value.toInstant().toString(),
+                )
+            }
+
+            is List<*> -> {
+                value.map(::channelValue)
+            }
+
+            is Set<*> -> {
+                value.map(::channelValue)
+            }
+
+            is Map<*, *> -> {
+                value.entries.associate { (key, item) ->
+                    (key as? String ?: throw IllegalArgumentException("Unsupported native user payload")) to
+                        channelValue(item)
+                }
+            }
+
+            else -> {
+                throw IllegalArgumentException("Unsupported native user payload")
+            }
         }
-        is Date -> mapOf(
+
+    private fun taggedChannelDate(value: Date): Map<String, String> =
+        mapOf(
             ChannelContract.CUSTOM_VALUE_TYPE to ChannelContract.CUSTOM_DATE_TYPE,
             ChannelContract.CUSTOM_VALUE to value.toInstant().toString(),
         )
-        is List<*> -> value.map(::channelValue)
-        is Set<*> -> value.map(::channelValue)
-        is Map<*, *> -> value.entries.associate { (key, item) ->
-            (key as? String ?: throw IllegalArgumentException("Unsupported native user payload")) to
-                channelValue(item)
-        }
-        else -> throw IllegalArgumentException("Unsupported native user payload")
-    }
-
-    private fun taggedChannelDate(value: Date): Map<String, String> = mapOf(
-        ChannelContract.CUSTOM_VALUE_TYPE to ChannelContract.CUSTOM_DATE_TYPE,
-        ChannelContract.CUSTOM_VALUE to value.toInstant().toString(),
-    )
 }

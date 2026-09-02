@@ -12,7 +12,11 @@ internal class ChatPlatformViewFactory(
     private val activityProvider: () -> Activity?,
     private val initialized: () -> Boolean,
 ) : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
-    override fun create(context: Context, viewId: Int, args: Any?): PlatformView =
+    override fun create(
+        context: Context,
+        viewId: Int,
+        args: Any?,
+    ): PlatformView =
         ChatPlatformView(
             context = context,
             viewId = viewId,

@@ -4,10 +4,11 @@ internal data class ChatViewError(
     val code: String,
     val message: String? = null,
 ) {
-    fun toMap(): Map<String, Any> = buildMap {
-        put("code", code)
-        message?.let { put("message", it) }
-    }
+    fun toMap(): Map<String, Any> =
+        buildMap {
+            put("code", code)
+            message?.let { put("message", it) }
+        }
 }
 
 internal class PendingChatViewError {

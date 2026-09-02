@@ -3,7 +3,10 @@ package com.infobip.mobilemessaging.huawei.chat
 import android.content.Context
 import org.infobip.mobile.messaging.chat.InAppChat
 
-internal data class ChatFailure(val code: String, val message: String)
+internal data class ChatFailure(
+    val code: String,
+    val message: String,
+)
 
 internal class ChatManager(
     context: Context,

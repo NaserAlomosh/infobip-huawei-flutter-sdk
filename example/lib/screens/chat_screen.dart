@@ -133,14 +133,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     onPressed: _loading
                         ? null
                         : () => _run(() async {
-                              await _chatController.send(
-                                InfobipHuaweiChatMessagePayload.text(
-                                  _message.text,
-                                ),
-                              );
-                              _message.clear();
-                              return 'Text message sent.';
-                            }),
+                            await _chatController.send(
+                              InfobipHuaweiChatMessagePayload.text(
+                                _message.text,
+                              ),
+                            );
+                            _message.clear();
+                            return 'Text message sent.';
+                          }),
                     child: const Text('Send text'),
                   ),
                 ),
@@ -156,12 +156,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     onPressed: _loading
                         ? null
                         : () => _run(() async {
-                              await _chatController.sendContextualData(
-                                _contextualData.text,
-                              );
-                              _contextualData.clear();
-                              return 'Contextual data sent.';
-                            }),
+                            await _chatController.sendContextualData(
+                              _contextualData.text,
+                            );
+                            _contextualData.clear();
+                            return 'Contextual data sent.';
+                          }),
                     child: const Text('Send contextual data'),
                   ),
                 ),
@@ -220,8 +220,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       onPressed: _loading
                           ? null
                           : () => _run(() async {
-                              final theme =
-                                  await _chatController.getWidgetTheme();
+                              final theme = await _chatController
+                                  .getWidgetTheme();
                               return theme == null
                                   ? 'No explicit widget theme is active.'
                                   : 'Current widget theme: $theme';

@@ -33,10 +33,8 @@ final class InfobipHuaweiNotifications {
   );
 
   /// Emits the complete installation when push registration changes.
-  Stream<Installation> get onRegistrationUpdated => _typed(
-    ChannelContract.registrationUpdated,
-    _installation,
-  );
+  Stream<Installation> get onRegistrationUpdated =>
+      _typed(ChannelContract.registrationUpdated, _installation);
 
   /// Emits when the native SDK updates the installation.
   Stream<Installation> get onInstallationUpdated =>

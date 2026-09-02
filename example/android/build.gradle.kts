@@ -1,5 +1,9 @@
 allprojects {
-    layout.buildDirectory.set(rootProject.layout.buildDirectory.dir("../../build").get())
+    layout.buildDirectory.set(
+        rootProject.layout.buildDirectory
+            .dir("../../build")
+            .get(),
+    )
 }
 
 subprojects {

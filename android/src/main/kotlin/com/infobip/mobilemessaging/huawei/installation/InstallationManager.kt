@@ -23,15 +23,20 @@ internal class InstallationManager(
     fun fetchInstallation(callback: Callback) {
         if (!initialized(callback)) return
         execute("installation_fetch_failed", callback) {
-            mobileMessaging.fetchInstallation(installationListener(
-                callback,
-                "installation_fetch_failed",
-                "Unable to fetch installation",
-            ))
+            mobileMessaging.fetchInstallation(
+                installationListener(
+                    callback,
+                    "installation_fetch_failed",
+                    "Unable to fetch installation",
+                ),
+            )
         }
     }
 
-    fun saveInstallation(payload: Any?, callback: Callback) {
+    fun saveInstallation(
+        payload: Any?,
+        callback: Callback,
+    ) {
         if (!initialized(callback)) return
         execute("installation_save_failed", callback) {
             val installation = InstallationMapper.applyWritable(mobileMessaging.installation, payload)
@@ -52,24 +57,41 @@ internal class InstallationManager(
         return false
     }
 
-    private fun complete(callback: Callback, value: Installation) {
+    private fun complete(
+        callback: Callback,
+        value: Installation,
+    ) {
         mainHandler.post { callback(InstallationMapper.toMap(value), null) }
     }
 
-    private fun fail(callback: Callback, code: String, message: String) {
+    private fun fail(
+        callback: Callback,
+        code: String,
+        message: String,
+    ) {
         mainHandler.post { callback(null, InstallationFailure(code, message)) }
     }
 
-    private fun installationListener(callback: Callback, code: String, message: String) =
-        object : MobileMessaging.ResultListener<Installation>() {
-            override fun onResult(result: Result<Installation, MobileMessagingError>) {
-                val installation = result.data
-                if (result.isSuccess && installation != null) complete(callback, installation)
-                else fail(callback, code, message)
+    private fun installationListener(
+        callback: Callback,
+        code: String,
+        message: String,
+    ) = object : MobileMessaging.ResultListener<Installation>() {
+        override fun onResult(result: Result<Installation, MobileMessagingError>) {
+            val installation = result.data
+            if (result.isSuccess && installation != null) {
+                complete(callback, installation)
+            } else {
+                fail(callback, code, message)
             }
         }
+    }
 
-    private fun execute(code: String, callback: Callback, operation: () -> Unit) {
+    private fun execute(
+        code: String,
+        callback: Callback,
+        operation: () -> Unit,
+    ) {
         try {
             operation()
         } catch (_: IllegalArgumentException) {
@@ -81,4 +103,8 @@ internal class InstallationManager(
 }
 
 internal typealias Callback = (Map<String, Any?>?, InstallationFailure?) -> Unit
-internal data class InstallationFailure(val code: String, val message: String)
+
+internal data class InstallationFailure(
+    val code: String,
+    val message: String,
+)

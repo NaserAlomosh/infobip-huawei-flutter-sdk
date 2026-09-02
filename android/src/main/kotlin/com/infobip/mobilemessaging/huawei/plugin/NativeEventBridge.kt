@@ -21,29 +21,41 @@ internal class NativeEventBridge(
     private var sink: EventChannel.EventSink? = null
     private var registered = false
 
-    private val receiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                Event.MESSAGE_RECEIVED.key -> intent.extraOfType<Message>()?.let { message ->
-                    emit(ChannelContract.MESSAGE_RECEIVED, mapOf("message" to MessageMapper.map(message)))
-                }
-                Event.INSTALLATION_UPDATED.key -> intent.extraOfType<Installation>()?.let { installation ->
-                    emit(
-                        ChannelContract.INSTALLATION_UPDATED,
-                        mapOf(ChannelContract.INSTALLATION to InstallationMapper.toMap(installation)),
-                    )
+    private val receiver =
+        object : BroadcastReceiver() {
+            override fun onReceive(
+                context: Context?,
+                intent: Intent?,
+            ) {
+                when (intent?.action) {
+                    Event.MESSAGE_RECEIVED.key -> {
+                        intent.extraOfType<Message>()?.let { message ->
+                            emit(ChannelContract.MESSAGE_RECEIVED, mapOf("message" to MessageMapper.map(message)))
+                        }
+                    }
+
+                    Event.INSTALLATION_UPDATED.key -> {
+                        intent.extraOfType<Installation>()?.let { installation ->
+                            emit(
+                                ChannelContract.INSTALLATION_UPDATED,
+                                mapOf(ChannelContract.INSTALLATION to InstallationMapper.toMap(installation)),
+                            )
+                        }
+                    }
                 }
             }
         }
-    }
 
     @Synchronized
     fun register() {
         if (registered) return
-        broadcasts.registerReceiver(receiver, IntentFilter().apply {
-            addAction(Event.MESSAGE_RECEIVED.key)
-            addAction(Event.INSTALLATION_UPDATED.key)
-        })
+        broadcasts.registerReceiver(
+            receiver,
+            IntentFilter().apply {
+                addAction(Event.MESSAGE_RECEIVED.key)
+                addAction(Event.INSTALLATION_UPDATED.key)
+            },
+        )
         registered = true
     }
 
@@ -64,13 +76,20 @@ internal class NativeEventBridge(
         sink = null
     }
 
-    private fun emit(type: String, payload: Map<String, Any?>) {
+    private fun emit(
+        type: String,
+        payload: Map<String, Any?>,
+    ) {
         val event = EventEnvelope.create(type, payload)
         mainHandler.post { sink?.success(event) }
     }
 
     private inline fun <reified T> Intent.extraOfType(): T? {
         val extras = extras ?: return null
-        return extras.keySet().asSequence().mapNotNull { extras.get(it) as? T }.firstOrNull()
+        return extras
+            .keySet()
+            .asSequence()
+            .mapNotNull { extras.get(it) as? T }
+            .firstOrNull()
     }
 }

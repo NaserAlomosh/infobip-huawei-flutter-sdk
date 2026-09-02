@@ -10,9 +10,8 @@ final class InfobipHuaweiChat {
   static final InfobipHuaweiChat instance = InfobipHuaweiChat._();
 
   /// Returns the current number of unread Chat messages.
-  Future<int> getUnreadMessageCount() => InfobipMobileMessagingHuaweiPlatform
-      .instance
-      .getChatUnreadMessageCount();
+  Future<int> getUnreadMessageCount() =>
+      InfobipMobileMessagingHuaweiPlatform.instance.getChatUnreadMessageCount();
 
   /// Emits future native unread-counter updates without replaying a value.
   Stream<int> get onUnreadMessageCounterUpdated =>

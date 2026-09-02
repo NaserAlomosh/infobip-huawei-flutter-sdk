@@ -16,7 +16,10 @@ internal object ChatMapper {
         return data
     }
 
-    private fun value(arguments: Any?, key: String): String {
+    private fun value(
+        arguments: Any?,
+        key: String,
+    ): String {
         val values = arguments as? Map<*, *> ?: throw IllegalArgumentException("Arguments are invalid")
         return values[key] as? String ?: throw IllegalArgumentException("Argument is invalid")
     }
