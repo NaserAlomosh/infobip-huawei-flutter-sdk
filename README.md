@@ -294,45 +294,37 @@ Huawei configuration is an application concern, not a library concern. Before en
 
 No AGConnect file, credential, signing key, or Infobip Application Code belongs in this repository. The Phase 1 example intentionally does not apply the AGConnect plugin, so it can validate plugin integration without fake credentials.
 
-## Example
+## Running the example
 
-The `example/` application accepts its Application Code through a compile-time environment value and shows loading, success, and sanitized failure states. No credential is committed:
+The example is an Android/Huawei-only Flutter application covering initialization, notification
+events, User, Installation, Inbox, and embedded native Chat. Use Flutter 3.35.7 or later, Java 17,
+and an Android/Huawei environment matching the versions in [Requirements](#requirements).
+
+1. Register the example package with Huawei AppGallery Connect. For Huawei Push on a device, place
+   your own `agconnect-services.json` at `example/android/app/agconnect-services.json` and apply the
+   AGConnect Gradle plugin as described in [Host application Huawei setup](#host-application-huawei-setup).
+   The Huawei Maven repository is already configured in the example.
+2. Run the application with a development Infobip Application Code supplied at build time:
 
 ```sh
 cd example
+flutter pub get
 flutter run --dart-define=INFOBIP_APPLICATION_CODE=YOUR_APPLICATION_CODE
 ```
 
-```sh
-flutter pub get
-flutter analyze
-flutter test
-cd example
-flutter pub get
-flutter build apk --debug
-```
+Inbox external user IDs and optional JWTs are entered at runtime and are not persisted. Use only
+test identities with a development Infobip application. A Chat widget theme name is optional and
+must match a theme configured for your Infobip widget; `null` means no explicit theme is active.
+The embedded native composer provides its own supported attachment workflow.
 
-## Planned features
-
-- Chat
-
-These remain roadmap items, not current capabilities.
-
-## Roadmap
-
-1. **Phase 1:** project setup, dependency baseline, platform-channel infrastructure, documentation, and example integration.
-2. **Phase 2:** analyze the official Flutter API against the Huawei native API and populate `API_COMPATIBILITY.md`.
-3. **Phase 3:** core SDK initialization, idempotent state coordination, structured failures, tests, and example integration.
-4. **Phase 4:** SDK-owned push lifecycle and notification events.
-5. **Phase 5:** User Management.
-6. **Phase 6:** Installation Management and installation events.
-7. **Phase 7:** Inbox fetch, filters, counters, message mapping, and seen updates.
-8. **Later phases:** implement and test approved Chat areas incrementally.
+On Android 13 and later, the host application is responsible for declaring and requesting runtime
+notification permission with suitable rationale UX. The plugin intentionally does not expose a
+permission API, and the example does not add a permission dependency solely for this purpose.
 
 ## Current limitations
 
 - Android/Huawei only; no iOS implementation is registered.
-- No public registration control, raw HMS token, Chat, notification-permission, or background-isolate API is implemented.
+- No public registration control, raw HMS token, notification-permission, or background-isolate API is implemented.
 
 ## Inbox
 
