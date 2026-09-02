@@ -71,7 +71,7 @@ abstract final class InboxCodec {
       receivedTimestamp: _date(map[ChannelContract.receivedTimestamp]),
       customPayload: _payload(map[ChannelContract.customPayload]),
       deepLink: _nullableString(map[ChannelContract.deepLink], 'deepLink'),
-      isSilent: map[ChannelContract.isSilent] as bool? ?? false,
+      isSilent: _requiredBool(map[ChannelContract.isSilent], 'isSilent'),
     );
   }
 
@@ -82,6 +82,11 @@ abstract final class InboxCodec {
 
   static int _integer(Object? value, String name) {
     if (value is! int || value < 0) throw FormatException('Invalid $name');
+    return value;
+  }
+
+  static bool _requiredBool(Object? value, String name) {
+    if (value is! bool) throw FormatException('Invalid $name');
     return value;
   }
 

@@ -142,18 +142,11 @@ final class InfobipHuaweiChatController {
   }
 
   /// Returns the widget theme name currently reported by this component.
-  Future<String> getWidgetTheme() async {
+  Future<String?> getWidgetTheme() async {
     final bridge = _requireBridge();
-    final widgetTheme = await bridge.channel.invokeMethod<String>(
+    return bridge.channel.invokeMethod<String>(
       ChannelContract.chatGetWidgetTheme,
     );
-    if (widgetTheme == null) {
-      throw PlatformException(
-        code: 'native_error',
-        message: 'Chat widget theme is unavailable',
-      );
-    }
-    return widgetTheme;
   }
 
   /// Lets Chat consume its internal back navigation.
@@ -163,10 +156,13 @@ final class InfobipHuaweiChatController {
   Future<bool> navigateBackOrCloseChat() async {
     final bridge = _bridge;
     if (bridge == null) return false;
-    return await bridge.channel.invokeMethod<bool>(
-          ChannelContract.chatNavigateBack,
-        ) ??
-        false;
+    final handled = await bridge.channel.invokeMethod<Object?>(
+      ChannelContract.chatNavigateBack,
+    );
+    if (handled is! bool) {
+      throw const FormatException('Invalid Chat navigation result');
+    }
+    return handled;
   }
 
   _ChatViewBridge _requireBridge() {

@@ -74,11 +74,18 @@ Deferred native capabilities (not Phase 8 blockers):
 - Programmatic attachments: Huawei exposes native attachment types, but Android URI ownership and permissions do not have a safe portable contract.
 - Raw-message and additional component events: intentionally omitted without stable public models or official parity.
 
-## Phase 9 - Models, Mappers, and Error Handling
+## Phase 9 - Models, Mappers, Errors & API Hardening: COMPLETE
 
-- [ ] Add the approved Dart models and enums
-- [ ] Map native values and errors into predictable Flutter types
-- [ ] Handle invalid arguments, unsupported operations, and platform failures
+- [x] Audit all current public models, enums, exports, and async contracts
+- [x] Harden Dart decoding for malformed maps, booleans, numeric values, and nested payloads
+- [x] Verify UTC instant and date-only serialization across User and Inbox
+- [x] Audit native mappers, channel completion, event isolation, errors, and lifecycle boundaries
+- [x] Preserve cold-start tap replay, Chat unread update, and view-scoped controller semantics
+- [x] Document the nullable Huawei widget-theme result and current error taxonomy
+
+Deferred cleanup that does not block correctness: non-Chat APIs continue to expose the
+package's established `PlatformException` contract. A shared public domain exception would be a
+breaking redesign and is reserved for a future release decision.
 
 ## Phase 10 - Example Application Integration
 
