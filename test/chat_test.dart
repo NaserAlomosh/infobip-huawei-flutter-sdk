@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:infobip_mobilemessaging_huawei/infobip_mobilemessaging_huawei.dart';
@@ -11,9 +13,7 @@ void main() {
     expect(controller.isAttached, isFalse);
     expect(await controller.navigateBackOrCloseChat(), isFalse);
     await expectLater(
-      controller.send(
-        const InfobipHuaweiChatMessagePayload.text('Hello'),
-      ),
+      controller.send(const InfobipHuaweiChatMessagePayload.text('Hello')),
       throwsA(
         isA<PlatformException>().having(
           (error) => error.code,
@@ -80,9 +80,15 @@ void main() {
           ),
         ),
       );
-      tester.widget<AndroidView>(find.byType(AndroidView)).onPlatformViewCreated(
-        viewId,
-      );
+      if (tester
+              .widget<AndroidView>(find.byType(AndroidView))
+              .onPlatformViewCreated !=
+          null) {
+        tester
+            .widget<AndroidView>(find.byType(AndroidView))
+            .onPlatformViewCreated!(viewId);
+      }
+
       await tester.pump();
     }
 
@@ -102,7 +108,10 @@ void main() {
 
     tearDown(() {
       debugDefaultTargetPlatformOverride = null;
-      messenger.setMockMethodCallHandler(const MethodChannel(channelName), null);
+      messenger.setMockMethodCallHandler(
+        const MethodChannel(channelName),
+        null,
+      );
     });
 
     for (final entry in <String, InfobipHuaweiChatErrorCode>{
@@ -225,9 +234,7 @@ void main() {
       await controller.setWidgetTheme('support');
 
       expect(calls.last.method, 'setWidgetTheme');
-      expect(calls.last.arguments, <String, Object>{
-        'widgetTheme': 'support',
-      });
+      expect(calls.last.arguments, <String, Object>{'widgetTheme': 'support'});
       expect(await controller.getWidgetTheme(), 'support');
     });
 
@@ -272,9 +279,7 @@ void main() {
       await mountView(tester, controller: controller);
 
       await expectLater(
-        controller.send(
-          const InfobipHuaweiChatMessagePayload.text('Hello'),
-        ),
+        controller.send(const InfobipHuaweiChatMessagePayload.text('Hello')),
         throwsA(
           isA<PlatformException>().having(
             (error) => error.code,
