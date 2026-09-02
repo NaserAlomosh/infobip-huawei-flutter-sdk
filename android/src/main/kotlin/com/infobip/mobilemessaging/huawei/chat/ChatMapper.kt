@@ -1,7 +1,7 @@
 package com.infobip.mobilemessaging.huawei.chat
 
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
-import org.infobip.mobile.messaging.chat.core.MessagePayload
+import org.infobip.mobile.messaging.chat.models.MessagePayload
 
 internal object ChatMapper {
     fun messagePayload(arguments: Any?): MessagePayload {

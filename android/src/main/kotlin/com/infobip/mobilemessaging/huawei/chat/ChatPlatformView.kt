@@ -10,6 +10,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
 import org.infobip.mobile.messaging.chat.view.InAppChatView
+import org.infobip.mobile.messaging.chat.InAppChat
 
 internal class ChatPlatformView(
     context: Context,
@@ -22,6 +23,7 @@ internal class ChatPlatformView(
     private var chatView: InAppChatView? = null
     private val root: View
     private val pendingError = PendingChatViewError()
+    private val inAppChat = InAppChat.getInstance(context.applicationContext)
 
     init {
         root = when {
@@ -59,16 +61,16 @@ internal class ChatPlatformView(
             ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, view)
             ChannelContract.CHAT_SET_LANGUAGE -> handleLanguage(call, result, view)
             ChannelContract.CHAT_GET_LANGUAGE -> readFromView(view, result) {
-                ChatLanguageMapper.toWidgetCode(view.getLanguage())
+                ChatLanguageMapper.toWidgetCode(inAppChat.getLanguage())
             }
             ChannelContract.CHAT_SET_WIDGET_THEME -> handleStringArgument(
                 call,
                 result,
                 view,
                 ChannelContract.WIDGET_THEME,
-            ) { view.setWidgetTheme(it) }
+            ) { inAppChat.setWidgetTheme(it) }
             ChannelContract.CHAT_GET_WIDGET_THEME -> readFromView(view, result) {
-                view.getWidgetTheme()
+                inAppChat.getWidgetTheme()
             }
             else -> result.notImplemented()
         }
@@ -89,7 +91,7 @@ internal class ChatPlatformView(
             result.error("invalid_argument", "Unsupported Chat language", null)
             return
         }
-        runOnView(view, result) { view.setLanguage(language) }
+        runOnView(view, result) { inAppChat.setLanguage(language) }
     }
 
     private fun handleStringArgument(
@@ -128,7 +130,7 @@ internal class ChatPlatformView(
             result.error("invalid_argument", error.message, null)
             return
         }
-        runOnView(view, result) { view.sendContextualData(data) }
+        runOnView(view, result) { inAppChat.sendContextualData(data) }
     }
 
     private fun runOnView(

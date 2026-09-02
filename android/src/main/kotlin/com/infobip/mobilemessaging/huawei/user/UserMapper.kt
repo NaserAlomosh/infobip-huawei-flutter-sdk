@@ -4,6 +4,8 @@ import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import org.infobip.mobile.messaging.User
 import org.infobip.mobile.messaging.UserAttributes
 import org.infobip.mobile.messaging.UserIdentity
+import org.infobip.mobile.messaging.CustomAttributeValue
+import org.infobip.mobile.messaging.Gender
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.Date
@@ -27,7 +29,7 @@ internal object UserMapper {
         ChannelContract.PHONES to user.phones?.toList(),
         ChannelContract.EMAILS to user.emails?.toList(),
         ChannelContract.TAGS to user.tags?.toList(),
-        ChannelContract.CUSTOM_ATTRIBUTES to channelValue(user.customAttributes),
+        ChannelContract.CUSTOM_ATTRIBUTES to channelCustomAttributes(user.customAttributes),
     )
 
     fun toUser(value: Any?): User {
@@ -84,10 +86,11 @@ internal object UserMapper {
         return values.filterIsInstance<String>()
     }
 
-    private fun gender(value: Any?): User.Gender? = when (value) {
+    private fun gender(value: Any?): Gender? = when (value) {
         null -> null
-        "male" -> User.Gender.Male
-        "female" -> User.Gender.Female
+        "male" -> Gender.Male
+        "female" -> Gender.Female
+        "unknown" -> null
         else -> throw IllegalArgumentException("gender is invalid")
     }
 
@@ -97,7 +100,7 @@ internal object UserMapper {
         return dateFormat.parse(value) ?: throw IllegalArgumentException("birthday is invalid")
     }
 
-    internal fun toNativeCustomAttributes(value: Any?): Map<String, Any?>? {
+    internal fun toNativeCustomAttributes(value: Any?): Map<String, CustomAttributeValue>? {
         if (value == null) return null
         val map = value as? Map<*, *>
             ?: throw IllegalArgumentException("customAttributes must be a map")
@@ -105,9 +108,13 @@ internal object UserMapper {
             throw IllegalArgumentException("customAttributes keys must be strings")
         }
         return map.entries.associate { (key, item) ->
-            key as String to nativeCustomValue(item)
+            key as String to CustomAttributeValue(nativeCustomValue(item))
         }
     }
+
+    private fun channelCustomAttributes(
+        value: Map<String, CustomAttributeValue>?,
+    ): Map<String, Any?>? = value?.mapValues { channelValue(it.value) }
 
     private fun nativeCustomValue(value: Any?): Any? = when (value) {
         null, is String, is Boolean, is Number -> value
@@ -132,6 +139,7 @@ internal object UserMapper {
 
     internal fun channelValue(value: Any?): Any? = when (value) {
         null, is String, is Boolean, is Number -> value
+        is CustomAttributeValue -> channelValue(value.value)
         is Date -> mapOf(
             ChannelContract.CUSTOM_VALUE_TYPE to ChannelContract.CUSTOM_DATE_TYPE,
             ChannelContract.CUSTOM_VALUE to value.toInstant().toString(),

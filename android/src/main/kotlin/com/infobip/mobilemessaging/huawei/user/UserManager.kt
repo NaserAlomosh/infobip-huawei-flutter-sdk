@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import org.infobip.mobile.messaging.MobileMessaging
+import org.infobip.mobile.messaging.MobileMessagingError
+import org.infobip.mobile.messaging.User
 import org.infobip.mobile.messaging.UserAttributes
 import org.infobip.mobile.messaging.UserIdentity
 
@@ -16,16 +18,17 @@ internal class UserManager(
 
     fun getUser(callback: (Map<String, Any?>?, UserFailure?) -> Unit) {
         if (!initialized(callback)) return
-        execute("native_error", callback) { complete(callback, mobileMessaging.user) }
+        execute("native_error", callback) {
+            val user = mobileMessaging.user
+            if (user == null) mainHandler.post { callback(null, null) }
+            else complete(callback, user)
+        }
     }
 
     fun fetchUser(callback: (Map<String, Any?>?, UserFailure?) -> Unit) {
         if (!initialized(callback)) return
         execute("user_fetch_failed", callback) {
-            mobileMessaging.fetchUser { result ->
-                if (result.isSuccess) complete(callback, result.data)
-                else fail(callback, "user_fetch_failed", "Unable to fetch user")
-            }
+            mobileMessaging.fetchUser(userListener(callback, "user_fetch_failed", "Unable to fetch user"))
         }
     }
 
@@ -33,10 +36,10 @@ internal class UserManager(
         if (!initialized(callback)) return
         execute("invalid_argument", callback) {
             val user = UserMapper.toUser(value)
-            mobileMessaging.saveUser(user) { result ->
-                if (result.isSuccess) complete(callback, result.data)
-                else fail(callback, "user_save_failed", "Unable to save user")
-            }
+            mobileMessaging.saveUser(
+                user,
+                userListener(callback, "user_save_failed", "Unable to save user"),
+            )
         }
     }
 
@@ -50,20 +53,24 @@ internal class UserManager(
         execute("invalid_argument", callback) {
             val identity: UserIdentity = UserMapper.toIdentity(identityValue)
             val attributes: UserAttributes? = UserMapper.toAttributes(attributesValue)
-            mobileMessaging.personalize(identity, attributes, forceDepersonalize) { result ->
-                if (result.isSuccess) complete(callback, result.data)
-                else fail(callback, "personalization_failed", "Unable to personalize user")
-            }
+            val listener = userListener(
+                callback,
+                "personalization_failed",
+                "Unable to personalize user",
+            )
+            mobileMessaging.personalize(identity, attributes, forceDepersonalize, listener)
         }
     }
 
     fun depersonalize(callback: (Map<String, Any?>?, UserFailure?) -> Unit) {
         if (!initialized(callback)) return
         execute("depersonalization_failed", callback) {
-            mobileMessaging.depersonalize { result ->
-                if (result.isSuccess) mainHandler.post { callback(emptyMap(), null) }
-                else fail(callback, "depersonalization_failed", "Unable to depersonalize user")
-            }
+            mobileMessaging.depersonalize(object : MobileMessaging.ResultListener<User> {
+                override fun onResult(result: User?, error: MobileMessagingError?) {
+                    if (error == null) mainHandler.post { callback(emptyMap(), null) }
+                    else fail(callback, "depersonalization_failed", "Unable to depersonalize user")
+                }
+            })
         }
     }
 
@@ -81,7 +88,18 @@ internal class UserManager(
         mainHandler.post { callback(null, UserFailure(code, message)) }
     }
 
-    private inline fun execute(
+    private fun userListener(
+        callback: (Map<String, Any?>?, UserFailure?) -> Unit,
+        code: String,
+        message: String,
+    ) = object : MobileMessaging.ResultListener<User> {
+        override fun onResult(result: User?, error: MobileMessagingError?) {
+            if (error == null && result != null) complete(callback, result)
+            else fail(callback, code, message)
+        }
+    }
+
+    private fun execute(
         code: String,
         callback: (Map<String, Any?>?, UserFailure?) -> Unit,
         operation: () -> Unit,

@@ -3,6 +3,8 @@ package com.infobip.mobilemessaging.huawei.inbox
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import org.infobip.mobile.messaging.MobileMessaging
+import org.infobip.mobile.messaging.MobileMessagingError
 import org.infobip.mobile.messaging.inbox.Inbox
 import org.infobip.mobile.messaging.inbox.MobileInbox
 
@@ -25,13 +27,9 @@ internal class InboxManager(
             val jwt = InboxMapper.optionalJwt(jwtValue)
             val options = InboxMapper.nativeOptions(InboxMapper.parseOptions(optionsValue))
             if (jwt == null) {
-                mobileInbox.fetchInbox(externalUserId, options) { result ->
-                    handleFetch(result.isSuccess, result.data, callback)
-                }
+                mobileInbox.fetchInbox(externalUserId, options, inboxListener(callback))
             } else {
-                mobileInbox.fetchInbox(jwt, externalUserId, options) { result ->
-                    handleFetch(result.isSuccess, result.data, callback)
-                }
+                mobileInbox.fetchInbox(jwt, externalUserId, options, inboxListener(callback))
             }
         } catch (_: IllegalArgumentException) {
             fail(callback, "invalid_argument", "Invalid Inbox arguments")
@@ -45,10 +43,16 @@ internal class InboxManager(
         try {
             val externalUserId = InboxMapper.requiredExternalUserId(externalUserIdValue)
             val ids = InboxMapper.messageIds(idsValue).toTypedArray()
-            mobileInbox.setSeen(externalUserId, ids) { result ->
-                if (result.isSuccess) complete(callback, null)
-                else fail(callback, "inbox_update_failed", "Unable to update Inbox")
-            }
+            mobileInbox.setSeen(
+                externalUserId,
+                ids,
+                object : MobileMessaging.ResultListener<Array<String>> {
+                    override fun onResult(result: Array<String>?, error: MobileMessagingError?) {
+                        if (error == null) complete(callback, null)
+                        else fail(callback, "inbox_update_failed", "Unable to update Inbox")
+                    }
+                },
+            )
         } catch (_: IllegalArgumentException) {
             fail(callback, "invalid_argument", "Invalid Inbox arguments")
         } catch (_: Exception) {
@@ -56,10 +60,13 @@ internal class InboxManager(
         }
     }
 
-    private fun handleFetch(success: Boolean, inbox: Inbox?, callback: InboxCallback) {
-        if (success && inbox != null) complete(callback, InboxMapper.inbox(inbox))
-        else fail(callback, "inbox_fetch_failed", "Unable to fetch Inbox")
-    }
+    private fun inboxListener(callback: InboxCallback) =
+        object : MobileMessaging.ResultListener<Inbox> {
+            override fun onResult(result: Inbox?, error: MobileMessagingError?) {
+                if (error == null && result != null) complete(callback, InboxMapper.inbox(result))
+                else fail(callback, "inbox_fetch_failed", "Unable to fetch Inbox")
+            }
+        }
 
     private fun initialized(callback: InboxCallback): Boolean {
         if (isInitialized()) return true

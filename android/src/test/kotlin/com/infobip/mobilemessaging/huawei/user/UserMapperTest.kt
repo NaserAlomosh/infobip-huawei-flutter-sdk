@@ -26,9 +26,12 @@ class UserMapperTest {
             ),
         )
 
-        assertEquals(Date.from(instant), user.customAttributes?.get("created"))
-        assertEquals(Date.from(instant), (user.customAttributes?.get("history") as List<*>).single())
-        assertEquals(instant.toString(), user.customAttributes?.get("text"))
+        assertEquals(Date.from(instant), user.customAttributes?.get("created")?.value)
+        assertEquals(
+            Date.from(instant),
+            (user.customAttributes?.get("history")?.value as List<*>).single(),
+        )
+        assertEquals(instant.toString(), user.customAttributes?.get("text")?.value)
     }
 
     @Test
@@ -36,8 +39,10 @@ class UserMapperTest {
         val instant = Instant.parse("2026-09-01T12:00:00Z")
         val user = User().apply {
             customAttributes = mapOf(
-                "created" to Date.from(instant),
-                "history" to listOf(Date.from(instant)),
+                "created" to org.infobip.mobile.messaging.CustomAttributeValue(Date.from(instant)),
+                "history" to org.infobip.mobile.messaging.CustomAttributeValue(
+                    listOf(Date.from(instant)),
+                ),
             )
         }
 

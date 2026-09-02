@@ -32,7 +32,11 @@ repositories {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
-    implementation("com.infobip:infobip-mobile-messaging-huawei-sdk:8.14.0")
+    implementation("com.infobip:infobip-mobile-messaging-huawei-sdk:8.14.0@aar") {
+        isTransitive = true
+    }
     implementation("com.infobip:infobip-mobile-messaging-huawei-inbox-sdk:8.14.0")
     implementation("com.infobip:infobip-mobile-messaging-huawei-chat-sdk:8.14.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
 }

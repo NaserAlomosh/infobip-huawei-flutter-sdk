@@ -50,11 +50,10 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
             context = binding.applicationContext,
             isInitialized = { initializer?.isInitialized == true },
         )
-        eventBridge = NativeEventBridge().also { it.register() }
+        eventBridge = NativeEventBridge(binding.applicationContext).also { it.register() }
         chatManager = ChatManager(
-            binding.applicationContext,
+            context = binding.applicationContext,
             initialized = { initializer?.isInitialized == true },
-            onUnreadMessageCountChanged = { eventBridge?.emitChatUnreadMessageCount(it) },
         )
         methodChannel = MethodChannel(binding.binaryMessenger, ChannelContract.METHOD_CHANNEL).also {
             it.setMethodCallHandler(this)

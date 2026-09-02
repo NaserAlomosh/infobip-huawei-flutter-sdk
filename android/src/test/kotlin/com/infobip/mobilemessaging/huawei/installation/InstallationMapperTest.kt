@@ -15,7 +15,11 @@ class InstallationMapperTest {
             isPushRegistrationEnabled = true
             isPrimaryDevice = false
             language = "en"
-            customAttributes = mapOf("created" to Date.from(Instant.parse("2026-09-01T10:15:30Z")))
+            customAttributes = mapOf(
+                "created" to org.infobip.mobile.messaging.CustomAttributeValue(
+                    Date.from(Instant.parse("2026-09-01T10:15:30Z")),
+                ),
+            )
         }
 
         val mapped = InstallationMapper.toMap(installation)
@@ -46,6 +50,6 @@ class InstallationMapperTest {
         assertNull(installation.pushRegistrationId)
         assertNull(installation.deviceModel)
         assertNull(installation.language)
-        assertEquals(3, installation.customAttributes["score"])
+        assertEquals(3, installation.customAttributes["score"]?.value)
     }
 }
