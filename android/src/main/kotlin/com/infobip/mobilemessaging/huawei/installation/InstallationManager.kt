@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import org.infobip.mobile.messaging.Installation
 import org.infobip.mobile.messaging.MobileMessaging
+import org.infobip.mobile.messaging.MobileMessagingError
 
 internal class InstallationManager(
     context: Context,
@@ -21,10 +22,11 @@ internal class InstallationManager(
     fun fetchInstallation(callback: Callback) {
         if (!initialized(callback)) return
         execute("installation_fetch_failed", callback) {
-            mobileMessaging.fetchInstallation { result ->
-                if (result.isSuccess) complete(callback, result.data)
-                else fail(callback, "installation_fetch_failed", "Unable to fetch installation")
-            }
+            mobileMessaging.fetchInstallation(installationListener(
+                callback,
+                "installation_fetch_failed",
+                "Unable to fetch installation",
+            ))
         }
     }
 
@@ -32,10 +34,14 @@ internal class InstallationManager(
         if (!initialized(callback)) return
         execute("installation_save_failed", callback) {
             val installation = InstallationMapper.applyWritable(mobileMessaging.installation, payload)
-            mobileMessaging.saveInstallation(installation) { result ->
-                if (result.isSuccess) complete(callback, result.data)
-                else fail(callback, "installation_save_failed", "Unable to save installation")
-            }
+            mobileMessaging.saveInstallation(
+                installation,
+                installationListener(
+                    callback,
+                    "installation_save_failed",
+                    "Unable to save installation",
+                ),
+            )
         }
     }
 
@@ -53,7 +59,15 @@ internal class InstallationManager(
         mainHandler.post { callback(null, InstallationFailure(code, message)) }
     }
 
-    private inline fun execute(code: String, callback: Callback, operation: () -> Unit) {
+    private fun installationListener(callback: Callback, code: String, message: String) =
+        object : MobileMessaging.ResultListener<Installation> {
+            override fun onResult(result: Installation?, error: MobileMessagingError?) {
+                if (error == null && result != null) complete(callback, result)
+                else fail(callback, code, message)
+            }
+        }
+
+    private fun execute(code: String, callback: Callback, operation: () -> Unit) {
         try {
             operation()
         } catch (_: IllegalArgumentException) {

@@ -1,18 +1,22 @@
 package com.infobip.mobilemessaging.huawei.core
 
+import android.app.Application
 import android.content.Context
 import org.infobip.mobile.messaging.MobileMessaging
+import org.infobip.mobile.messaging.MobileMessagingError
 
 internal class MobileMessagingInitializer(context: Context) {
-    private val applicationContext = context.applicationContext
+    private val application = context.applicationContext as Application
     private val coordinator = InitializationCoordinator { applicationCode, complete ->
         try {
-            MobileMessaging.Builder(applicationContext)
+            MobileMessaging.Builder(application)
                 .withApplicationCode(applicationCode)
-                .build { result ->
-                    if (result.isSuccess) {
+                .build(object : MobileMessaging.InitListener {
+                    override fun onSuccess() {
                         complete(null)
-                    } else {
+                    }
+
+                    override fun onError(error: MobileMessagingError) {
                         complete(
                             InitializationError(
                                 "initialization_failed",
@@ -20,7 +24,7 @@ internal class MobileMessagingInitializer(context: Context) {
                             ),
                         )
                     }
-                }
+                })
         } catch (_: Exception) {
             complete(InitializationError("native_error", "Unable to initialize the Infobip SDK"))
         }

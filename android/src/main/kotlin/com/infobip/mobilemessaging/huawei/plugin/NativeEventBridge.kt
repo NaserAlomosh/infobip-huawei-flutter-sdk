@@ -1,72 +1,54 @@
 package com.infobip.mobilemessaging.huawei.plugin
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Handler
 import android.os.Looper
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.infobip.mobilemessaging.huawei.installation.InstallationMapper
 import io.flutter.plugin.common.EventChannel
 import org.infobip.mobile.messaging.Event
-import org.infobip.mobile.messaging.EventBus
 import org.infobip.mobile.messaging.Installation
 import org.infobip.mobile.messaging.Message
-import com.infobip.mobilemessaging.huawei.installation.InstallationMapper
-import com.infobip.mobilemessaging.huawei.chat.ChatUnreadCount
 
 internal class NativeEventBridge(
+    context: Context,
     private val mainHandler: Handler = Handler(Looper.getMainLooper()),
-    private val pendingTapStore: PendingTapStore = PendingTapStore(),
 ) {
+    private val broadcasts = LocalBroadcastManager.getInstance(context.applicationContext)
     private var sink: EventChannel.EventSink? = null
     private var registered = false
 
-    private val messageReceivedListener = EventBus.EventListener<Message> { message ->
-        emit(ChannelContract.MESSAGE_RECEIVED, mapOf("message" to MessageMapper.map(message)))
-    }
-    private val notificationTappedListener = EventBus.EventListener<Message> { message ->
-        val event = EventEnvelope.create(
-            ChannelContract.NOTIFICATION_TAPPED,
-            mapOf("message" to MessageMapper.map(message)),
-        )
-        mainHandler.post {
-            sink?.success(event) ?: pendingTapStore.save(event)
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Event.MESSAGE_RECEIVED.key -> intent.extraOfType<Message>()?.let { message ->
+                    emit(ChannelContract.MESSAGE_RECEIVED, mapOf("message" to MessageMapper.map(message)))
+                }
+                Event.INSTALLATION_UPDATED.key -> intent.extraOfType<Installation>()?.let { installation ->
+                    emit(
+                        ChannelContract.INSTALLATION_UPDATED,
+                        mapOf(ChannelContract.INSTALLATION to InstallationMapper.toMap(installation)),
+                    )
+                }
+            }
         }
-    }
-    private val actionTappedListener = EventBus.EventListener<Message> { message ->
-        emit(
-            ChannelContract.NOTIFICATION_ACTION_TAPPED,
-            mapOf(
-                "actionId" to message.action,
-                "message" to MessageMapper.map(message),
-            ),
-        )
-    }
-    private val registrationUpdatedListener = EventBus.EventListener<Installation> { installation ->
-        emit(
-            ChannelContract.REGISTRATION_UPDATED,
-            mapOf(ChannelContract.INSTALLATION to InstallationMapper.toMap(installation)),
-        )
-    }
-    private val installationUpdatedListener = EventBus.EventListener<Installation> { installation ->
-        emit(
-            ChannelContract.INSTALLATION_UPDATED,
-            mapOf(ChannelContract.INSTALLATION to InstallationMapper.toMap(installation)),
-        )
     }
 
     @Synchronized
     fun register() {
         if (registered) return
-        EventBus.getInstance().register(Event.MESSAGE_RECEIVED, messageReceivedListener)
-        EventBus.getInstance().register(Event.NOTIFICATION_TAPPED, notificationTappedListener)
-        EventBus.getInstance().register(Event.ACTION_TAPPED, actionTappedListener)
-        EventBus.getInstance().register(Event.REGISTRATION_UPDATED, registrationUpdatedListener)
-        EventBus.getInstance().register(Event.INSTALLATION_UPDATED, installationUpdatedListener)
+        broadcasts.registerReceiver(receiver, IntentFilter().apply {
+            addAction(Event.MESSAGE_RECEIVED.key)
+            addAction(Event.INSTALLATION_UPDATED.key)
+        })
         registered = true
     }
 
     fun listen(eventSink: EventChannel.EventSink?) {
-        mainHandler.post {
-            sink = eventSink
-            pendingTapStore.take()?.let { eventSink?.success(it) }
-        }
+        mainHandler.post { sink = eventSink }
     }
 
     fun cancel() {
@@ -76,15 +58,10 @@ internal class NativeEventBridge(
     @Synchronized
     fun detach() {
         if (registered) {
-            EventBus.getInstance().unregister(Event.MESSAGE_RECEIVED, messageReceivedListener)
-            EventBus.getInstance().unregister(Event.NOTIFICATION_TAPPED, notificationTappedListener)
-            EventBus.getInstance().unregister(Event.ACTION_TAPPED, actionTappedListener)
-            EventBus.getInstance().unregister(Event.REGISTRATION_UPDATED, registrationUpdatedListener)
-            EventBus.getInstance().unregister(Event.INSTALLATION_UPDATED, installationUpdatedListener)
+            broadcasts.unregisterReceiver(receiver)
             registered = false
         }
         sink = null
-        pendingTapStore.clear()
     }
 
     private fun emit(type: String, payload: Map<String, Any?>) {
@@ -92,11 +69,8 @@ internal class NativeEventBridge(
         mainHandler.post { sink?.success(event) }
     }
 
-    fun emitChatUnreadMessageCount(count: Int) {
-        val payload = ChatUnreadCount.eventPayload(count) ?: return
-        emit(
-            ChannelContract.CHAT_UNREAD_MESSAGE_COUNTER_UPDATED,
-            payload,
-        )
+    private inline fun <reified T> Intent.extraOfType(): T? {
+        val extras = extras ?: return null
+        return extras.keySet().asSequence().mapNotNull { extras.get(it) as? T }.firstOrNull()
     }
 }
