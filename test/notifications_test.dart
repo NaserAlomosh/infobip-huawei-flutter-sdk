@@ -15,12 +15,6 @@ final class NotificationsPlatform extends InfobipMobileMessagingHuaweiPlatform
 
   @override
   Future<void> initialize({required String applicationCode}) async {}
-
-  @override
-  Future<bool> isRegistrationEnabled() async => false;
-
-  @override
-  Future<void> setRegistration({required bool enabled}) async {}
 }
 
 Map<String, Object?> envelope(String type, Map<String, Object?> payload) => {

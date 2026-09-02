@@ -14,13 +14,12 @@ parameters are shortened in tables, but class and method names are retained. The
 used to establish the release boundary are recorded in this repository's `android/build.gradle.kts`.
 
 The official Flutter public source exposes `getInstallation()`, `fetchInstallation()`, and
-`saveInstallation(...)` for installation and registration information. It does not expose public
-`setRegistration(...)` or `isRegistrationEnabled()` methods. Its
+`saveInstallation(...)` for installation and registration information. Registration state belongs
+to the Installation model rather than a separate registration bridge. Its
 `registerForAndroidRemoteNotifications()` API concerns Android remote-notification permission and
-registration behavior and is not equivalent to the Huawei SDK's server-side
-`MobileMessaging.setRegistration(...)`. The official callback surface includes registration
-updates, so a minimal registration event remains appropriate until the full Installation model is
-implemented.
+registration behavior and is not equivalent to changing server-side registration state. The
+official callback surface includes registration updates, so a registration event remains
+appropriate alongside the Installation model.
 
 Statuses have these precise meanings:
 
@@ -55,8 +54,8 @@ Statuses have these precise meanings:
 
 | Official Flutter API/capability | Huawei 8.14.0 native API | Status | Evidence and implementation notes |
 | --- | --- | --- | --- |
-| Public enable/disable push registration | `MobileMessaging.setRegistration(boolean, ResultListener<Installation>)` | Intentionally Internal | The official Flutter plugin does not expose public `setRegistration`; native support alone is not sufficient reason to add it to the primary Dart API. The bridge remains internal for future Installation work. |
-| Public synchronous registration-state query | `MobileMessaging.getInstallation()` → `Installation.isPushRegistrationEnabled()` | Deferred to Installation | The official Flutter plugin does not expose public `isRegistrationEnabled`; registration information belongs in its Installation APIs. Do not publish a temporary state getter before that phase. |
+| Public enable/disable push registration | Native registration operation | Intentionally Internal | Native support alone is not sufficient reason to add a separate registration bridge to the primary Dart API. |
+| Public registration-state query | `MobileMessaging.getInstallation()` → `Installation.isPushRegistrationEnabled()` | Supported | Registration information is exposed through the Installation APIs and model. |
 | Obtain HMS push token | Huawei Push Kit integration inside SDK; `HmsMessageService`-based token flow | Requires Adaptation | Token ownership belongs to HMS/SDK. Flutter should observe the resulting registration event rather than call FCM APIs. |
 | Supply arbitrary push token | No public general-purpose Flutter token setter equivalent | Unsupported | Do not introduce a token injection API unless a public 8.14.0 Huawei method is subsequently evidenced. |
 | Token refresh | SDK HMS service updates installation/token | Requires Adaptation | Background refresh is native. Surface completion through transformed registration/installation events; it is not a synchronous Dart call. |
@@ -132,7 +131,7 @@ Model source: `mobile-messaging-sdk/src/main/java/org/infobip/mobile/messaging/U
 | Fetch installation | `MobileMessaging.fetchInstallation(ResultListener<Installation>)` | Supported | Server refresh maps to a future. |
 | Save/update installation | `MobileMessaging.saveInstallation(Installation, ResultListener<Installation>)` | Requires Adaptation | Use an allow-list of writable properties; device-managed fields must be read-only in Dart. |
 | Installation ID | `Installation.getInstallationId()` | Supported | SDK-owned stable installation identifier; host must not set it. |
-| Push registration enabled | `Installation.isPushRegistrationEnabled()` / `setRegistration(...)` | Supported | Read property; mutate through the dedicated SDK method. |
+| Push registration enabled | `Installation.isPushRegistrationEnabled()` | Supported | Exposed as the read-only `Installation.pushRegistrationEnabled` model property. |
 | Push token | `Installation.getPushRegistrationId()` | Requires Adaptation | Read-only sensitive HMS-derived value. Prefer not to expose unless parity requires it; never log it. |
 | Primary device | `Installation.isPrimaryDevice()` / writable installation update property | Requires Adaptation | Server conflict and identity requirements must surface through operation errors. |
 | App version | `Installation.getAppVersion()` | Supported | SDK-populated metadata; read-only. |

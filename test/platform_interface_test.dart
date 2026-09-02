@@ -18,12 +18,6 @@ final class FakePlatform extends InfobipMobileMessagingHuaweiPlatform
   Future<void> initialize({required String applicationCode}) async {
     initializedWith = applicationCode;
   }
-
-  @override
-  Future<bool> isRegistrationEnabled() async => false;
-
-  @override
-  Future<void> setRegistration({required bool enabled}) async {}
 }
 
 void main() {

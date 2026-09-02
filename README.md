@@ -134,7 +134,7 @@ Native listeners are installed once per Flutter engine and removed on detach. Fl
 
 There is no background Dart isolate. The native SDK can continue its own processing and notification display while Flutter is stopped, but no Dart callback executes while the application is terminated.
 
-Android notification permission and Infobip registration are separate concerns. The official plugin's `registerForAndroidRemoteNotifications()` relates to Android remote-notification/permission behavior; it is not equivalent to native `MobileMessaging.setRegistration(...)`. This plugin does not currently expose a notification-permission API, and the host owns the permission declaration, rationale, and request UX.
+Android notification permission and Infobip registration are separate concerns. The official plugin's `registerForAndroidRemoteNotifications()` relates to Android remote-notification/permission behavior; it is not equivalent to changing server-side registration state. This plugin does not currently expose a notification-permission API, and the host owns the permission declaration, rationale, and request UX.
 
 ## User management
 

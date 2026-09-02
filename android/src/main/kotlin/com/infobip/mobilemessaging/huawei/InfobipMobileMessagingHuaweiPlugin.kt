@@ -16,7 +16,6 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import org.infobip.mobile.messaging.MobileMessaging
 import com.infobip.mobilemessaging.huawei.chat.ChatPlatformViewFactory
 import com.infobip.mobilemessaging.huawei.chat.ChatManager
 
@@ -106,8 +105,6 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             ChannelContract.INITIALIZE -> initialize(call, result)
-            ChannelContract.SET_REGISTRATION -> setRegistration(call, result)
-            ChannelContract.IS_REGISTRATION_ENABLED -> isRegistrationEnabled(result)
             ChannelContract.GET_USER -> userManager?.getUser(result::completeUser)
                 ?: detached(result)
             ChannelContract.FETCH_USER -> userManager?.fetchUser(result::completeUser)
@@ -191,53 +188,6 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
 
     private fun detached(result: MethodChannel.Result) {
         result.error("native_error", "Plugin is not attached to an engine", null)
-    }
-
-    private fun setRegistration(call: MethodCall, result: MethodChannel.Result) {
-        if (initializer?.isInitialized != true) {
-            result.error("not_initialized", "Initialize the Infobip SDK first", null)
-            return
-        }
-        val enabled = call.argument<Boolean>(ChannelContract.ENABLED)
-        if (enabled == null) {
-            result.error("invalid_argument", "enabled must be a boolean", null)
-            return
-        }
-        val context = applicationContext ?: run {
-            result.error("native_error", "Plugin is not attached to an engine", null)
-            return
-        }
-        try {
-            MobileMessaging.getInstance(context).setRegistration(enabled) { sdkResult ->
-                mainHandler.post {
-                    if (sdkResult.isSuccess) {
-                        result.success(null)
-                    } else {
-                        result.error("registration_failed", "Push registration update failed", null)
-                    }
-                }
-            }
-        } catch (_: Exception) {
-            result.error("native_error", "Unable to update push registration", null)
-        }
-    }
-
-    private fun isRegistrationEnabled(result: MethodChannel.Result) {
-        if (initializer?.isInitialized != true) {
-            result.error("not_initialized", "Initialize the Infobip SDK first", null)
-            return
-        }
-        val context = applicationContext ?: run {
-            result.error("native_error", "Plugin is not attached to an engine", null)
-            return
-        }
-        try {
-            result.success(
-                MobileMessaging.getInstance(context).installation.isPushRegistrationEnabled,
-            )
-        } catch (_: Exception) {
-            result.error("native_error", "Unable to read push registration state", null)
-        }
     }
 
     private fun initialize(call: MethodCall, result: MethodChannel.Result) {
