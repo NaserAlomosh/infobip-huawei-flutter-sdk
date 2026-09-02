@@ -195,65 +195,53 @@ Native evidence paths are under
 
 ## Chat
 
-### Phase 8 Part 4 compatibility decision
+### Phase 8 final compatibility decision
 
-The official Flutter source and the Huawei 8.14.0 component/model sources were reviewed as source,
-not inferred from README examples. The approved additions remain owned by one
-`InfobipHuaweiChatController` and its PlatformView channel.
+The official Flutter plugin's exported Dart Chat API and Android implementation, and the Huawei
+8.14.0 `MobileChat`, `InAppChatView`, listener, payload, attachment, and thread sources were
+re-inspected for this final audit. “Deferred” below means that Huawei has the native capability but
+a stable portable public Dart contract is not available; it does not mean Huawei lacks support.
 
-| Capability | Official Flutter contract | Huawei 8.14.0 contract | Parity | Decision |
-| --- | --- | --- | --- | --- |
-| Send text | Programmatic Chat send | `InAppChatView.send(MessagePayload)` | Adaptable | Public, view-scoped |
-| Contextual data | Dedicated contextual-data command | `InAppChatView.sendContextualData(...)` | Adaptable | Public, view-scoped |
-| Create thread | No stable compatible public model/result contract | `InAppChatView.createThread(...)` and component callback | Huawei-only at the safe Dart boundary | Omitted |
-| Get threads | No stable compatible typed collection contract | `InAppChatView.getThreads(...)` and component callback | Huawei-only at the safe Dart boundary | Omitted |
-| Get active thread | No stable compatible nullable/error contract | `InAppChatView.getActiveThread(...)` and component callback | Huawei-only at the safe Dart boundary | Omitted |
-| Show thread | No stable compatible identifier/model contract | `InAppChatView.showThread(...)` | Huawei-only at the safe Dart boundary | Omitted |
-| Show thread list | No stable compatible operation contract | `InAppChatView.showThreadList()` | Huawei-only at the safe Dart boundary | Omitted |
-| Programmatic attachments | No portable URI lifecycle contract | `MessagePayload`, `InAppChatAttachment`, `AttachmentSource` | Unsupported safely in this phase | Omitted; native composer remains public UI |
+The inspected official public Chat surface uses the root plugin commands
+`showChat`, `getChatUnreadMessageCount`, `setChatLanguage`, `setChatWidgetTheme`,
+`sendChatMessage`, and `sendChatContextualData`, plus
+`onChatUnreadMessageCounterUpdated`. Its language, widget-theme, message, and contextual-data inputs
+are strings; it does not export a stable thread family or portable programmatic attachment model.
+Its presentation command opens native Chat rather than exporting Huawei's embeddable Android view.
 
-`MessagePayload` is used only as an outbound payload. The bridge maps a validated Dart text payload
-explicitly and never serializes a native object. Contextual data is transported independently and
-is not surfaced as message content. Component operation callbacks are not duplicated into global
-streams. `ChatThread`, `ChatThreadStatus`, and `ChatThreadTopic` therefore remain native-only; no
-partial thread model is published merely to expose verified methods.
+| Capability | Official Flutter API | Huawei 8.14.0 API | Parity | Public decision | Reason |
+| --- | --- | --- | --- | --- | --- |
+| Embedded Chat UI | Full-screen native Chat presentation | `InAppChatActivity`, `InAppChatFragment`, `InAppChatView` | Adaptable | Implemented | A PlatformView embeds `InAppChatView`. |
+| Flutter-owned toolbar | Flutter presentation owns its route chrome | `InAppChatView` has no component toolbar | Adaptable | Implemented | Flutter supplies the `AppBar`; the native view supplies Chat content. |
+| Native composer | Native Chat input | `InAppChatView` input | Exact | Implemented | Native focus, validation, and upload behavior is retained. |
+| Native attachments | Native attachment picker and composer | `InAppChatAttachment`, `AttachmentSource`, native input UI | Exact | Implemented | Supported through the native composer. |
+| Back navigation | Chat navigation command | `navigateBackOrCloseChat()` | Adaptable | Implemented | A view-scoped boolean lets Flutter decide whether to pop. |
+| Unread count | `getChatUnreadMessageCount` | `MobileChat.getUnreadMessagesCounter()` | Adaptable | Implemented | Exposed as global SDK state. |
+| Unread updates | `onChatUnreadMessageCounterUpdated` | `InAppChatEventsListener.onChangedUnreadMessagesCounter(int)` | Adaptable | Implemented | Typed global stream on the shared EventChannel. |
+| Programmatic text send | Programmatic Chat send | `send(MessagePayload)` | Adaptable | Implemented | A typed, validated text-only outbound payload maps to `MessagePayload(text)`. |
+| Contextual data | String contextual-data command | `sendContextualData(String)` | Exact | Implemented | The string remains opaque and distinct from message content. |
+| Programmatic attachments | No stable portable attachment ownership contract | `MessagePayload`, `InAppChatAttachment`, `AttachmentSource` | Huawei-only at the safe Dart boundary | Deferred | Android URI/content ownership and permissions cannot be represented safely by the current public model. |
+| Language | String widget-language setter/getter | `setLanguage(String)`, `getLanguage()` | Exact | Implemented | Forwarded on the attached component; Dart does not cache or claim support for particular identifiers. |
+| Widget theme | String widget-theme setter/getter | `setWidgetTheme(String)`, `getWidgetTheme()` | Exact | Implemented | The value names a configured Infobip widget theme; it is not `ThemeData` or an Android resource. |
+| `createThread` | No stable public thread request/result model | `createThread(...)` and callback | Huawei-only at the safe Dart boundary | Deferred | Native thread types and operation callbacks do not establish portable identity/value semantics. |
+| `getThreads` | No stable typed thread collection contract | `getThreads(...)` and callback | Huawei-only at the safe Dart boundary | Deferred | Returning native objects or untyped maps would make an unstable API. |
+| `getActiveThread` | No stable nullable thread model contract | `getActiveThread(...)` and callback | Huawei-only at the safe Dart boundary | Deferred | Active-thread identity and errors cannot be preserved in the approved API. |
+| `showThread` | No stable thread identifier/model contract | `showThread(...)` | Huawei-only at the safe Dart boundary | Deferred | Dart cannot safely reconstruct the required native thread argument. |
+| `showThreadList` | No equivalent approved operation | `showThreadList()` | Huawei-only | Deferred | Exposing one navigation command without the thread model family would be incomplete. |
+| Chat events | Unread counter update only has approved parity | `InAppChatEventsListener` and component listeners | Adaptable selectively | Implemented for unread only | Operation-result events are not duplicated as streams. |
+| Raw-message events | No stable public received/raw-message model | `onChatRawMessageReceived` | Huawei-only at the safe Dart boundary | Intentionally omitted | Raw internal structures are not exposed as maps or invented Dart messages. |
+| View-specific events | No approved portable surface | View/Fragment `EventsListener` callbacks | Huawei-only | Intentionally omitted | UI callbacks remain owned by the embedded component and are not mixed into global events. |
 
-### Phase 8 Part 3 compatibility decision
+Language and widget theme are component-scoped. Setters complete only after the native call succeeds;
+getters read the attached component. Empty values fail in Dart and at the native boundary. Other
+unsupported identifiers and native fallback behavior are determined by the configured Infobip
+widget and Huawei SDK; this wrapper neither validates an invented locale/theme list nor silently
+caches a fallback. Values can affect the native widget's own subsequent state, but this plugin makes
+no additional persistence guarantee and does not store them for future PlatformViews.
 
-The current official Flutter contract exposes `getChatUnreadMessageCount` and
-`onChatUnreadMessageCounterUpdated`. Huawei 8.14.0 provides the global
-`MobileChat` unread counter and
-`InAppChatEventsListener.onChangedUnreadMessagesCounter(int)`, so these two capabilities are
-adaptable and public through the focused `InfobipMobileMessagingHuawei.chat` facade. The facade
-keeps global SDK state separate from the view-scoped controller and leaves room for later approved
-Chat APIs without expanding the root class.
-
-| Capability | Official Flutter API | Huawei 8.14.0 API | Parity | Decision |
-| --- | --- | --- | --- | --- |
-| Unread count retrieval | `getChatUnreadMessageCount` | `MobileChat.getUnreadMessagesCounter()` | Adaptable | Public |
-| Unread count changes | `onChatUnreadMessageCounterUpdated` | `InAppChatEventsListener.onChangedUnreadMessagesCounter(int)` | Adaptable | Public |
-| Chat availability | No public equivalent | `MobileChat` configuration/availability callbacks | Huawei-only | Omitted |
-| Loading finished | No public equivalent | Chat/component event callback | Huawei-only | Omitted |
-| Connection resumed/paused | No public equivalent | Chat/component event callbacks | Huawei-only | Omitted |
-| Chat sent | No stable public event model | `InAppChatEventsListener` callback | Huawei-only | Omitted |
-| Thread created/threads received/active thread received | Thread APIs are outside this phase | `InAppChatEventsListener` callbacks | Adaptable later | Omitted |
-| Thread shown/thread list shown | No approved global equivalent | Fragment/View callbacks | Huawei-only, view-specific | Omitted |
-| Raw message received | No stable public message stream | Fragment/View `EventsListener` callback | Unsupported safely | Omitted |
-| View changed/controls visibility changed | No global equivalent | Fragment/View `EventsListener` callbacks | Huawei-only, view-specific | Omitted |
-| URL interacted/attachment preview opened | No approved global equivalent | Fragment/View `EventsListener` callbacks | Huawei-only, view-specific | Omitted |
-| Exit Chat pressed | No approved global equivalent | Fragment/View `EventsListener` callback | Huawei-only, view-specific | Omitted |
-
-Unread updates contain only `{count: int}` in the versioned shared event envelope. They have no
-replay buffer and preserve duplicate native callbacks. The listener is engine-global, registered
-once after successful core initialization, and removed on engine detach. View-specific callbacks
-remain on the PlatformView boundary if they are approved in a later phase; they are not mixed into
-the global event stream or `InfobipHuaweiChatView.onError`.
-
-Huawei Chat 8.14.0 is a **native UI/web-chat integration with reusable UI components and public
-component commands**. It is not limited to a full-screen Activity: `InAppChatActivity`,
-`InAppChatFragment`, and `InAppChatView` provide Activity, Fragment, and directly embeddable View
-integration respectively. It is still not a complete headless Chat client because history, receipts,
-and a fully typed public message stream are not exposed independently of those components.
+Huawei Chat 8.14.0 is a native UI/web-chat integration with reusable UI components and public
+component commands. It is not a complete headless Chat client: history, receipts, and a stable typed
+public received-message stream are not available independently of those components.
 
 ### UI integration and configuration
 
@@ -269,12 +257,11 @@ and a fully typed public message stream are not exposed independently of those c
 | Close/hide chat | Component navigation plus Activity/Fragment/View lifecycle | Requires Adaptation | Activity finish, Fragment removal, and PlatformView disposal are distinct operations and must run on the main thread. |
 | Chat authentication/session | SDK personalization plus chat session managed internally | Requires Adaptation | No Flutter-accessible credential/session token should be invented. User identity changes must synchronize with core personalization. |
 | Get unread count | Chat unread-message counter getter/callback | Requires Adaptation | Async/cached result maps to a future; unavailable/offline states must not collapse to zero. |
-| Listen for unread count | `InAppChatEventsListener.onChangedUnreadMessagesCounter(int)` | Requires Adaptation | EventChannel is a possible later transport; unregister the listener at engine detach. |
-| Chat configuration/theme | Component widget language/theme commands plus Android resources | Requires Adaptation | Runtime widget language/theme can be forwarded, while Android resource configuration remains host-owned. |
+| Listen for unread count | `InAppChatEventsListener.onChangedUnreadMessagesCounter(int)` | Requires Adaptation | Implemented on the shared EventChannel; the listener is removed at engine detach. |
+| Chat configuration/theme | Component widget language/theme commands plus Android resources | Requires Adaptation | Runtime widget language/theme strings are implemented; Android resource configuration remains host-owned. |
 | Multiple Flutter engines | Singleton chat SDK plus per-engine listener/UI ownership | Requires Adaptation | Enforce one active presentation/listener owner or provide deterministic arbitration. |
 
-`withToolbar` and `withInput` establish architectural feasibility; they do not add Flutter controls in
-this phase. In particular, a custom Flutter input should not be the default merely because it is
+`withToolbar` and `withInput` establish architectural feasibility; they do not add Flutter controls to this wrapper. In particular, a custom Flutter input should not be the default merely because it is
 possible.
 
 ### Verified component commands
@@ -286,16 +273,16 @@ the compatibility conclusion.
 
 | Command | Exact 8.14.0 owner | Status | Flutter compatibility note |
 | --- | --- | --- | --- |
-| `send(MessagePayload)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Text and supported payload/attachment forms can be sent through the UI component. A later bridge must convert a deliberate Flutter model to `MessagePayload`; this is not a standalone headless repository API. |
+| `send(MessagePayload)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Text and supported payload/attachment forms can be sent through the UI component. The implemented bridge converts the deliberate text-only Flutter payload to `MessagePayload`; this is not a standalone headless repository API. |
 | `sendContextualData(...)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Contextual data is distinct from a Chat message and needs input/result conversion. |
 | `createThread(...)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Thread request/model and asynchronous result conversion are required. |
 | `getThreads(...)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Exposes threads through the component; it is not a continuously synchronized Flutter repository. |
 | `getActiveThread(...)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | The returned active-thread model/callback must be converted. |
 | `showThread(...)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Enables programmatic thread selection in an embedded Chat instance. |
-| `showThreadList()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Suitable for a future Flutter toolbar action. |
+| `showThreadList()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Deferred with the rest of the thread model family. |
 | `navigateBackOrCloseChat()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Suitable for forwarding Android/Flutter back; the host must honor the component's navigation result. |
-| `setLanguage(...)` / `getLanguage()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Convert and validate the widget language without claiming a global Flutter locale contract. |
-| `setWidgetTheme(...)` / `getWidgetTheme()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | The native widget-theme representation needs an Android-side mapping; it is not a portable resource identifier. |
+| `setLanguage(...)` / `getLanguage()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Implemented as a validated component-scoped string without claiming a global Flutter locale contract. |
+| `setWidgetTheme(...)` / `getWidgetTheme()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Implemented as the native string widget-theme identifier; it is not a Flutter or Android resource theme. |
 
 These commands correct the earlier conclusions that programmatic sending and multi-thread Chat were
 unavailable. They are component-scoped capabilities and therefore remain **Requires Adaptation**,
@@ -322,8 +309,7 @@ callbacks in 8.14.0:
 - `onChatAttachmentPreviewOpened`
 - `onExitChatPressed`
 
-A future EventChannel could adapt selected callbacks after listener registration, lifecycle, and
-payload ownership are designed. `onChatRawMessageReceived` is verified, but “raw” must not be
+Additional callbacks remain intentionally omitted unless a stable public model and non-duplicative lifecycle contract are established. `onChatRawMessageReceived` is verified, but “raw” must not be
 misrepresented as a stable, fully typed stream of all public Chat messages. Likewise, sent/thread
 callbacks are operation and UI events rather than a substitute for message history pagination.
 
@@ -332,7 +318,7 @@ callbacks are operation and UI events rather than a substitute for message histo
 | Attachment capability | Huawei Chat 8.14.0 evidence | Status | Boundary |
 | --- | --- | --- | --- |
 | Attachments in native Chat UI | `InAppChatAttachment` and `AttachmentSource` in the Chat module | Supported | The Infobip input/UI owns selection, upload, rendering, and its configured sources. |
-| Attachment preview interception | `onChatAttachmentPreviewOpened` on both component event listeners | Requires Adaptation | Flutter could later observe/intercept preview interaction after native payload conversion and lifecycle rules are defined. |
+| Attachment preview interception | `onChatAttachmentPreviewOpened` on both component event listeners | Requires Adaptation | Intentionally omitted because native payload conversion and preview ownership are not stable public contracts. |
 | Programmatic attachment sending | `send(MessagePayload)` with supported message-payload attachment data | Requires Adaptation | Requires a safe Flutter-to-native payload/file/URI contract; availability is not equivalent to a general headless attachment service. |
 | Fully custom Flutter attachment workflow | No independent public upload/download/history layer | Unsupported | Selection permissions, URI access, upload progress, download caching, and history cannot be claimed from the component APIs alone. |
 | Message history/pagination | No independent public history API | Unsupported | Do not scrape the native/web UI. |
@@ -358,7 +344,7 @@ sources containing `MessagePayload`, `InAppChatAttachment`, and `AttachmentSourc
 | Inbox | `Inbox` | Requires Adaptation | Result container with counts, messages and paging metadata. |
 | Inbox message | `InboxMessage` | Requires Adaptation | Custom Dart model, date/action/custom payload conversion. |
 | Inbox filter | `InboxFilterOptions` | Requires Adaptation | Validate topics, date order and paging before native call. |
-| Chat message payload | `MessagePayload` accepted by embedded Chat components | Requires Adaptation | A future explicit mapper is required; this send payload is not a complete received-message/history model. |
+| Chat message payload | `MessagePayload` accepted by embedded Chat components | Requires Adaptation | The explicit text mapper is implemented; the send payload is not a complete received-message/history model. |
 | Chat attachment | `InAppChatAttachment` / `AttachmentSource` | Requires Adaptation | Native UI and payload-related attachment capability exists, but a safe Flutter file/URI model and lifecycle contract must be designed. |
 | Chat connection state | Listener-specific native state/callback | Requires Adaptation | Custom finite enum with unknown fallback. |
 | Native errors | `MobileMessagingError`, callback error values, HMS exceptions | Requires Adaptation | Stable Dart exception/code/details envelope. |

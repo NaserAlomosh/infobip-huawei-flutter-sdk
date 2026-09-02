@@ -59,13 +59,19 @@ Background Dart isolate delivery is unsupported by this wrapper and is not claim
 - [x] Use typed Huawei 8.14.0 Inbox APIs, filters, counters, and message mapping
 - [x] Keep Huawei native Inbox events internal because official Flutter event parity is not established
 
-## Phase 8 - Chat
+## Phase 8 - Chat: COMPLETE
 
 - [x] Implement embedded `InAppChatView` and view-scoped back controller
 - [x] Implement approved view-scoped text send and contextual-data APIs
 - [x] Evaluate and omit thread/programmatic-attachment APIs without a stable portable contract
 - [x] Implement global Chat unread-count retrieval and updates
-- [ ] Implement later approved Chat models and events
+- [x] Complete the final language, widget-theme, event, lifecycle, error, API, and documentation audit
+
+Deferred native capabilities (not Phase 8 blockers):
+
+- Multi-thread commands and models: Huawei exposes component APIs, but the official Flutter surface does not establish a stable portable thread contract.
+- Programmatic attachments: Huawei exposes native attachment types, but Android URI ownership and permissions do not have a safe portable contract.
+- Raw-message and additional component events: intentionally omitted without stable public models or official parity.
 
 ## Phase 9 - Models, Mappers, and Error Handling
 

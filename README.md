@@ -43,7 +43,19 @@ Initialize the core SDK successfully before constructing Chat, then place the wi
 final chatController = InfobipHuaweiChatController();
 
 Scaffold(
-  appBar: AppBar(title: const Text('Chat'), actions: [businessAction]),
+  appBar: AppBar(
+    title: const Text('Support'),
+    leading: IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () async {
+        final handled =
+            await chatController.navigateBackOrCloseChat();
+        if (!handled && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+    ),
+  ),
   body: InfobipHuaweiChatView(
     controller: chatController,
     onError: (error) {
@@ -92,11 +104,11 @@ the stream for future updates. Malformed and negative updates are ignored withou
 stream. One global Huawei listener is installed after initialization and removed at engine detach;
 creating or disposing embedded views does not register listeners.
 
-No other Chat events are public in this phase. Availability has no matching approved official
+No other Chat events are public. Availability has no matching approved official
 Flutter API. Thread, raw-message, loading/connection, and component UI callbacks are omitted:
 thread/raw events lack stable public models, while view and control callbacks belong to a specific
 embedded component rather than global Chat state. Native attachments remain available from the
-native composer; Android resource theme configuration remains host-native configuration.
+native composer.
 
 The controller also exposes the component-scoped text and contextual-data commands:
 
@@ -105,6 +117,12 @@ await chatController.send(
   const InfobipHuaweiChatMessagePayload.text('Hello'),
 );
 await chatController.sendContextualData('{"source":"support"}');
+
+await chatController.setLanguage('configured-language');
+final language = await chatController.getLanguage();
+
+await chatController.setWidgetTheme('configured-theme');
+final widgetTheme = await chatController.getWidgetTheme();
 ```
 
 `InfobipHuaweiChatMessagePayload` is deliberately a send payload and not a received-message model.
@@ -115,8 +133,15 @@ message, is treated as opaque text, and is never included in plugin logs or erro
 commands require a live attached view and otherwise fail with `chat_unavailable`; invalid empty
 values fail with `invalid_argument` at the native boundary (and `ArgumentError` in Dart).
 
+Language and widget theme are strings because both the official Flutter API and Huawei 8.14.0 use
+string identifiers. They are forwarded without an invented locale or theme enumeration: supported
+values and fallback behavior are defined by the configured Infobip widget. These operations apply
+to the attached native component. Dart does not persist them, apply them to future views, or map
+Flutter's `Theme.of(context)` to the native widget. A widget theme is not Android `Theme`, a resource
+ID, or Flutter `ThemeData`.
+
 Thread commands remain intentionally omitted. Huawei 8.14.0 exposes them on the embedded component,
-but the inspected official Flutter contract does not provide the stable thread models and operation
+but the inspected official Flutter source does not provide the stable thread models and operation
 result contract needed for a compatible permanent Dart API. In particular, this plugin does not
 claim headless history access or cache raw native thread objects.
 

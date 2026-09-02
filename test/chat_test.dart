@@ -26,6 +26,14 @@ void main() {
       controller.sendContextualData('{"source":"support"}'),
       throwsA(isA<PlatformException>()),
     );
+    await expectLater(
+      controller.getLanguage(),
+      throwsA(isA<PlatformException>()),
+    );
+    await expectLater(
+      controller.getWidgetTheme(),
+      throwsA(isA<PlatformException>()),
+    );
   });
 
   test('text payload rejects empty text', () {
@@ -181,6 +189,56 @@ void main() {
       expect(calls.last.arguments, <String, Object>{
         'data': '{"source":"support"}',
       });
+    });
+
+    testWidgets('controller sets and gets the component language', (
+      tester,
+    ) async {
+      final calls = <MethodCall>[];
+      messenger.setMockMethodCallHandler(const MethodChannel(channelName), (
+        call,
+      ) async {
+        calls.add(call);
+        return call.method == 'getLanguage' ? 'en' : null;
+      });
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await controller.setLanguage('en');
+
+      expect(calls.last.method, 'setLanguage');
+      expect(calls.last.arguments, <String, Object>{'language': 'en'});
+      expect(await controller.getLanguage(), 'en');
+    });
+
+    testWidgets('controller sets and gets the widget theme', (tester) async {
+      final calls = <MethodCall>[];
+      messenger.setMockMethodCallHandler(const MethodChannel(channelName), (
+        call,
+      ) async {
+        calls.add(call);
+        return call.method == 'getWidgetTheme' ? 'support' : null;
+      });
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await controller.setWidgetTheme('support');
+
+      expect(calls.last.method, 'setWidgetTheme');
+      expect(calls.last.arguments, <String, Object>{
+        'widgetTheme': 'support',
+      });
+      expect(await controller.getWidgetTheme(), 'support');
+    });
+
+    testWidgets('controller validates language and theme values', (
+      tester,
+    ) async {
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await expectLater(controller.setLanguage(' '), throwsArgumentError);
+      await expectLater(controller.setWidgetTheme(' '), throwsArgumentError);
     });
 
     testWidgets('controller command forwards a native error', (tester) async {

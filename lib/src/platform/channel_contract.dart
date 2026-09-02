@@ -6,12 +6,17 @@ abstract final class ChannelContract {
   static const chatNavigateBack = 'navigateBackOrCloseChat';
   static const chatSend = 'send';
   static const chatSendContextualData = 'sendContextualData';
+  static const chatSetLanguage = 'setLanguage';
+  static const chatGetLanguage = 'getLanguage';
+  static const chatSetWidgetTheme = 'setWidgetTheme';
+  static const chatGetWidgetTheme = 'getWidgetTheme';
   static const chatViewReady = 'viewReady';
   static const chatOnError = 'onError';
   static const code = 'code';
   static const message = 'message';
   static const text = 'text';
   static const data = 'data';
+  static const widgetTheme = 'widgetTheme';
   static const initialize = 'initialize';
   static const applicationCode = 'applicationCode';
   static const getUser = 'getUser';

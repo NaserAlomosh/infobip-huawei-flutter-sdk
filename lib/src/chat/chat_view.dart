@@ -92,6 +92,70 @@ final class InfobipHuaweiChatController {
     );
   }
 
+  /// Sets the language used by this embedded Chat component.
+  ///
+  /// The value is a language identifier supported by the configured Infobip
+  /// widget. It is forwarded to the native SDK and is not persisted by Dart.
+  Future<void> setLanguage(String language) async {
+    if (language.trim().isEmpty) {
+      throw ArgumentError.value(language, 'language', 'must not be empty');
+    }
+    final bridge = _requireBridge();
+    await bridge.channel.invokeMethod<void>(
+      ChannelContract.chatSetLanguage,
+      <String, Object>{ChannelContract.language: language},
+    );
+  }
+
+  /// Returns the language currently reported by this Chat component.
+  Future<String> getLanguage() async {
+    final bridge = _requireBridge();
+    final language = await bridge.channel.invokeMethod<String>(
+      ChannelContract.chatGetLanguage,
+    );
+    if (language == null) {
+      throw PlatformException(
+        code: 'native_error',
+        message: 'Chat language is unavailable',
+      );
+    }
+    return language;
+  }
+
+  /// Sets the configured widget theme name for this Chat component.
+  ///
+  /// This is an Infobip widget theme identifier, not a Flutter [ThemeData]
+  /// value or an Android resource identifier.
+  Future<void> setWidgetTheme(String widgetTheme) async {
+    if (widgetTheme.trim().isEmpty) {
+      throw ArgumentError.value(
+        widgetTheme,
+        'widgetTheme',
+        'must not be empty',
+      );
+    }
+    final bridge = _requireBridge();
+    await bridge.channel.invokeMethod<void>(
+      ChannelContract.chatSetWidgetTheme,
+      <String, Object>{ChannelContract.widgetTheme: widgetTheme},
+    );
+  }
+
+  /// Returns the widget theme name currently reported by this component.
+  Future<String> getWidgetTheme() async {
+    final bridge = _requireBridge();
+    final widgetTheme = await bridge.channel.invokeMethod<String>(
+      ChannelContract.chatGetWidgetTheme,
+    );
+    if (widgetTheme == null) {
+      throw PlatformException(
+        code: 'native_error',
+        message: 'Chat widget theme is unavailable',
+      );
+    }
+    return widgetTheme;
+  }
+
   /// Lets Chat consume its internal back navigation.
   ///
   /// Returns `false` when the controller is not attached. When it returns
