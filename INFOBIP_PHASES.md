@@ -92,6 +92,11 @@ breaking redesign and is reserved for a future release decision.
 - [x] Integrate completed feature areas into the example application
 - [x] Demonstrate supported workflows without placeholder credentials
 
+## Phase 10.5 - Native Android Compilation Stabilization
+
+- [ ] Compile the Android plugin against Huawei Mobile Messaging SDK 8.14.0
+- [ ] Build the example debug APK
+
 ## Phase 11 - Testing and Device Validation
 
 - [ ] Add Dart, platform-channel, and native Android tests

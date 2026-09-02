@@ -38,15 +38,18 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         applicationContext = binding.applicationContext
         initializer = MobileMessagingInitializer(binding.applicationContext)
-        userManager = UserManager(binding.applicationContext) {
-            initializer?.isInitialized == true
-        }
-        installationManager = InstallationManager(binding.applicationContext) {
-            initializer?.isInitialized == true
-        }
-        inboxManager = InboxManager(binding.applicationContext) {
-            initializer?.isInitialized == true
-        }
+        userManager = UserManager(
+            context = binding.applicationContext,
+            isInitialized = { initializer?.isInitialized == true },
+        )
+        installationManager = InstallationManager(
+            context = binding.applicationContext,
+            isInitialized = { initializer?.isInitialized == true },
+        )
+        inboxManager = InboxManager(
+            context = binding.applicationContext,
+            isInitialized = { initializer?.isInitialized == true },
+        )
         eventBridge = NativeEventBridge().also { it.register() }
         chatManager = ChatManager(
             binding.applicationContext,
@@ -105,37 +108,45 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             ChannelContract.INITIALIZE -> initialize(call, result)
-            ChannelContract.GET_USER -> userManager?.getUser(result::completeUser)
+            ChannelContract.GET_USER -> userManager?.getUser { value, failure ->
+                result.completeUser(value, failure)
+            }
                 ?: detached(result)
-            ChannelContract.FETCH_USER -> userManager?.fetchUser(result::completeUser)
+            ChannelContract.FETCH_USER -> userManager?.fetchUser { value, failure ->
+                result.completeUser(value, failure)
+            }
                 ?: detached(result)
             ChannelContract.SAVE_USER -> userManager?.saveUser(
                 call.argument<Any?>(ChannelContract.USER),
-                result::completeUser,
+                { value, failure -> result.completeUser(value, failure) },
             ) ?: detached(result)
             ChannelContract.PERSONALIZE -> personalize(call, result)
             ChannelContract.DEPERSONALIZE -> userManager?.depersonalize { _, failure ->
                 if (failure == null) result.success(null)
                 else result.error(failure.code, failure.message, null)
             } ?: detached(result)
-            ChannelContract.GET_INSTALLATION -> installationManager?.getInstallation(result::completeInstallation)
+            ChannelContract.GET_INSTALLATION -> installationManager?.getInstallation { value, failure ->
+                result.completeInstallation(value, failure)
+            }
                 ?: detached(result)
-            ChannelContract.FETCH_INSTALLATION -> installationManager?.fetchInstallation(result::completeInstallation)
+            ChannelContract.FETCH_INSTALLATION -> installationManager?.fetchInstallation { value, failure ->
+                result.completeInstallation(value, failure)
+            }
                 ?: detached(result)
             ChannelContract.SAVE_INSTALLATION -> installationManager?.saveInstallation(
                 call.argument<Any?>(ChannelContract.INSTALLATION),
-                result::completeInstallation,
+                { value, failure -> result.completeInstallation(value, failure) },
             ) ?: detached(result)
             ChannelContract.FETCH_INBOX -> inboxManager?.fetch(
                 call.argument<Any?>(ChannelContract.EXTERNAL_USER_ID),
                 call.argument<Any?>(ChannelContract.JWT),
                 call.argument<Any?>(ChannelContract.OPTIONS),
-                result::completeInbox,
+                { value, failure -> result.completeInbox(value, failure) },
             ) ?: detached(result)
             ChannelContract.SET_INBOX_MESSAGES_SEEN -> inboxManager?.setSeen(
                 call.argument<Any?>(ChannelContract.EXTERNAL_USER_ID),
                 call.argument<Any?>(ChannelContract.MESSAGE_IDS),
-                result::completeInbox,
+                { value, failure -> result.completeInbox(value, failure) },
             ) ?: detached(result)
             ChannelContract.GET_CHAT_UNREAD_MESSAGE_COUNT ->
                 chatManager?.getUnreadMessageCount { count, failure ->
@@ -158,7 +169,7 @@ class InfobipMobileMessagingHuaweiPlugin : FlutterPlugin,
             call.argument<Any?>(ChannelContract.USER_IDENTITY),
             call.argument<Any?>(ChannelContract.USER_ATTRIBUTES),
             force,
-            result::completeUser,
+            { value, failure -> result.completeUser(value, failure) },
         ) ?: detached(result)
     }
 
