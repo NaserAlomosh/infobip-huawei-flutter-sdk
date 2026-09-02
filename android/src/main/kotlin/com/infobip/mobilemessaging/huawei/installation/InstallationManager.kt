@@ -5,7 +5,8 @@ import android.os.Handler
 import android.os.Looper
 import org.infobip.mobile.messaging.Installation
 import org.infobip.mobile.messaging.MobileMessaging
-import org.infobip.mobile.messaging.MobileMessagingError
+import org.infobip.mobile.messaging.mobileapi.MobileMessagingError
+import org.infobip.mobile.messaging.mobileapi.Result
 
 internal class InstallationManager(
     context: Context,
@@ -60,9 +61,10 @@ internal class InstallationManager(
     }
 
     private fun installationListener(callback: Callback, code: String, message: String) =
-        object : MobileMessaging.ResultListener<Installation> {
-            override fun onResult(result: Installation?, error: MobileMessagingError?) {
-                if (error == null && result != null) complete(callback, result)
+        object : MobileMessaging.ResultListener<Installation>() {
+            override fun onResult(result: Result<Installation, MobileMessagingError>) {
+                val installation = result.data
+                if (result.isSuccess && installation != null) complete(callback, installation)
                 else fail(callback, code, message)
             }
         }

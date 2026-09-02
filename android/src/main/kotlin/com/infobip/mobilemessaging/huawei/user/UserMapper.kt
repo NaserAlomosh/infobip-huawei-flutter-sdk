@@ -5,7 +5,6 @@ import org.infobip.mobile.messaging.User
 import org.infobip.mobile.messaging.UserAttributes
 import org.infobip.mobile.messaging.UserIdentity
 import org.infobip.mobile.messaging.CustomAttributeValue
-import org.infobip.mobile.messaging.Gender
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.Date
@@ -86,10 +85,10 @@ internal object UserMapper {
         return values.filterIsInstance<String>()
     }
 
-    private fun gender(value: Any?): Gender? = when (value) {
+    private fun gender(value: Any?): UserAttributes.Gender? = when (value) {
         null -> null
-        "male" -> Gender.Male
-        "female" -> Gender.Female
+        "male" -> UserAttributes.Gender.Male
+        "female" -> UserAttributes.Gender.Female
         "unknown" -> null
         else -> throw IllegalArgumentException("gender is invalid")
     }
@@ -108,7 +107,7 @@ internal object UserMapper {
             throw IllegalArgumentException("customAttributes keys must be strings")
         }
         return map.entries.associate { (key, item) ->
-            key as String to CustomAttributeValue(nativeCustomValue(item))
+            key as String to nativeCustomValue(item)
         }
     }
 
@@ -116,10 +115,11 @@ internal object UserMapper {
         value: Map<String, CustomAttributeValue>?,
     ): Map<String, Any?>? = value?.mapValues { channelValue(it.value) }
 
-    private fun nativeCustomValue(value: Any?): Any? = when (value) {
-        null, is String, is Boolean, is Number -> value
-        is List<*> -> value.map(::nativeCustomValue)
-        is Map<*, *> -> taggedDate(value)
+    private fun nativeCustomValue(value: Any?): CustomAttributeValue = when (value) {
+        is String -> CustomAttributeValue(value)
+        is Boolean -> CustomAttributeValue(value)
+        is Number -> CustomAttributeValue(value)
+        is Map<*, *> -> CustomAttributeValue(CustomAttributeValue.DateTime(taggedDate(value)))
         else -> throw IllegalArgumentException("customAttributes contains an unsupported value")
     }
 
@@ -139,7 +139,14 @@ internal object UserMapper {
 
     internal fun channelValue(value: Any?): Any? = when (value) {
         null, is String, is Boolean, is Number -> value
-        is CustomAttributeValue -> channelValue(value.value)
+        is CustomAttributeValue -> when (value.type) {
+            CustomAttributeValue.Type.String -> value.stringValue()
+            CustomAttributeValue.Type.Number -> value.numberValue()
+            CustomAttributeValue.Type.Date -> taggedChannelDate(value.dateValue())
+            CustomAttributeValue.Type.DateTime -> taggedChannelDate(value.dateTimeValue().date)
+            CustomAttributeValue.Type.Boolean -> value.booleanValue()
+            CustomAttributeValue.Type.CustomList -> null
+        }
         is Date -> mapOf(
             ChannelContract.CUSTOM_VALUE_TYPE to ChannelContract.CUSTOM_DATE_TYPE,
             ChannelContract.CUSTOM_VALUE to value.toInstant().toString(),
@@ -152,4 +159,9 @@ internal object UserMapper {
         }
         else -> throw IllegalArgumentException("Unsupported native user payload")
     }
+
+    private fun taggedChannelDate(value: Date): Map<String, String> = mapOf(
+        ChannelContract.CUSTOM_VALUE_TYPE to ChannelContract.CUSTOM_DATE_TYPE,
+        ChannelContract.CUSTOM_VALUE to value.toInstant().toString(),
+    )
 }

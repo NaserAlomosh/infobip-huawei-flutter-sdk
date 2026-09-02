@@ -3,7 +3,7 @@ package com.infobip.mobilemessaging.huawei.core
 import android.app.Application
 import android.content.Context
 import org.infobip.mobile.messaging.MobileMessaging
-import org.infobip.mobile.messaging.MobileMessagingError
+import org.infobip.mobile.messaging.mobileapi.InternalSdkError
 
 internal class MobileMessagingInitializer(context: Context) {
     private val application = context.applicationContext as Application
@@ -16,7 +16,7 @@ internal class MobileMessagingInitializer(context: Context) {
                         complete(null)
                     }
 
-                    override fun onError(error: MobileMessagingError) {
+                    override fun onError(error: InternalSdkError, errorCode: Int?) {
                         complete(
                             InitializationError(
                                 "initialization_failed",

@@ -7,7 +7,7 @@ internal object ChatMapper {
     fun messagePayload(arguments: Any?): MessagePayload {
         val text = value(arguments, ChannelContract.TEXT)
         require(text.isNotBlank()) { "Message text must not be empty" }
-        return MessagePayload(text)
+        return MessagePayload.Basic(text)
     }
 
     fun contextualData(arguments: Any?): String {
