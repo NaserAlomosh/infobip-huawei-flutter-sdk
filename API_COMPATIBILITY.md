@@ -221,7 +221,7 @@ Its presentation command opens native Chat rather than exporting Huawei's embedd
 | Programmatic text send | Programmatic Chat send | `send(MessagePayload)` | Adaptable | Implemented | A typed, validated text-only outbound payload maps to `MessagePayload(text)`. |
 | Contextual data | String contextual-data command | `sendContextualData(String)` | Exact | Implemented | The string remains opaque and distinct from message content. |
 | Programmatic attachments | No stable portable attachment ownership contract | `MessagePayload`, `InAppChatAttachment`, `AttachmentSource` | Huawei-only at the safe Dart boundary | Deferred | Android URI/content ownership and permissions cannot be represented safely by the current public model. |
-| Language | String widget-language setter/getter | `setLanguage(String)`, `getLanguage()` | Exact | Implemented | Forwarded on the attached component; Dart does not cache or claim support for particular identifiers. |
+| Language | `LivechatWidgetLanguage` setter/getter | `setLanguage(String)`, `getLanguage()` | Requires Adaptation | Implemented | Dart widget codes are resolved with `LivechatWidgetLanguage.findLanguage(...)`; getters return `widgetCode`. Unsupported codes fail with `invalid_argument`. |
 | Widget theme | String widget-theme setter/getter | `setWidgetTheme(String)`, `getWidgetTheme()` | Exact | Implemented | The value names a configured Infobip widget theme; it is not `ThemeData` or an Android resource. |
 | `createThread` | No stable public thread request/result model | `createThread(...)` and callback | Huawei-only at the safe Dart boundary | Deferred | Native thread types and operation callbacks do not establish portable identity/value semantics. |
 | `getThreads` | No stable typed thread collection contract | `getThreads(...)` and callback | Huawei-only at the safe Dart boundary | Deferred | Returning native objects or untyped maps would make an unstable API. |
@@ -281,7 +281,7 @@ the compatibility conclusion.
 | `showThread(...)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Enables programmatic thread selection in an embedded Chat instance. |
 | `showThreadList()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Deferred with the rest of the thread model family. |
 | `navigateBackOrCloseChat()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Suitable for forwarding Android/Flutter back; the host must honor the component's navigation result. |
-| `setLanguage(...)` / `getLanguage()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Implemented as a validated component-scoped string without claiming a global Flutter locale contract. |
+| `setLanguage(...)` / `getLanguage()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Implemented as a component-scoped widget-code string mapped to and from Huawei's `LivechatWidgetLanguage`. |
 | `setWidgetTheme(...)` / `getWidgetTheme()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Implemented as the native string widget-theme identifier; it is not a Flutter or Android resource theme. |
 
 These commands correct the earlier conclusions that programmatic sending and multi-thread Chat were

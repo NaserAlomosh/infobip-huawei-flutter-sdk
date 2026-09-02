@@ -66,6 +66,7 @@ Background Dart isolate delivery is unsupported by this wrapper and is not claim
 - [x] Evaluate and omit thread/programmatic-attachment APIs without a stable portable contract
 - [x] Implement global Chat unread-count retrieval and updates
 - [x] Complete the final language, widget-theme, event, lifecycle, error, API, and documentation audit
+- [x] Map portable Chat widget language codes to and from Huawei `LivechatWidgetLanguage`
 
 Deferred native capabilities (not Phase 8 blockers):
 

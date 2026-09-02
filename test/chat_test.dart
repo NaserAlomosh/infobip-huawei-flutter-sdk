@@ -199,16 +199,16 @@ void main() {
         call,
       ) async {
         calls.add(call);
-        return call.method == 'getLanguage' ? 'en' : null;
+        return call.method == 'getLanguage' ? 'en-US' : null;
       });
       final controller = InfobipHuaweiChatController();
       await mountView(tester, controller: controller);
 
-      await controller.setLanguage('en');
+      await controller.setLanguage('en-US');
 
       expect(calls.last.method, 'setLanguage');
-      expect(calls.last.arguments, <String, Object>{'language': 'en'});
-      expect(await controller.getLanguage(), 'en');
+      expect(calls.last.arguments, <String, Object>{'language': 'en-US'});
+      expect(await controller.getLanguage(), 'en-US');
     });
 
     testWidgets('controller sets and gets the widget theme', (tester) async {
@@ -238,6 +238,7 @@ void main() {
       await mountView(tester, controller: controller);
 
       await expectLater(controller.setLanguage(' '), throwsArgumentError);
+      await expectLater(controller.setLanguage(''), throwsArgumentError);
       await expectLater(controller.setWidgetTheme(' '), throwsArgumentError);
     });
 
