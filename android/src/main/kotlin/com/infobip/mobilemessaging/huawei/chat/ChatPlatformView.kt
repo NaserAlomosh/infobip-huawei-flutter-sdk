@@ -55,8 +55,39 @@ internal class ChatPlatformView(
             ChannelContract.CHAT_NAVIGATE_BACK -> result.success(view.navigateBackOrCloseChat())
             ChannelContract.CHAT_SEND -> handleSend(call, result, view)
             ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, view)
+            ChannelContract.CHAT_SET_LANGUAGE -> handleStringArgument(
+                call,
+                result,
+                view,
+                ChannelContract.LANGUAGE,
+            ) { view.setLanguage(it) }
+            ChannelContract.CHAT_GET_LANGUAGE -> readFromView(view, result) { view.getLanguage() }
+            ChannelContract.CHAT_SET_WIDGET_THEME -> handleStringArgument(
+                call,
+                result,
+                view,
+                ChannelContract.WIDGET_THEME,
+            ) { view.setWidgetTheme(it) }
+            ChannelContract.CHAT_GET_WIDGET_THEME -> readFromView(view, result) {
+                view.getWidgetTheme()
+            }
             else -> result.notImplemented()
         }
+    }
+
+    private fun handleStringArgument(
+        call: MethodCall,
+        result: MethodChannel.Result,
+        view: InAppChatView,
+        key: String,
+        operation: (String) -> Unit,
+    ) {
+        val value = (call.arguments as? Map<*, *>)?.get(key) as? String
+        if (value.isNullOrBlank()) {
+            result.error("invalid_argument", "$key must not be empty", null)
+            return
+        }
+        runOnView(view, result) { operation(value) }
     }
 
     private fun handleSend(call: MethodCall, result: MethodChannel.Result, view: InAppChatView) {
@@ -96,6 +127,24 @@ internal class ChatPlatformView(
             try {
                 operation()
                 result.success(null)
+            } catch (_: RuntimeException) {
+                result.error("native_error", "Chat operation failed", null)
+            }
+        }
+    }
+
+    private fun readFromView(
+        view: InAppChatView,
+        result: MethodChannel.Result,
+        operation: () -> String,
+    ) {
+        view.post {
+            if (chatView !== view) {
+                result.error("chat_unavailable", "Chat view is unavailable", null)
+                return@post
+            }
+            try {
+                result.success(operation())
             } catch (_: RuntimeException) {
                 result.error("native_error", "Chat operation failed", null)
             }

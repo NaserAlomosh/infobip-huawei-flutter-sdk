@@ -339,6 +339,10 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  static const _chatLanguage = String.fromEnvironment('INFOBIP_CHAT_LANGUAGE');
+  static const _chatWidgetTheme = String.fromEnvironment(
+    'INFOBIP_CHAT_WIDGET_THEME',
+  );
   final _controller = InfobipHuaweiChatController();
   InfobipHuaweiChatError? _error;
   StreamSubscription<int>? _unreadSubscription;
@@ -386,6 +390,32 @@ class _ChatScreenState extends State<ChatScreen> {
         leading: BackButton(onPressed: _back),
         title: Text('Support · unread: ${_unreadCount ?? '—'}'),
         actions: [
+          IconButton(
+            onPressed: () => _controller.send(
+              const InfobipHuaweiChatMessagePayload.text('Hello'),
+            ),
+            icon: const Icon(Icons.send_outlined),
+            tooltip: 'Send sample text',
+          ),
+          IconButton(
+            onPressed: () => _controller.sendContextualData(
+              '{"source":"flutter-example"}',
+            ),
+            icon: const Icon(Icons.data_object),
+            tooltip: 'Send contextual data',
+          ),
+          if (_chatLanguage.isNotEmpty)
+            IconButton(
+              onPressed: () => _controller.setLanguage(_chatLanguage),
+              icon: const Icon(Icons.language),
+              tooltip: 'Set configured Chat language',
+            ),
+          if (_chatWidgetTheme.isNotEmpty)
+            IconButton(
+              onPressed: () => _controller.setWidgetTheme(_chatWidgetTheme),
+              icon: const Icon(Icons.palette_outlined),
+              tooltip: 'Set configured Chat theme',
+            ),
           IconButton(
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Flutter business action')),
