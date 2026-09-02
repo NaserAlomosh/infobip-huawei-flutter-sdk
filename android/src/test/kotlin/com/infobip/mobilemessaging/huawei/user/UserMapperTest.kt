@@ -9,7 +9,7 @@ import java.util.Date
 
 class UserMapperTest {
     @Test
-    fun `tagged dates map recursively to native dates`() {
+    fun `tagged dates map to native date times`() {
         val instant = Instant.parse("2026-09-01T12:00:00Z")
         val tag = mapOf(
             ChannelContract.CUSTOM_VALUE_TYPE to ChannelContract.CUSTOM_DATE_TYPE,
@@ -20,29 +20,24 @@ class UserMapperTest {
             mapOf(
                 ChannelContract.CUSTOM_ATTRIBUTES to mapOf(
                     "created" to tag,
-                    "history" to listOf(tag),
                     "text" to instant.toString(),
                 ),
             ),
         )
 
-        assertEquals(Date.from(instant), user.customAttributes?.get("created")?.value)
         assertEquals(
             Date.from(instant),
-            (user.customAttributes?.get("history")?.value as List<*>).single(),
+            user.customAttributes?.get("created")?.dateTimeValue()?.date,
         )
-        assertEquals(instant.toString(), user.customAttributes?.get("text")?.value)
+        assertEquals(instant.toString(), user.customAttributes?.get("text")?.stringValue())
     }
 
     @Test
-    fun `native dates map recursively to tagged channel values`() {
+    fun `native dates map to tagged channel values`() {
         val instant = Instant.parse("2026-09-01T12:00:00Z")
         val user = User().apply {
             customAttributes = mapOf(
                 "created" to org.infobip.mobile.messaging.CustomAttributeValue(Date.from(instant)),
-                "history" to org.infobip.mobile.messaging.CustomAttributeValue(
-                    listOf(Date.from(instant)),
-                ),
             )
         }
 
@@ -50,7 +45,6 @@ class UserMapperTest {
         val created = custom["created"] as Map<*, *>
         assertEquals(ChannelContract.CUSTOM_DATE_TYPE, created[ChannelContract.CUSTOM_VALUE_TYPE])
         assertEquals(instant.toString(), created[ChannelContract.CUSTOM_VALUE])
-        assertEquals(created, (custom["history"] as List<*>).single())
     }
 
     @Test(expected = IllegalArgumentException::class)

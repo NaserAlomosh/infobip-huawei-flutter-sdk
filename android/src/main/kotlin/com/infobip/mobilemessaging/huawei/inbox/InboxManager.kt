@@ -4,9 +4,10 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import org.infobip.mobile.messaging.MobileMessaging
-import org.infobip.mobile.messaging.MobileMessagingError
 import org.infobip.mobile.messaging.inbox.Inbox
 import org.infobip.mobile.messaging.inbox.MobileInbox
+import org.infobip.mobile.messaging.mobileapi.MobileMessagingError
+import org.infobip.mobile.messaging.mobileapi.Result
 
 internal class InboxManager(
     context: Context,
@@ -46,9 +47,9 @@ internal class InboxManager(
             mobileInbox.setSeen(
                 externalUserId,
                 ids,
-                object : MobileMessaging.ResultListener<Array<String>> {
-                    override fun onResult(result: Array<String>?, error: MobileMessagingError?) {
-                        if (error == null) complete(callback, null)
+                object : MobileMessaging.ResultListener<Array<String>>() {
+                    override fun onResult(result: Result<Array<String>, MobileMessagingError>) {
+                        if (result.isSuccess) complete(callback, null)
                         else fail(callback, "inbox_update_failed", "Unable to update Inbox")
                     }
                 },
@@ -61,9 +62,10 @@ internal class InboxManager(
     }
 
     private fun inboxListener(callback: InboxCallback) =
-        object : MobileMessaging.ResultListener<Inbox> {
-            override fun onResult(result: Inbox?, error: MobileMessagingError?) {
-                if (error == null && result != null) complete(callback, InboxMapper.inbox(result))
+        object : MobileMessaging.ResultListener<Inbox>() {
+            override fun onResult(result: Result<Inbox, MobileMessagingError>) {
+                val inbox = result.data
+                if (result.isSuccess && inbox != null) complete(callback, InboxMapper.inbox(inbox))
                 else fail(callback, "inbox_fetch_failed", "Unable to fetch Inbox")
             }
         }

@@ -4,10 +4,12 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import org.infobip.mobile.messaging.MobileMessaging
-import org.infobip.mobile.messaging.MobileMessagingError
+import org.infobip.mobile.messaging.SuccessPending
 import org.infobip.mobile.messaging.User
 import org.infobip.mobile.messaging.UserAttributes
 import org.infobip.mobile.messaging.UserIdentity
+import org.infobip.mobile.messaging.mobileapi.MobileMessagingError
+import org.infobip.mobile.messaging.mobileapi.Result
 
 internal class UserManager(
     context: Context,
@@ -65,9 +67,9 @@ internal class UserManager(
     fun depersonalize(callback: (Map<String, Any?>?, UserFailure?) -> Unit) {
         if (!initialized(callback)) return
         execute("depersonalization_failed", callback) {
-            mobileMessaging.depersonalize(object : MobileMessaging.ResultListener<User> {
-                override fun onResult(result: User?, error: MobileMessagingError?) {
-                    if (error == null) mainHandler.post { callback(emptyMap(), null) }
+            mobileMessaging.depersonalize(object : MobileMessaging.ResultListener<SuccessPending>() {
+                override fun onResult(result: Result<SuccessPending, MobileMessagingError>) {
+                    if (result.isSuccess) mainHandler.post { callback(emptyMap(), null) }
                     else fail(callback, "depersonalization_failed", "Unable to depersonalize user")
                 }
             })
@@ -92,9 +94,10 @@ internal class UserManager(
         callback: (Map<String, Any?>?, UserFailure?) -> Unit,
         code: String,
         message: String,
-    ) = object : MobileMessaging.ResultListener<User> {
-        override fun onResult(result: User?, error: MobileMessagingError?) {
-            if (error == null && result != null) complete(callback, result)
+    ) = object : MobileMessaging.ResultListener<User>() {
+        override fun onResult(result: Result<User, MobileMessagingError>) {
+            val user = result.data
+            if (result.isSuccess && user != null) complete(callback, user)
             else fail(callback, code, message)
         }
     }

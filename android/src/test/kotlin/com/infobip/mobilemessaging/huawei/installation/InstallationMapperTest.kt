@@ -50,6 +50,6 @@ class InstallationMapperTest {
         assertNull(installation.pushRegistrationId)
         assertNull(installation.deviceModel)
         assertNull(installation.language)
-        assertEquals(3, installation.customAttributes["score"]?.value)
+        assertEquals(3, installation.customAttributes["score"]?.numberValue())
     }
 }

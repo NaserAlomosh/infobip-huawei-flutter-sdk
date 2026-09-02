@@ -55,7 +55,12 @@ internal class ChatPlatformView(
         }
         when (call.method) {
             ChannelContract.CHAT_NAVIGATE_BACK -> readFromView(view, result) {
-                view.navigateBackOrCloseChat()
+                if (view.isMultiThread) {
+                    view.showThreadList()
+                    true
+                } else {
+                    false
+                }
             }
             ChannelContract.CHAT_SEND -> handleSend(call, result, view)
             ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, view)
