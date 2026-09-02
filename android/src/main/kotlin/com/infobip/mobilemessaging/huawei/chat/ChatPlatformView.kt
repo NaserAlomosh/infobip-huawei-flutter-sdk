@@ -55,13 +55,10 @@ internal class ChatPlatformView(
             ChannelContract.CHAT_NAVIGATE_BACK -> result.success(view.navigateBackOrCloseChat())
             ChannelContract.CHAT_SEND -> handleSend(call, result, view)
             ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, view)
-            ChannelContract.CHAT_SET_LANGUAGE -> handleStringArgument(
-                call,
-                result,
-                view,
-                ChannelContract.LANGUAGE,
-            ) { view.setLanguage(it) }
-            ChannelContract.CHAT_GET_LANGUAGE -> readFromView(view, result) { view.getLanguage() }
+            ChannelContract.CHAT_SET_LANGUAGE -> handleLanguage(call, result, view)
+            ChannelContract.CHAT_GET_LANGUAGE -> readFromView(view, result) {
+                ChatLanguageMapper.toWidgetCode(view.getLanguage())
+            }
             ChannelContract.CHAT_SET_WIDGET_THEME -> handleStringArgument(
                 call,
                 result,
@@ -73,6 +70,24 @@ internal class ChatPlatformView(
             }
             else -> result.notImplemented()
         }
+    }
+
+    private fun handleLanguage(
+        call: MethodCall,
+        result: MethodChannel.Result,
+        view: InAppChatView,
+    ) {
+        val languageCode = (call.arguments as? Map<*, *>)?.get(ChannelContract.LANGUAGE) as? String
+        if (languageCode.isNullOrBlank()) {
+            result.error("invalid_argument", "language must not be empty", null)
+            return
+        }
+        val language = ChatLanguageMapper.fromWidgetCode(languageCode)
+        if (language == null) {
+            result.error("invalid_argument", "Unsupported Chat language", null)
+            return
+        }
+        runOnView(view, result) { view.setLanguage(language) }
     }
 
     private fun handleStringArgument(

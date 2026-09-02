@@ -118,7 +118,7 @@ await chatController.send(
 );
 await chatController.sendContextualData('{"source":"support"}');
 
-await chatController.setLanguage('configured-language');
+await chatController.setLanguage('ar-AE');
 final language = await chatController.getLanguage();
 
 await chatController.setWidgetTheme('configured-theme');
@@ -133,11 +133,12 @@ message, is treated as opaque text, and is never included in plugin logs or erro
 commands require a live attached view and otherwise fail with `chat_unavailable`; invalid empty
 values fail with `invalid_argument` at the native boundary (and `ArgumentError` in Dart).
 
-Language and widget theme are strings because both the official Flutter API and Huawei 8.14.0 use
-string identifiers. They are forwarded without an invented locale or theme enumeration: supported
-values and fallback behavior are defined by the configured Infobip widget. These operations apply
-to the attached native component. Dart does not persist them, apply them to future views, or map
-Flutter's `Theme.of(context)` to the native widget. A widget theme is not Android `Theme`, a resource
+Language and widget theme remain component-scoped. Language uses an Infobip widget language code
+such as `en-US` or `ar-AE`; Android resolves that code with
+`LivechatWidgetLanguage.findLanguage(...)` before calling Huawei's enum-based API, then maps the
+returned enum's `widgetCode` back to Dart. Unsupported codes fail with `invalid_argument` instead of
+falling back to English. Widget theme continues to use Huawei's string identifier. Dart does not
+persist either setting or apply it to future views. A widget theme is not Android `Theme`, a resource
 ID, or Flutter `ThemeData`.
 
 Thread commands remain intentionally omitted. Huawei 8.14.0 exposes them on the embedded component,
