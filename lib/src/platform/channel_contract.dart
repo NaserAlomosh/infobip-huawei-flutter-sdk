@@ -4,10 +4,14 @@ abstract final class ChannelContract {
   static const chatView = 'com.infobip.mobilemessaging.huawei/chat_view';
   static const chatViewChannel = 'com.infobip.mobilemessaging.huawei/chat_view/';
   static const chatNavigateBack = 'navigateBackOrCloseChat';
+  static const chatSend = 'send';
+  static const chatSendContextualData = 'sendContextualData';
   static const chatViewReady = 'viewReady';
   static const chatOnError = 'onError';
   static const code = 'code';
   static const message = 'message';
+  static const text = 'text';
+  static const data = 'data';
   static const initialize = 'initialize';
   static const applicationCode = 'applicationCode';
   static const getUser = 'getUser';

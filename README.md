@@ -93,10 +93,32 @@ stream. One global Huawei listener is installed after initialization and removed
 creating or disposing embedded views does not register listeners.
 
 No other Chat events are public in this phase. Availability has no matching approved official
-Flutter API. Thread, raw-message, send, loading/connection, and component UI callbacks are omitted:
+Flutter API. Thread, raw-message, loading/connection, and component UI callbacks are omitted:
 thread/raw events lack stable public models, while view and control callbacks belong to a specific
 embedded component rather than global Chat state. Native attachments remain available from the
 native composer; Android resource theme configuration remains host-native configuration.
+
+The controller also exposes the component-scoped text and contextual-data commands:
+
+```dart
+await chatController.send(
+  const InfobipHuaweiChatMessagePayload.text('Hello'),
+);
+await chatController.sendContextualData('{"source":"support"}');
+```
+
+`InfobipHuaweiChatMessagePayload` is deliberately a send payload and not a received-message model.
+Its current portable surface is non-empty text only. Programmatic attachments are omitted because
+Huawei's attachment contract is based on Android URI/file lifecycle concerns; the native composer
+remains the default and supported attachment workflow. Contextual data stays distinct from a Chat
+message, is treated as opaque text, and is never included in plugin logs or error details. Both
+commands require a live attached view and otherwise fail with `chat_unavailable`; invalid empty
+values fail with `invalid_argument` at the native boundary (and `ArgumentError` in Dart).
+
+Thread commands remain intentionally omitted. Huawei 8.14.0 exposes them on the embedded component,
+but the inspected official Flutter contract does not provide the stable thread models and operation
+result contract needed for a compatible permanent Dart API. In particular, this plugin does not
+claim headless history access or cache raw native thread objects.
 
 Android PlatformViews require real-device validation for IME resizing, accessibility, attachment permissions, Activity recreation, and route leave/re-entry behavior. No manual keyboard workaround is installed. Chat also requires a correctly configured Infobip application/backend and a Huawei device or suitable HMS environment. Never log Chat content, contextual data, URLs, identity, tokens, or local attachment paths.
 

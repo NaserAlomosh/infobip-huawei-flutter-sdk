@@ -53,7 +53,52 @@ internal class ChatPlatformView(
         }
         when (call.method) {
             ChannelContract.CHAT_NAVIGATE_BACK -> result.success(view.navigateBackOrCloseChat())
+            ChannelContract.CHAT_SEND -> handleSend(call, result, view)
+            ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, view)
             else -> result.notImplemented()
+        }
+    }
+
+    private fun handleSend(call: MethodCall, result: MethodChannel.Result, view: InAppChatView) {
+        val payload = try {
+            ChatMapper.messagePayload(call.arguments)
+        } catch (error: IllegalArgumentException) {
+            result.error("invalid_argument", error.message, null)
+            return
+        }
+        runOnView(view, result) { view.send(payload) }
+    }
+
+    private fun handleContextualData(
+        call: MethodCall,
+        result: MethodChannel.Result,
+        view: InAppChatView,
+    ) {
+        val data = try {
+            ChatMapper.contextualData(call.arguments)
+        } catch (error: IllegalArgumentException) {
+            result.error("invalid_argument", error.message, null)
+            return
+        }
+        runOnView(view, result) { view.sendContextualData(data) }
+    }
+
+    private fun runOnView(
+        view: InAppChatView,
+        result: MethodChannel.Result,
+        operation: () -> Unit,
+    ) {
+        view.post {
+            if (chatView !== view) {
+                result.error("chat_unavailable", "Chat view is unavailable", null)
+                return@post
+            }
+            try {
+                operation()
+                result.success(null)
+            } catch (_: RuntimeException) {
+                result.error("native_error", "Chat operation failed", null)
+            }
         }
     }
 

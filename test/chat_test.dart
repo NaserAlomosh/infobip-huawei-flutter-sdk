@@ -10,6 +10,29 @@ void main() {
 
     expect(controller.isAttached, isFalse);
     expect(await controller.navigateBackOrCloseChat(), isFalse);
+    await expectLater(
+      controller.send(
+        const InfobipHuaweiChatMessagePayload.text('Hello'),
+      ),
+      throwsA(
+        isA<PlatformException>().having(
+          (error) => error.code,
+          'code',
+          'chat_unavailable',
+        ),
+      ),
+    );
+    await expectLater(
+      controller.sendContextualData('{"source":"support"}'),
+      throwsA(isA<PlatformException>()),
+    );
+  });
+
+  test('text payload rejects empty text', () {
+    expect(
+      () => const InfobipHuaweiChatMessagePayload.text('  ').toMap(),
+      throwsArgumentError,
+    );
   });
 
   testWidgets('unsupported platforms render a deterministic placeholder', (
@@ -118,6 +141,79 @@ void main() {
 
       expect(controller.isAttached, isTrue);
       expect(await controller.navigateBackOrCloseChat(), isTrue);
+    });
+
+    testWidgets('controller sends text on its view channel', (tester) async {
+      final calls = <MethodCall>[];
+      messenger.setMockMethodCallHandler(const MethodChannel(channelName), (
+        call,
+      ) async {
+        calls.add(call);
+        return null;
+      });
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await controller.send(
+        const InfobipHuaweiChatMessagePayload.text('Hello'),
+      );
+
+      expect(calls.last.method, 'send');
+      expect(calls.last.arguments, <String, Object>{'text': 'Hello'});
+    });
+
+    testWidgets('controller sends contextual data on its view channel', (
+      tester,
+    ) async {
+      final calls = <MethodCall>[];
+      messenger.setMockMethodCallHandler(const MethodChannel(channelName), (
+        call,
+      ) async {
+        calls.add(call);
+        return null;
+      });
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await controller.sendContextualData('{"source":"support"}');
+
+      expect(calls.last.method, 'sendContextualData');
+      expect(calls.last.arguments, <String, Object>{
+        'data': '{"source":"support"}',
+      });
+    });
+
+    testWidgets('controller command forwards a native error', (tester) async {
+      messenger.setMockMethodCallHandler(
+        const MethodChannel(channelName),
+        (call) async => throw PlatformException(code: 'native_error'),
+      );
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await expectLater(
+        controller.send(
+          const InfobipHuaweiChatMessagePayload.text('Hello'),
+        ),
+        throwsA(
+          isA<PlatformException>().having(
+            (error) => error.code,
+            'code',
+            'native_error',
+          ),
+        ),
+      );
+    });
+
+    testWidgets('disposed controller rejects commands', (tester) async {
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+      await tester.pumpWidget(const SizedBox());
+
+      await expectLater(
+        controller.sendContextualData('{}'),
+        throwsA(isA<PlatformException>()),
+      );
     });
   });
 }
