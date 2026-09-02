@@ -195,6 +195,29 @@ Native evidence paths are under
 
 ## Chat
 
+### Phase 8 Part 4 compatibility decision
+
+The official Flutter source and the Huawei 8.14.0 component/model sources were reviewed as source,
+not inferred from README examples. The approved additions remain owned by one
+`InfobipHuaweiChatController` and its PlatformView channel.
+
+| Capability | Official Flutter contract | Huawei 8.14.0 contract | Parity | Decision |
+| --- | --- | --- | --- | --- |
+| Send text | Programmatic Chat send | `InAppChatView.send(MessagePayload)` | Adaptable | Public, view-scoped |
+| Contextual data | Dedicated contextual-data command | `InAppChatView.sendContextualData(...)` | Adaptable | Public, view-scoped |
+| Create thread | No stable compatible public model/result contract | `InAppChatView.createThread(...)` and component callback | Huawei-only at the safe Dart boundary | Omitted |
+| Get threads | No stable compatible typed collection contract | `InAppChatView.getThreads(...)` and component callback | Huawei-only at the safe Dart boundary | Omitted |
+| Get active thread | No stable compatible nullable/error contract | `InAppChatView.getActiveThread(...)` and component callback | Huawei-only at the safe Dart boundary | Omitted |
+| Show thread | No stable compatible identifier/model contract | `InAppChatView.showThread(...)` | Huawei-only at the safe Dart boundary | Omitted |
+| Show thread list | No stable compatible operation contract | `InAppChatView.showThreadList()` | Huawei-only at the safe Dart boundary | Omitted |
+| Programmatic attachments | No portable URI lifecycle contract | `MessagePayload`, `InAppChatAttachment`, `AttachmentSource` | Unsupported safely in this phase | Omitted; native composer remains public UI |
+
+`MessagePayload` is used only as an outbound payload. The bridge maps a validated Dart text payload
+explicitly and never serializes a native object. Contextual data is transported independently and
+is not surfaced as message content. Component operation callbacks are not duplicated into global
+streams. `ChatThread`, `ChatThreadStatus`, and `ChatThreadTopic` therefore remain native-only; no
+partial thread model is published merely to expose verified methods.
+
 ### Phase 8 Part 3 compatibility decision
 
 The current official Flutter contract exposes `getChatUnreadMessageCount` and

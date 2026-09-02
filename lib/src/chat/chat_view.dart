@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../platform/channel_contract.dart';
 import 'chat_error.dart';
+import 'chat_message_payload.dart';
 
 typedef InfobipHuaweiChatErrorCallback = void Function(
   InfobipHuaweiChatError error,
@@ -65,6 +66,32 @@ final class InfobipHuaweiChatController {
   /// Whether this controller is attached to a live native Chat view.
   bool get isAttached => _bridge != null;
 
+  /// Sends a text message through this embedded Chat component.
+  ///
+  /// The native composer remains available and is the supported attachment
+  /// workflow.
+  Future<void> send(InfobipHuaweiChatMessagePayload payload) async {
+    final bridge = _requireBridge();
+    await bridge.channel.invokeMethod<void>(
+      ChannelContract.chatSend,
+      payload.toMap(),
+    );
+  }
+
+  /// Sends opaque contextual data through this embedded Chat component.
+  ///
+  /// Contextual data is not displayed as a normal Chat message.
+  Future<void> sendContextualData(String data) async {
+    if (data.trim().isEmpty) {
+      throw ArgumentError.value(data, 'data', 'must not be empty');
+    }
+    final bridge = _requireBridge();
+    await bridge.channel.invokeMethod<void>(
+      ChannelContract.chatSendContextualData,
+      <String, Object>{ChannelContract.data: data},
+    );
+  }
+
   /// Lets Chat consume its internal back navigation.
   ///
   /// Returns `false` when the controller is not attached. When it returns
@@ -76,6 +103,17 @@ final class InfobipHuaweiChatController {
           ChannelContract.chatNavigateBack,
         ) ??
         false;
+  }
+
+  _ChatViewBridge _requireBridge() {
+    final bridge = _bridge;
+    if (bridge == null) {
+      throw PlatformException(
+        code: 'chat_unavailable',
+        message: 'Chat view is unavailable',
+      );
+    }
+    return bridge;
   }
 
   void _attach(_ChatViewBridge bridge) {
