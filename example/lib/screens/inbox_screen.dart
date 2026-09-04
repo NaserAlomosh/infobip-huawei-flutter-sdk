@@ -14,12 +14,11 @@ class InboxScreen extends StatefulWidget {
 
 class _InboxScreenState extends State<InboxScreen> {
   final _externalUserId = TextEditingController();
-  final _jwt = TextEditingController();
   final _topic = TextEditingController();
   final _limit = TextEditingController(text: '20');
   Inbox? _inbox;
   bool _loading = false;
-  String _result = 'Enter a test identity and an optional temporary JWT.';
+  String _result = 'Enter a test external user identity.';
 
   Future<void> _fetch() async {
     if (_loading) return;
@@ -32,7 +31,6 @@ class _InboxScreenState extends State<InboxScreen> {
     try {
       final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
         externalUserId: _externalUserId.text.trim(),
-        jwt: _jwt.text.trim().isEmpty ? null : _jwt.text.trim(),
         options: InboxFilterOptions(
           limit: limit,
           topic: _topic.text.trim().isEmpty ? null : _topic.text.trim(),
@@ -85,7 +83,6 @@ class _InboxScreenState extends State<InboxScreen> {
   Future<void> _fetchAfterUpdate() async {
     final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
       externalUserId: _externalUserId.text.trim(),
-      jwt: _jwt.text.trim().isEmpty ? null : _jwt.text.trim(),
       options: InboxFilterOptions(
         limit: int.tryParse(_limit.text.trim()),
         topic: _topic.text.trim().isEmpty ? null : _topic.text.trim(),
@@ -97,7 +94,6 @@ class _InboxScreenState extends State<InboxScreen> {
   @override
   void dispose() {
     _externalUserId.dispose();
-    _jwt.dispose();
     _topic.dispose();
     _limit.dispose();
     super.dispose();
@@ -116,22 +112,12 @@ class _InboxScreenState extends State<InboxScreen> {
             SectionCard(
               title: 'Fetch Inbox',
               description:
-                  'The JWT is obscured, used only for this request, and never '
-                  'stored or logged.',
+                  'Fetch messages for an external user ID using typed filters.',
               children: [
                 TextField(
                   controller: _externalUserId,
                   decoration: const InputDecoration(
                     labelText: 'Test external user ID',
-                  ),
-                ),
-                TextField(
-                  controller: _jwt,
-                  obscureText: true,
-                  enableSuggestions: false,
-                  autocorrect: false,
-                  decoration: const InputDecoration(
-                    labelText: 'Temporary JWT (optional)',
                   ),
                 ),
                 TextField(

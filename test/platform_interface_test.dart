@@ -48,6 +48,34 @@ void main() {
   });
 
   test(
+    'forwards remote notification registration over the method channel',
+    () async {
+      const channelName = 'registration-method-test';
+      final calls = <MethodCall>[];
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      const channel = MethodChannel(channelName);
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        calls.add(call);
+        return null;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+      final platform = MethodChannelInfobipMobileMessagingHuawei(
+        methodChannel: channel,
+        eventChannel: const EventChannel('registration-event-test'),
+      );
+      await platform.registerForRemoteNotifications();
+
+      expect(
+        calls.single.method,
+        ChannelContract.registerForRemoteNotifications,
+      );
+      expect(calls.single.arguments, isNull);
+    },
+  );
+
+  test(
     'shares one native event subscription and supports re-subscription',
     () async {
       const eventChannelName = 'platform-interface-test-events';

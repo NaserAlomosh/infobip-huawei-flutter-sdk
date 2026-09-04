@@ -80,7 +80,12 @@ internal class UserManager(
                         if (result.isSuccess) {
                             mainHandler.post { callback(emptyMap(), null) }
                         } else {
-                            fail(callback, "depersonalization_failed", "Unable to depersonalize user")
+                            fail(
+                                callback,
+                                result.error,
+                                "depersonalization_failed",
+                                "Unable to depersonalize user",
+                            )
                         }
                     }
                 },
@@ -109,6 +114,19 @@ internal class UserManager(
         mainHandler.post { callback(null, UserFailure(code, message)) }
     }
 
+    private fun fail(
+        callback: (Map<String, Any?>?, UserFailure?) -> Unit,
+        error: MobileMessagingError?,
+        fallbackCode: String,
+        fallbackMessage: String,
+    ) {
+        fail(
+            callback,
+            error?.code?.toString() ?: fallbackCode,
+            error?.message ?: fallbackMessage,
+        )
+    }
+
     private fun userListener(
         callback: (Map<String, Any?>?, UserFailure?) -> Unit,
         code: String,
@@ -119,7 +137,7 @@ internal class UserManager(
             if (result.isSuccess && user != null) {
                 complete(callback, user)
             } else {
-                fail(callback, code, message)
+                fail(callback, result.error, code, message)
             }
         }
     }

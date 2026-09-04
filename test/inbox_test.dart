@@ -73,7 +73,10 @@ void main() {
     expect(inbox.countTotalFiltered, 3);
     expect(inbox.countUnreadFiltered, 1);
     expect(inbox.messages.single.messageId, 'message-1');
-    expect(inbox.messages.single.receivedTimestamp, DateTime.utc(2026, 9, 1, 12));
+    expect(
+      inbox.messages.single.receivedTimestamp,
+      DateTime.utc(2026, 9, 1, 12),
+    );
     expect(inbox.messages.single.customPayload['nested'], {'enabled': true});
     expect(inbox.messages.single.seen, isFalse);
     expect(inbox.messages.single.isSilent, isTrue);
@@ -102,13 +105,6 @@ void main() {
       throwsArgumentError,
     );
     expect(
-      () => InfobipMobileMessagingHuawei.fetchInbox(
-        externalUserId: 'user',
-        jwt: ' ',
-      ),
-      throwsArgumentError,
-    );
-    expect(
       () => InfobipMobileMessagingHuawei.setInboxMessagesSeen(
         externalUserId: '',
         messageIds: const ['one'],
@@ -122,6 +118,18 @@ void main() {
       ),
       throwsArgumentError,
     );
+  });
+
+  test('decodes null native messages as an empty list', () {
+    final inbox = InboxCodec.decode({
+      'countTotal': 0,
+      'countUnread': 0,
+      'countTotalFiltered': 0,
+      'countUnreadFiltered': 0,
+      'messages': null,
+    });
+
+    expect(inbox.messages, isEmpty);
   });
 
   test('rejects malformed native Inbox results', () {
@@ -179,7 +187,6 @@ void main() {
 
     final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
       externalUserId: 'user',
-      jwt: 'jwt',
       options: const InboxFilterOptions(topic: 'news', limit: 10),
     );
     await InfobipMobileMessagingHuawei.setInboxMessagesSeen(
@@ -194,7 +201,6 @@ void main() {
     ]);
     expect(calls.first.arguments, {
       ChannelContract.externalUserId: 'user',
-      ChannelContract.jwt: 'jwt',
       ChannelContract.options: {
         'from': null,
         'to': null,

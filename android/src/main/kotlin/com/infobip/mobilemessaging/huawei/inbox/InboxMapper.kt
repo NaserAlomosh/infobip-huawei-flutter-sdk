@@ -14,12 +14,6 @@ internal object InboxMapper {
         (value as? String)?.takeUnless { it.isBlank() }
             ?: throw IllegalArgumentException("externalUserId must not be empty")
 
-    fun optionalJwt(value: Any?): String? {
-        if (value == null) return null
-        return (value as? String)?.takeUnless { it.isBlank() }
-            ?: throw IllegalArgumentException("jwt must not be empty")
-    }
-
     fun parseOptions(value: Any?): InboxOptions {
         if (value == null) return InboxOptions()
         val map = value as? Map<*, *> ?: throw IllegalArgumentException("options must be a map")
@@ -64,8 +58,11 @@ internal object InboxMapper {
             ChannelContract.COUNT_UNREAD to value.countUnread,
             ChannelContract.COUNT_TOTAL_FILTERED to value.countTotalFiltered,
             ChannelContract.COUNT_UNREAD_FILTERED to value.countUnreadFiltered,
-            ChannelContract.MESSAGES to value.messages.map(::message),
+            ChannelContract.MESSAGES to messages(value.messages),
         )
+
+    internal fun messages(value: List<InboxMessage>?): List<Map<String, Any?>> =
+        value?.map(::message) ?: emptyList()
 
     internal fun message(value: InboxMessage): Map<String, Any?> =
         mapOf(
@@ -145,7 +142,8 @@ internal object InboxMapper {
         return value.keys().asSequence().associateWith { key -> jsonValue(value.opt(key)) }
     }
 
-    private fun jsonArray(value: JSONArray): List<Any?> = (0 until value.length()).map { index -> jsonValue(value.opt(index)) }
+    private fun jsonArray(value: JSONArray): List<Any?> =
+        (0 until value.length()).map { index -> jsonValue(value.opt(index)) }
 
     private fun jsonValue(value: Any?): Any? =
         when (value) {

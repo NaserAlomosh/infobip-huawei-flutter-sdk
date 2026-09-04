@@ -33,6 +33,14 @@ final class InfobipMobileMessagingHuawei {
     );
   }
 
+  /// Asks the Infobip SDK to register this installation for remote
+  /// notifications.
+  ///
+  /// The host application must obtain Android notification permission first.
+  static Future<void> registerForRemoteNotifications() =>
+      InfobipMobileMessagingHuaweiPlatform.instance
+          .registerForRemoteNotifications();
+
   /// Returns the locally cached user without making a server request.
   static Future<User> getUser() =>
       InfobipMobileMessagingHuaweiPlatform.instance.getUser();
@@ -75,11 +83,8 @@ final class InfobipMobileMessagingHuawei {
       );
 
   /// Fetches Inbox messages for [externalUserId].
-  ///
-  /// When supplied, [jwt] is forwarded only for this request and is not stored.
   static Future<Inbox> fetchInbox({
     required String externalUserId,
-    String? jwt,
     InboxFilterOptions? options,
   }) {
     if (externalUserId.trim().isEmpty) {
@@ -89,16 +94,8 @@ final class InfobipMobileMessagingHuawei {
         'Must not be empty or whitespace-only',
       );
     }
-    if (jwt != null && jwt.trim().isEmpty) {
-      throw ArgumentError.value(
-        jwt,
-        'jwt',
-        'Must not be empty or whitespace-only',
-      );
-    }
     return InfobipMobileMessagingHuaweiPlatform.instance.fetchInbox(
       externalUserId: externalUserId,
-      jwt: jwt,
       options: options,
     );
   }

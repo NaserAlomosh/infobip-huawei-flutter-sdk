@@ -19,6 +19,8 @@ abstract final class ChannelContract {
   static const data = 'data';
   static const widgetTheme = 'widgetTheme';
   static const initialize = 'initialize';
+  static const registerForRemoteNotifications =
+      'registerForRemoteNotifications';
   static const applicationCode = 'applicationCode';
   static const getUser = 'getUser';
   static const fetchUser = 'fetchUser';
@@ -73,7 +75,6 @@ abstract final class ChannelContract {
   static const countUnread = 'countUnread';
   static const countTotalFiltered = 'countTotalFiltered';
   static const countUnreadFiltered = 'countUnreadFiltered';
-  static const jwt = 'jwt';
   static const messages = 'messages';
   static const messageIds = 'messageIds';
   static const messageId = 'messageId';

@@ -47,6 +47,10 @@ final class MethodChannelInfobipMobileMessagingHuawei
   }
 
   @override
+  Future<void> registerForRemoteNotifications() => methodChannel
+      .invokeMethod<void>(ChannelContract.registerForRemoteNotifications);
+
+  @override
   Future<User> getUser() async => UserCodec.decode(
     await methodChannel.invokeMethod<Object?>(ChannelContract.getUser),
   );
@@ -108,12 +112,10 @@ final class MethodChannelInfobipMobileMessagingHuawei
   @override
   Future<Inbox> fetchInbox({
     required String externalUserId,
-    String? jwt,
     InboxFilterOptions? options,
   }) async => InboxCodec.decode(
     await methodChannel.invokeMethod<Object?>(ChannelContract.fetchInbox, {
       ChannelContract.externalUserId: externalUserId,
-      ChannelContract.jwt: jwt,
       ChannelContract.options: InboxCodec.encodeOptions(options),
     }),
   );
