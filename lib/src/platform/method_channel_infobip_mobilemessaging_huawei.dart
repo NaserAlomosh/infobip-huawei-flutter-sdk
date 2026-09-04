@@ -87,6 +87,12 @@ final class MethodChannelInfobipMobileMessagingHuawei
       methodChannel.invokeMethod<void>(ChannelContract.depersonalize);
 
   @override
+  Future<void> setJwt(String? jwt) => methodChannel.invokeMethod<void>(
+    ChannelContract.setJwt,
+    {ChannelContract.jwt: jwt?.trim().isEmpty == true ? null : jwt?.trim()},
+  );
+
+  @override
   Future<Installation> getInstallation() async => InstallationCodec.decode(
     await methodChannel.invokeMethod<Object?>(ChannelContract.getInstallation),
   );
@@ -112,10 +118,12 @@ final class MethodChannelInfobipMobileMessagingHuawei
   @override
   Future<Inbox> fetchInbox({
     required String externalUserId,
+    String? jwt,
     InboxFilterOptions? options,
   }) async => InboxCodec.decode(
     await methodChannel.invokeMethod<Object?>(ChannelContract.fetchInbox, {
       ChannelContract.externalUserId: externalUserId,
+      ChannelContract.jwt: jwt?.trim().isEmpty == true ? null : jwt?.trim(),
       ChannelContract.options: InboxCodec.encodeOptions(options),
     }),
   );

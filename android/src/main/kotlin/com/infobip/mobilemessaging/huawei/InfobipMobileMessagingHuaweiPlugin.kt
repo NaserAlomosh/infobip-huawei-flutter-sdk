@@ -79,6 +79,7 @@ class InfobipMobileMessagingHuaweiPlugin :
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        inboxManager?.setJwt(null)
         methodChannel?.setMethodCallHandler(null)
         eventChannel?.setStreamHandler(null)
         eventBridge?.detach()
@@ -157,11 +158,22 @@ class InfobipMobileMessagingHuaweiPlugin :
             ChannelContract.DEPERSONALIZE -> {
                 userManager?.depersonalize { _, failure ->
                     if (failure == null) {
+                        inboxManager?.setJwt(null)
                         result.success(null)
                     } else {
                         result.error(failure.code, failure.message, null)
                     }
                 } ?: detached(result)
+            }
+
+            ChannelContract.SET_JWT -> {
+                try {
+                    inboxManager?.setJwt(call.argument<Any?>(ChannelContract.JWT))
+                        ?: return detached(result)
+                    result.success(null)
+                } catch (_: IllegalArgumentException) {
+                    result.error("invalid_argument", "jwt must be a string or null", null)
+                }
             }
 
             ChannelContract.GET_INSTALLATION -> {
@@ -188,6 +200,7 @@ class InfobipMobileMessagingHuaweiPlugin :
             ChannelContract.FETCH_INBOX -> {
                 inboxManager?.fetch(
                     call.argument<Any?>(ChannelContract.EXTERNAL_USER_ID),
+                    call.argument<Any?>(ChannelContract.JWT),
                     call.argument<Any?>(ChannelContract.OPTIONS),
                     { value, failure -> result.completeInbox(value, failure) },
                 ) ?: detached(result)

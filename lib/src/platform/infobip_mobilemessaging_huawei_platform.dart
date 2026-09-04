@@ -42,6 +42,8 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
 
   Future<void> depersonalize() => throw UnimplementedError();
 
+  Future<void> setJwt(String? jwt) => throw UnimplementedError();
+
   Future<Installation> getInstallation() => throw UnimplementedError();
 
   Future<Installation> fetchInstallation() => throw UnimplementedError();
@@ -51,6 +53,7 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
 
   Future<Inbox> fetchInbox({
     required String externalUserId,
+    String? jwt,
     InboxFilterOptions? options,
   }) => throw UnimplementedError();
 

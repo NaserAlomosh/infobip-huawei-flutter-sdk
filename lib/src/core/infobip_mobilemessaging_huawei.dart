@@ -68,6 +68,14 @@ final class InfobipMobileMessagingHuawei {
   static Future<void> depersonalize() =>
       InfobipMobileMessagingHuaweiPlatform.instance.depersonalize();
 
+  /// Configures the memory-only Infobip JWT used by native SDK requests.
+  ///
+  /// Passing `null` or a whitespace-only value clears the current JWT.
+  static Future<void> setJwt(String? jwt) =>
+      InfobipMobileMessagingHuaweiPlatform.instance.setJwt(
+        jwt?.trim().isEmpty == true ? null : jwt?.trim(),
+      );
+
   /// Returns the locally cached installation without network access.
   static Future<Installation> getInstallation() =>
       InfobipMobileMessagingHuaweiPlatform.instance.getInstallation();
@@ -83,8 +91,13 @@ final class InfobipMobileMessagingHuawei {
       );
 
   /// Fetches Inbox messages for [externalUserId].
+  ///
+  /// A non-empty [jwt] overrides the globally configured JWT. When [jwt] is
+  /// absent or whitespace-only, the native SDK uses the global JWT, if set,
+  /// and otherwise uses Application Code authorization.
   static Future<Inbox> fetchInbox({
     required String externalUserId,
+    String? jwt,
     InboxFilterOptions? options,
   }) {
     if (externalUserId.trim().isEmpty) {
@@ -96,6 +109,7 @@ final class InfobipMobileMessagingHuawei {
     }
     return InfobipMobileMessagingHuaweiPlatform.instance.fetchInbox(
       externalUserId: externalUserId,
+      jwt: jwt?.trim().isEmpty == true ? null : jwt?.trim(),
       options: options,
     );
   }

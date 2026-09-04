@@ -25,6 +25,8 @@ internal object ChannelContract {
     const val SAVE_USER = "saveUser"
     const val PERSONALIZE = "personalize"
     const val DEPERSONALIZE = "depersonalize"
+    const val SET_JWT = "setJwt"
+    const val JWT = "jwt"
     const val GET_INSTALLATION = "getInstallation"
     const val FETCH_INSTALLATION = "fetchInstallation"
     const val SAVE_INSTALLATION = "saveInstallation"

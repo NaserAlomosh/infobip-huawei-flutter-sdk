@@ -359,7 +359,47 @@ await InfobipMobileMessagingHuawei.setInboxMessagesSeen(
 ```
 
 The caller must supply the same non-empty external user ID used for the Inbox audience. The plugin
-does not derive it from the locally personalized user. Inbox fetches use Huawei SDK 8.14.0's external-user-ID overload without JWT, matching the supported host workflow.
+does not derive it from the locally personalized user.
+
+### Inbox JWT authorization
+
+Infobip Production application profiles require JWT authorization for Inbox. Obtain an
+Infobip-compatible JWT from the host application's trusted backend and configure it in memory:
+
+```dart
+final jwt = await myBackend.getInfobipJwt();
+
+await InfobipMobileMessagingHuawei.setJwt(jwt);
+
+final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
+  externalUserId: userId,
+  options: const InboxFilterOptions(limit: 10),
+);
+```
+
+A token can instead be supplied for one fetch:
+
+```dart
+final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
+  externalUserId: userId,
+  jwt: jwt,
+  options: const InboxFilterOptions(limit: 10),
+);
+```
+
+A non-empty per-call `jwt` takes precedence over the globally configured JWT. If the per-call JWT
+is absent or whitespace-only, the global JWT is used. If neither exists, the plugin preserves the
+existing behavior and calls the Application Code authorization overload. Tokens are trimmed,
+retained only in native process memory, never logged, and can be cleared with `setJwt(null)`.
+Successful depersonalization also clears the token.
+
+Huawei SDK 8.14.0 exposes no token overload for `MobileInbox.setSeen`. Its seen-reporting path uses
+the JWT supplier configured on `MobileMessaging`, so call `setJwt` before
+`setInboxMessagesSeen` when the application profile requires JWT authorization.
+
+Do not generate production Infobip JWTs or embed signing keys in a Flutter application. An existing
+application login token must not be reused unless the backend confirms that it is an
+Infobip-compatible JWT generated with Infobip's required signing configuration.
 
 `Inbox` contains the server-authoritative `countTotal`, `countUnread`, `countTotalFiltered`, and
 `countUnreadFiltered` values and the returned
