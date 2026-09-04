@@ -8,6 +8,7 @@ final class InitializationPlatform extends InfobipMobileMessagingHuaweiPlatform
     with MockPlatformInterfaceMixin {
   String? applicationCode;
   Object? error;
+  var registrationCalls = 0;
 
   @override
   Stream<Object?> get events => const Stream.empty();
@@ -15,6 +16,12 @@ final class InitializationPlatform extends InfobipMobileMessagingHuaweiPlatform
   @override
   Future<void> initialize({required String applicationCode}) async {
     this.applicationCode = applicationCode;
+    if (error case final Object error) throw error;
+  }
+
+  @override
+  Future<void> registerForRemoteNotifications() async {
+    registrationCalls++;
     if (error case final Object error) throw error;
   }
 }
@@ -38,6 +45,28 @@ void main() {
   test('delegates initialization to the platform', () async {
     await InfobipMobileMessagingHuawei.initialize(applicationCode: 'test-code');
     expect(platform.applicationCode, 'test-code');
+  });
+
+  test('delegates remote notification registration to the platform', () async {
+    await InfobipMobileMessagingHuawei.registerForRemoteNotifications();
+    expect(platform.registrationCalls, 1);
+  });
+
+  test('propagates a registration platform failure', () async {
+    platform.error = PlatformException(
+      code: 'not_initialized',
+      message: 'Initialize the Infobip SDK first',
+    );
+    await expectLater(
+      InfobipMobileMessagingHuawei.registerForRemoteNotifications(),
+      throwsA(
+        isA<PlatformException>().having(
+          (error) => error.code,
+          'code',
+          'not_initialized',
+        ),
+      ),
+    );
   });
 
   test('completes when platform initialization succeeds', () async {

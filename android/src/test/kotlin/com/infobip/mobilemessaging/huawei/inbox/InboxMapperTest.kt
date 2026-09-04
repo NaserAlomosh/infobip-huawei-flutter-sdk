@@ -3,11 +3,17 @@ package com.infobip.mobilemessaging.huawei.inbox
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.infobip.mobile.messaging.inbox.MobileInboxFilterOptions
 
 class InboxMapperTest {
+
+    @Test
+    fun `null Inbox messages map to an empty list`() {
+        assertTrue(InboxMapper.messages(null).isEmpty())
+    }
 
     @Test(expected = IllegalArgumentException::class)
     fun `options reject fractional limits instead of truncating`() {

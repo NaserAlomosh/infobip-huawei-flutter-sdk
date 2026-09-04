@@ -72,6 +72,19 @@ internal class InstallationManager(
         mainHandler.post { callback(null, InstallationFailure(code, message)) }
     }
 
+    private fun fail(
+        callback: Callback,
+        error: MobileMessagingError?,
+        fallbackCode: String,
+        fallbackMessage: String,
+    ) {
+        fail(
+            callback,
+            error?.code?.toString() ?: fallbackCode,
+            error?.message ?: fallbackMessage,
+        )
+    }
+
     private fun installationListener(
         callback: Callback,
         code: String,
@@ -82,7 +95,7 @@ internal class InstallationManager(
             if (result.isSuccess && installation != null) {
                 complete(callback, installation)
             } else {
-                fail(callback, code, message)
+                fail(callback, result.error, code, message)
             }
         }
     }

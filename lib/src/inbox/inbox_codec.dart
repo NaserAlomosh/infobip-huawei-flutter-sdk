@@ -39,7 +39,7 @@ abstract final class InboxCodec {
   static Inbox decode(Object? value) {
     final map = _map(value, 'Inbox result');
     final messages = map[ChannelContract.messages];
-    if (messages is! List) {
+    if (messages != null && messages is! List) {
       throw const FormatException('Invalid Inbox messages');
     }
     return Inbox(
@@ -53,7 +53,9 @@ abstract final class InboxCodec {
         map[ChannelContract.countUnreadFiltered],
         'countUnreadFiltered',
       ),
-      messages: List.unmodifiable(messages.map(_decodeMessage)),
+      messages: List.unmodifiable(
+        (messages as List? ?? const []).map(_decodeMessage),
+      ),
     );
   }
 

@@ -6,7 +6,9 @@ import android.util.Log
 import com.infobip.mobilemessaging.huawei.R
 import org.infobip.mobile.messaging.MobileMessaging
 import org.infobip.mobile.messaging.NotificationSettings
+import org.infobip.mobile.messaging.chat.InAppChat
 import org.infobip.mobile.messaging.mobileapi.InternalSdkError
+import org.infobip.mobile.messaging.storage.SQLiteMessageStore
 
 internal class MobileMessagingInitializer(
     context: Context,
@@ -24,17 +26,25 @@ internal class MobileMessagingInitializer(
                 val notificationSettings =
                     NotificationSettings
                         .Builder(application)
+                        .withMultipleNotifications()
                         .withDefaultIcon(R.drawable.ic_notification)
                         .build()
 
                 MobileMessaging
                     .Builder(application)
                     .withApplicationCode(applicationCode)
+                    .withMessageStore(SQLiteMessageStore::class.java)
+                    .withFullFeaturedInApps()
                     .withDisplayNotification(notificationSettings)
                     .build(
                         object : MobileMessaging.InitListener {
                             override fun onSuccess() {
                                 Log.d(TAG, "Infobip initialization success")
+                                try {
+                                    InAppChat.getInstance(application).activate()
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Unable to activate Infobip In-app Chat", e)
+                                }
                                 complete(null)
                             }
 
@@ -91,6 +101,30 @@ internal class MobileMessagingInitializer(
 
     val isInitialized: Boolean
         get() = coordinator.isInitialized
+
+    fun registerForRemoteNotifications(callback: (InitializationError?) -> Unit) {
+        if (!isInitialized) {
+            callback(
+                InitializationError(
+                    "not_initialized",
+                    "Initialize the Infobip SDK first",
+                ),
+            )
+            return
+        }
+        try {
+            MobileMessaging.getInstance(application).registerForRemoteNotifications()
+            callback(null)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to register for remote notifications", e)
+            callback(
+                InitializationError(
+                    "registration_failed",
+                    e.message ?: "Unable to register for remote notifications",
+                ),
+            )
+        }
+    }
 
     private companion object {
         const val TAG = "InfobipHuawei"

@@ -24,6 +24,8 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
 
   Future<void> initialize({required String applicationCode});
 
+  Future<void> registerForRemoteNotifications() => throw UnimplementedError();
+
   Future<int> getChatUnreadMessageCount() => throw UnimplementedError();
 
   Future<User> getUser() => throw UnimplementedError();
@@ -49,7 +51,6 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
 
   Future<Inbox> fetchInbox({
     required String externalUserId,
-    String? jwt,
     InboxFilterOptions? options,
   }) => throw UnimplementedError();
 

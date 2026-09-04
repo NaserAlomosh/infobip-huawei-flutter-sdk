@@ -120,6 +120,15 @@ class InfobipMobileMessagingHuaweiPlugin :
                 initialize(call, result)
             }
 
+            ChannelContract.REGISTER_FOR_REMOTE_NOTIFICATIONS -> {
+                initializer?.registerForRemoteNotifications { error ->
+                    mainHandler.post {
+                        if (error == null) result.success(null)
+                        else result.error(error.code, error.message, error.details)
+                    }
+                } ?: detached(result)
+            }
+
             ChannelContract.GET_USER -> {
                 userManager?.getUser { value, failure ->
                     result.completeUser(value, failure)
@@ -179,7 +188,6 @@ class InfobipMobileMessagingHuaweiPlugin :
             ChannelContract.FETCH_INBOX -> {
                 inboxManager?.fetch(
                     call.argument<Any?>(ChannelContract.EXTERNAL_USER_ID),
-                    call.argument<Any?>(ChannelContract.JWT),
                     call.argument<Any?>(ChannelContract.OPTIONS),
                     { value, failure -> result.completeInbox(value, failure) },
                 ) ?: detached(result)

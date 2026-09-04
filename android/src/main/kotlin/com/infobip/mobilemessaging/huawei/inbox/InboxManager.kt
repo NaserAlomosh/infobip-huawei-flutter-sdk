@@ -18,20 +18,14 @@ internal class InboxManager(
 
     fun fetch(
         externalUserIdValue: Any?,
-        jwtValue: Any?,
         optionsValue: Any?,
         callback: InboxCallback,
     ) {
         if (!initialized(callback)) return
         try {
             val externalUserId = InboxMapper.requiredExternalUserId(externalUserIdValue)
-            val jwt = InboxMapper.optionalJwt(jwtValue)
             val options = InboxMapper.nativeOptions(InboxMapper.parseOptions(optionsValue))
-            if (jwt == null) {
-                mobileInbox.fetchInbox(externalUserId, options, inboxListener(callback))
-            } else {
-                mobileInbox.fetchInbox(jwt, externalUserId, options, inboxListener(callback))
-            }
+            mobileInbox.fetchInbox(externalUserId, options, inboxListener(callback))
         } catch (_: IllegalArgumentException) {
             fail(callback, "invalid_argument", "Invalid Inbox arguments")
         } catch (_: Exception) {
@@ -56,7 +50,12 @@ internal class InboxManager(
                         if (result.isSuccess) {
                             complete(callback, null)
                         } else {
-                            fail(callback, "inbox_update_failed", "Unable to update Inbox")
+                            fail(
+                                callback,
+                                result.error,
+                                "inbox_update_failed",
+                                "Unable to update Inbox",
+                            )
                         }
                     }
                 },
@@ -75,7 +74,12 @@ internal class InboxManager(
                 if (result.isSuccess && inbox != null) {
                     complete(callback, InboxMapper.inbox(inbox))
                 } else {
-                    fail(callback, "inbox_fetch_failed", "Unable to fetch Inbox")
+                    fail(
+                        callback,
+                        result.error,
+                        "inbox_fetch_failed",
+                        "Unable to fetch Inbox",
+                    )
                 }
             }
         }
@@ -99,6 +103,19 @@ internal class InboxManager(
         message: String,
     ) {
         mainHandler.post { callback(null, InboxFailure(code, message)) }
+    }
+
+    private fun fail(
+        callback: InboxCallback,
+        error: MobileMessagingError?,
+        fallbackCode: String,
+        fallbackMessage: String,
+    ) {
+        fail(
+            callback,
+            error?.code?.toString() ?: fallbackCode,
+            error?.message ?: fallbackMessage,
+        )
     }
 }
 

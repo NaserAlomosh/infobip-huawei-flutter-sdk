@@ -183,7 +183,15 @@ Native listeners are installed once per Flutter engine and removed on detach. Fl
 
 There is no background Dart isolate. The native SDK can continue its own processing and notification display while Flutter is stopped, but no Dart callback executes while the application is terminated.
 
-Android notification permission and Infobip registration are separate concerns. The official plugin's `registerForAndroidRemoteNotifications()` relates to Android remote-notification/permission behavior; it is not equivalent to changing server-side registration state. This plugin does not currently expose a notification-permission API, and the host owns the permission declaration, rationale, and request UX.
+Android notification permission and Infobip registration are separate concerns. After obtaining Android notification permission, call `InfobipMobileMessagingHuawei.registerForRemoteNotifications()` to trigger Infobip SDK registration. The plugin does not request permission; the host owns the permission declaration, rationale, and request UX.
+
+Registration readiness is determined from the SDK installation identifier:
+
+```dart
+await InfobipMobileMessagingHuawei.registerForRemoteNotifications();
+final installation = await InfobipMobileMessagingHuawei.getInstallation();
+final ready = installation.pushRegistrationId?.isNotEmpty == true;
+```
 
 ## User management
 
@@ -312,7 +320,7 @@ flutter pub get
 flutter run --dart-define=INFOBIP_APPLICATION_CODE=YOUR_APPLICATION_CODE
 ```
 
-Inbox external user IDs and optional JWTs are entered at runtime and are not persisted. Use only
+Inbox external user IDs are entered at runtime and are not persisted. Use only
 test identities with a development Infobip application. A Chat widget theme name is optional and
 must match a theme configured for your Infobip widget; `null` means no explicit theme is active.
 The embedded native composer provides its own supported attachment workflow.
@@ -324,7 +332,7 @@ permission API, and the example does not add a permission dependency solely for 
 ## Current limitations
 
 - Android/Huawei only; no iOS implementation is registered.
-- No public registration control, raw HMS token, notification-permission, or background-isolate API is implemented.
+- No raw HMS token, notification-permission, or background-isolate API is implemented.
 
 ## Inbox
 
@@ -351,9 +359,7 @@ await InfobipMobileMessagingHuawei.setInboxMessagesSeen(
 ```
 
 The caller must supply the same non-empty external user ID used for the Inbox audience. The plugin
-does not derive it from the locally personalized user. The official Flutter Inbox API also supports
-JWT-authorized fetches, so an optional `jwt` can be supplied to `fetchInbox`; it is forwarded to the
-Huawei token overload for that request and is never stored or logged.
+does not derive it from the locally personalized user. Inbox fetches use Huawei SDK 8.14.0's external-user-ID overload without JWT, matching the supported host workflow.
 
 `Inbox` contains the server-authoritative `countTotal`, `countUnread`, `countTotalFiltered`, and
 `countUnreadFiltered` values and the returned
