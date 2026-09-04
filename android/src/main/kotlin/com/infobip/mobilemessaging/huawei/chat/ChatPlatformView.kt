@@ -2,6 +2,7 @@ package com.infobip.mobilemessaging.huawei.chat
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
@@ -9,7 +10,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
-import org.infobip.mobile.messaging.chat.InAppChat
 import org.infobip.mobile.messaging.chat.view.InAppChatView
 
 internal class ChatPlatformView(
@@ -17,20 +17,23 @@ internal class ChatPlatformView(
     viewId: Int,
     messenger: BinaryMessenger,
     activity: Activity?,
-    initialized: Boolean,
+    chatManager: ChatManager,
 ) : PlatformView,
     MethodChannel.MethodCallHandler {
     private val channel = MethodChannel(messenger, ChannelContract.CHAT_VIEW_CHANNEL + viewId)
     private var chatView: InAppChatView? = null
     private val root: View
     private val pendingError = PendingChatViewError()
-    private val inAppChat = InAppChat.getInstance(context.applicationContext)
+    private val inAppChat by lazy { chatManager.instance() }
 
     init {
+        Log.d(TAG, "ChatPlatformView creation started")
+        val failure = chatManager.attach()
         root =
             when {
-                !initialized -> {
-                    neutralView(context, ChatViewError("not_initialized"))
+                failure != null -> {
+                    Log.e(TAG, "Native Chat error: ${failure.code}")
+                    neutralView(context, ChatViewError(failure.code, failure.message))
                 }
 
                 activity == null -> {
@@ -39,13 +42,24 @@ internal class ChatPlatformView(
 
                 else -> {
                     try {
-                        InAppChatView(activity).also { chatView = it }
-                    } catch (_: RuntimeException) {
+                        FrameLayout(activity).apply {
+                            layoutParams = matchParentLayoutParams()
+                            addView(
+                                InAppChatView(activity).also {
+                                    it.layoutParams = matchParentLayoutParams()
+                                    chatView = it
+                                    Log.d(TAG, "InAppChatView created successfully")
+                                },
+                            )
+                        }
+                    } catch (error: RuntimeException) {
+                        Log.e(TAG, "Native Chat error while creating InAppChatView", error)
                         neutralView(context, ChatViewError("native_error", "Chat could not be created"))
                     }
                 }
             }
         channel.setMethodCallHandler(this)
+        Log.d(TAG, "PlatformView ready")
     }
 
     override fun getView(): View = root
@@ -193,7 +207,8 @@ internal class ChatPlatformView(
             try {
                 operation()
                 result.success(null)
-            } catch (_: RuntimeException) {
+            } catch (error: RuntimeException) {
+                Log.e(TAG, "Native Chat operation failed", error)
                 result.error("native_error", "Chat operation failed", null)
             }
         }
@@ -211,7 +226,8 @@ internal class ChatPlatformView(
             }
             try {
                 result.success(operation())
-            } catch (_: RuntimeException) {
+            } catch (error: RuntimeException) {
+                Log.e(TAG, "Native Chat operation failed", error)
                 result.error("native_error", "Chat operation failed", null)
             }
         }
@@ -219,7 +235,9 @@ internal class ChatPlatformView(
 
     override fun dispose() {
         channel.setMethodCallHandler(null)
+        (chatView?.parent as? FrameLayout)?.removeView(chatView)
         chatView = null
+        Log.d(TAG, "ChatPlatformView disposed")
     }
 
     private fun neutralView(
@@ -228,11 +246,17 @@ internal class ChatPlatformView(
     ): View {
         pendingError.set(error)
         return FrameLayout(context).apply {
-            layoutParams =
-                FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                )
+            layoutParams = matchParentLayoutParams()
         }
+    }
+
+    private fun matchParentLayoutParams() =
+        FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT,
+        )
+
+    private companion object {
+        const val TAG = "InfobipHuaweiChat"
     }
 }

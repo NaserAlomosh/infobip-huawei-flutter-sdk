@@ -56,6 +56,39 @@ class InitializationCoordinatorTest {
     }
 
     @Test
+    fun `successful native initialization runs optional integration before completion`() {
+        val events = mutableListOf<String>()
+        val coordinator =
+            InitializationCoordinator(
+                start = { _, complete ->
+                    events += "mobile_messaging"
+                    complete(null)
+                },
+                afterSuccess = { events += "chat" },
+            )
+
+        coordinator.initialize("code") { events += "complete" }
+
+        assertEquals(listOf("mobile_messaging", "chat", "complete"), events)
+        assertTrue(coordinator.isInitialized)
+    }
+
+    @Test
+    fun `optional integration failure does not fail initialization`() {
+        val coordinator =
+            InitializationCoordinator(
+                start = { _, complete -> complete(null) },
+                afterSuccess = { throw IllegalStateException("Chat unavailable") },
+            )
+        var result: InitializationError? = InitializationError("test", "test")
+
+        coordinator.initialize("code") { result = it }
+
+        assertNull(result)
+        assertTrue(coordinator.isInitialized)
+    }
+
+    @Test
     fun `different code while initializing is rejected`() {
         val coordinator = InitializationCoordinator { _, _ -> }
         var error: InitializationError? = null

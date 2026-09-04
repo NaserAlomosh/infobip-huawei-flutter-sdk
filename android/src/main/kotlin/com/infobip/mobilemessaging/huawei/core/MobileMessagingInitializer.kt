@@ -6,81 +6,79 @@ import android.util.Log
 import com.infobip.mobilemessaging.huawei.R
 import org.infobip.mobile.messaging.MobileMessaging
 import org.infobip.mobile.messaging.NotificationSettings
-import org.infobip.mobile.messaging.chat.InAppChat
 import org.infobip.mobile.messaging.mobileapi.InternalSdkError
 import org.infobip.mobile.messaging.storage.SQLiteMessageStore
 
 internal class MobileMessagingInitializer(
     context: Context,
+    afterInitialization: () -> Unit = {},
 ) {
     private val application = context.applicationContext as Application
 
     private val coordinator =
-        InitializationCoordinator { applicationCode, complete ->
-            try {
-                Log.d(
-                    TAG,
-                    "Starting Infobip initialization. applicationCode length=${applicationCode.length}",
-                )
-
-                val notificationSettings =
-                    NotificationSettings
-                        .Builder(application)
-                        .withMultipleNotifications()
-                        .withDefaultIcon(R.drawable.ic_notification)
-                        .build()
-
-                MobileMessaging
-                    .Builder(application)
-                    .withApplicationCode(applicationCode)
-                    .withMessageStore(SQLiteMessageStore::class.java)
-                    .withFullFeaturedInApps()
-                    .withDisplayNotification(notificationSettings)
-                    .build(
-                        object : MobileMessaging.InitListener {
-                            override fun onSuccess() {
-                                Log.d(TAG, "Infobip initialization success")
-                                try {
-                                    InAppChat.getInstance(application).activate()
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Unable to activate Infobip In-app Chat", e)
-                                }
-                                complete(null)
-                            }
-
-                            override fun onError(
-                                error: InternalSdkError,
-                                errorCode: Int?,
-                            ) {
-                                Log.e(
-                                    TAG,
-                                    "Infobip initialization failed. error=$error, errorCode=$errorCode",
-                                )
-
-                                complete(
-                                    InitializationError(
-                                        "initialization_failed",
-                                        "Infobip SDK initialization failed: $error",
-                                    ),
-                                )
-                            }
-                        },
+        InitializationCoordinator(
+            start = { applicationCode, complete ->
+                try {
+                    Log.d(
+                        TAG,
+                        "Starting Infobip initialization. applicationCode length=${applicationCode.length}",
                     )
-            } catch (e: Exception) {
-                Log.e(
-                    TAG,
-                    "Exception while initializing Infobip SDK",
-                    e,
-                )
 
-                complete(
-                    InitializationError(
-                        "native_error",
-                        "Unable to initialize the Infobip SDK: ${e.message}",
-                    ),
-                )
-            }
-        }
+                    val notificationSettings =
+                        NotificationSettings
+                            .Builder(application)
+                            .withMultipleNotifications()
+                            .withDefaultIcon(R.drawable.ic_notification)
+                            .build()
+
+                    MobileMessaging
+                        .Builder(application)
+                        .withApplicationCode(applicationCode)
+                        .withMessageStore(SQLiteMessageStore::class.java)
+                        .withFullFeaturedInApps()
+                        .withDisplayNotification(notificationSettings)
+                        .build(
+                            object : MobileMessaging.InitListener {
+                                override fun onSuccess() {
+                                    Log.d(CHAT_TAG, "MobileMessaging initialization completed")
+                                    complete(null)
+                                }
+
+                                override fun onError(
+                                    error: InternalSdkError,
+                                    errorCode: Int?,
+                                ) {
+                                    Log.e(
+                                        TAG,
+                                        "Infobip initialization failed. error=$error, errorCode=$errorCode",
+                                    )
+
+                                    complete(
+                                        InitializationError(
+                                            "initialization_failed",
+                                            "Infobip SDK initialization failed: $error",
+                                        ),
+                                    )
+                                }
+                            },
+                        )
+                } catch (e: Exception) {
+                    Log.e(
+                        TAG,
+                        "Exception while initializing Infobip SDK",
+                        e,
+                    )
+
+                    complete(
+                        InitializationError(
+                            "native_error",
+                            "Unable to initialize the Infobip SDK: ${e.message}",
+                        ),
+                    )
+                }
+            },
+            afterSuccess = afterInitialization,
+        )
 
     fun initialize(
         applicationCode: String,
@@ -128,5 +126,6 @@ internal class MobileMessagingInitializer(
 
     private companion object {
         const val TAG = "InfobipHuawei"
+        const val CHAT_TAG = "InfobipHuaweiChat"
     }
 }
