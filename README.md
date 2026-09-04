@@ -35,7 +35,11 @@ Channel names, method identifiers, and versioned event identifiers are centraliz
 
 ## Embedded Chat
 
-Chat uses Huawei SDK 8.14.0's `InAppChatView` through a dedicated Android PlatformView. `InAppChatView` has no native toolbar, so Flutter retains ownership of the route, `AppBar`, and business actions without displaying a duplicate toolbar. The Infobip view retains its native composer, attachment workflow, focus handling, validation, and upload lifecycle.
+Chat uses Huawei SDK 8.14.0's `InAppChatFragment` through a dedicated Android PlatformView. The fragment retains the Infobip native composer, attachment workflow, focus handling, validation, and upload lifecycle. It is hosted by the application's AndroidX `FragmentActivity`.
+
+The Android host activity must extend `FlutterFragmentActivity` (or another
+AndroidX `FragmentActivity`) rather than `FlutterActivity` so the native Chat
+fragment can be attached safely.
 
 Initialize the core SDK successfully before constructing Chat, then place the widget in any bounded Flutter layout:
 
@@ -58,6 +62,8 @@ Scaffold(
   ),
   body: InfobipHuaweiChatView(
     controller: chatController,
+    withInput: true,
+    withToolbar: false,
     onError: (error) {
       // Update Flutter-owned UI with a friendly availability message.
     },
@@ -65,10 +71,16 @@ Scaffold(
 );
 ```
 
+`withInput` controls the native Infobip message composer and defaults to
+`true`. `withToolbar` controls the native Infobip toolbar and defaults to
+`false`, allowing the Flutter application to provide its own `AppBar`. Existing
+calls that omit both options retain these defaults.
+
 For Flutter-owned back navigation, call `navigateBackOrCloseChat()` first and pop the Flutter route only when it returns `false`. A controller is bound to one PlatformView ID, is detached when its widget is disposed, and never targets a global or previously disposed Chat view. Each view uses the SDK-managed Chat singleton; the plugin does not create another `MobileMessaging` instance.
 
 `onError` receives an `InfobipHuaweiChatError` with a typed
 `InfobipHuaweiChatErrorCode`: `notInitialized`, `activityUnavailable`,
+`activityFragmentUnavailable`,
 `chatUnavailable`, `nativeError`, or `unknown`. Unknown future native codes and malformed payloads
 map safely to `unknown`. Creation and view-lifecycle availability failures invoke `onError` once
 per native view instance; the native placeholder stays visually neutral so the application can

@@ -13,6 +13,7 @@ final class InfobipHuaweiChatError {
 enum InfobipHuaweiChatErrorCode {
   notInitialized,
   activityUnavailable,
+  activityFragmentUnavailable,
   chatUnavailable,
   nativeError,
   unknown,

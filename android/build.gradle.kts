@@ -39,4 +39,5 @@ dependencies {
     implementation("com.infobip:infobip-mobile-messaging-huawei-chat-sdk:8.14.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.9")
 }

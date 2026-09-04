@@ -59,6 +59,40 @@ void main() {
     expect(find.text('Chat is available on Android only.'), findsOneWidget);
   });
 
+  testWidgets('Chat view uses native input and Flutter toolbar defaults', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: InfobipHuaweiChatView(),
+      ),
+    );
+    final view = tester.widget<AndroidView>(find.byType(AndroidView));
+    expect(view.creationParams, <String, bool>{
+      'withInput': true,
+      'withToolbar': false,
+    });
+    expect(view.creationParamsCodec, isA<StandardMessageCodec>());
+  });
+
+  testWidgets('Chat view propagates native UI options', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: InfobipHuaweiChatView(withInput: false, withToolbar: true),
+      ),
+    );
+    expect(
+      tester.widget<AndroidView>(find.byType(AndroidView)).creationParams,
+      <String, bool>{'withInput': false, 'withToolbar': true},
+    );
+  });
+
   group('embedded Chat errors', () {
     const viewId = 42;
     const channelName = 'com.infobip.mobilemessaging.huawei/chat_view/42';
@@ -117,6 +151,8 @@ void main() {
     for (final entry in <String, InfobipHuaweiChatErrorCode>{
       'not_initialized': InfobipHuaweiChatErrorCode.notInitialized,
       'activity_unavailable': InfobipHuaweiChatErrorCode.activityUnavailable,
+      'activity_fragment_unavailable':
+          InfobipHuaweiChatErrorCode.activityFragmentUnavailable,
       'chat_unavailable': InfobipHuaweiChatErrorCode.chatUnavailable,
       'native_error': InfobipHuaweiChatErrorCode.nativeError,
       'future_error': InfobipHuaweiChatErrorCode.unknown,
