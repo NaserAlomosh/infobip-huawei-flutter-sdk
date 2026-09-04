@@ -5,12 +5,15 @@ import android.content.Context
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentContainerView
+import androidx.core.view.doOnLayout
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
-import org.infobip.mobile.messaging.chat.view.InAppChatView
+import org.infobip.mobile.messaging.chat.view.InAppChatFragment
 
 internal class ChatPlatformView(
     context: Context,
@@ -18,253 +21,160 @@ internal class ChatPlatformView(
     messenger: BinaryMessenger,
     activity: Activity?,
     chatManager: ChatManager,
-) : PlatformView,
-    MethodChannel.MethodCallHandler {
+    private val options: ChatViewOptions,
+) : PlatformView, MethodChannel.MethodCallHandler {
     private val channel = MethodChannel(messenger, ChannelContract.CHAT_VIEW_CHANNEL + viewId)
-    private var chatView: InAppChatView? = null
-    private val root: View
     private val pendingError = PendingChatViewError()
-    private val inAppChat by lazy { chatManager.instance() }
+    private var fragmentActivity: FragmentActivity? = activity as? FragmentActivity
+    private var fragment: InAppChatFragment? = null
+    private var disposed = false
+    private var flutterReady = false
+    private val root: View
 
     init {
         Log.d(TAG, "ChatPlatformView creation started")
-
         val failure = chatManager.attach()
+        root = when {
+            failure != null -> neutralView(context, ChatViewError(failure.code, failure.message))
+            activity == null -> neutralView(context, ChatViewError("activity_unavailable"))
+            activity !is FragmentActivity -> {
+                Log.e(TAG, "Activity does not extend FragmentActivity")
+                neutralView(
+                    context,
+                    ChatViewError(
+                        "activity_fragment_unavailable",
+                        "Chat requires an AndroidX FragmentActivity",
+                    ),
+                )
+            }
+            else -> createFragmentContainer(activity)
+        }
+        channel.setMethodCallHandler(this)
+        Log.d(TAG, "ChatPlatformView ready")
+    }
 
-        root =
-            when {
-                failure != null -> {
-                    Log.e(TAG, "Native Chat error: ${failure.code}")
-                    neutralView(
-                        context,
-                        ChatViewError(
-                            failure.code,
-                            failure.message,
-                        ),
-                    )
-                }
+    private fun createFragmentContainer(activity: FragmentActivity): FragmentContainerView =
+        FragmentContainerView(activity).apply {
+            id = View.generateViewId()
+            layoutParams = matchParentLayoutParams()
+            doOnLayout { attachFragment(this) }
+        }
 
-                activity == null -> {
-                    Log.e(TAG, "Activity is unavailable")
-                    neutralView(
-                        context,
-                        ChatViewError("activity_unavailable"),
-                    )
-                }
-
-                activity !is androidx.lifecycle.LifecycleOwner -> {
-                    Log.e(TAG, "Activity does not implement LifecycleOwner")
-                    neutralView(
-                        context,
-                        ChatViewError(
-                            "activity_lifecycle_unavailable",
-                            "Activity does not provide Android Lifecycle",
-                        ),
-                    )
-                }
-
-                else -> {
-                    try {
-                        FrameLayout(activity).apply {
-                            layoutParams = matchParentLayoutParams()
-
-                            addView(
-                                InAppChatView(activity).also { view ->
-                                    view.layoutParams = matchParentLayoutParams()
-
-                                    Log.d(TAG, "InAppChatView created successfully")
-
-                                    Log.d(TAG, "InAppChatView initialization started")
-
-                                    view.init(activity.lifecycle)
-
-                                    chatView = view
-
-                                    Log.d(TAG, "InAppChatView initialized successfully")
-                                },
-                            )
-                        }
-                    } catch (error: RuntimeException) {
-                        Log.e(
-                            TAG,
-                            "Native Chat error while creating or initializing InAppChatView",
-                            error,
-                        )
-
-                        neutralView(
-                            context,
-                            ChatViewError(
-                                "native_error",
-                                "Chat could not be created",
-                            ),
-                        )
+    private fun attachFragment(container: FragmentContainerView) {
+        if (disposed || fragment != null || !container.isAttachedToWindow) return
+        val activity = fragmentActivity ?: return
+        val manager = activity.supportFragmentManager
+        if (activity.isFinishing || activity.isDestroyed || manager.isStateSaved) {
+            reportError(ChatViewError("native_error", "Chat fragment could not be attached"))
+            return
+        }
+        try {
+            Log.d(TAG, "InAppChatFragment creation started")
+            val created = InAppChatFragment().apply {
+                withInput = options.withInput
+                withToolbar = options.withToolbar
+            }
+            fragment = created
+            manager.beginTransaction()
+                .replace(container.id, created, fragmentTag(container.id))
+                .runOnCommit {
+                    if (!disposed && fragment === created) {
+                        Log.d(TAG, "InAppChatFragment attached")
                     }
                 }
-            }
-
-        channel.setMethodCallHandler(this)
-
-        Log.d(TAG, "PlatformView ready")
+                .commit()
+        } catch (error: RuntimeException) {
+            fragment = null
+            Log.e(TAG, "Native Chat error while attaching InAppChatFragment", error)
+            reportError(ChatViewError("native_error", "Chat fragment could not be attached"))
+        }
     }
+
     override fun getView(): View = root
 
-    override fun onMethodCall(
-        call: MethodCall,
-        result: MethodChannel.Result,
-    ) {
+    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         if (call.method == ChannelContract.CHAT_VIEW_READY) {
-            pendingError.take()?.let {
-                channel.invokeMethod(ChannelContract.CHAT_ON_ERROR, it.toMap())
-            }
+            flutterReady = true
+            pendingError.take()?.let { channel.invokeMethod(ChannelContract.CHAT_ON_ERROR, it.toMap()) }
             result.success(null)
             return
         }
-        val view = chatView
-        if (view == null) {
+        val current = fragment
+        if (current == null || disposed || !current.isAdded) {
             result.error("chat_unavailable", "Chat view is unavailable", null)
             return
         }
         when (call.method) {
-            ChannelContract.CHAT_NAVIGATE_BACK -> {
-                readFromView(view, result) {
-                    if (view.isMultiThread) {
-                        view.showThreadList()
-                        true
-                    } else {
-                        false
-                    }
-                }
+            ChannelContract.CHAT_NAVIGATE_BACK -> runOnFragment(current, result) {
+                current.navigateBackOrCloseChat()
             }
-
-            ChannelContract.CHAT_SEND -> {
-                handleSend(call, result, view)
+            ChannelContract.CHAT_SEND -> handleSend(call, result, current)
+            ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, current)
+            ChannelContract.CHAT_SET_LANGUAGE -> handleLanguage(call, result, current)
+            ChannelContract.CHAT_GET_LANGUAGE -> runOnFragment(current, result) {
+                ChatLanguageMapper.toWidgetCode(current.getLanguage())
             }
-
-            ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> {
-                handleContextualData(call, result, view)
+            ChannelContract.CHAT_SET_WIDGET_THEME -> handleStringArgument(call, result, current) {
+                current.setWidgetTheme(it)
             }
-
-            ChannelContract.CHAT_SET_LANGUAGE -> {
-                handleLanguage(call, result, view)
+            ChannelContract.CHAT_GET_WIDGET_THEME -> runOnFragment(current, result) {
+                current.getWidgetTheme()
             }
-
-            ChannelContract.CHAT_GET_LANGUAGE -> {
-                readFromView(view, result) {
-                    ChatLanguageMapper.toWidgetCode(inAppChat.getLanguage())
-                }
-            }
-
-            ChannelContract.CHAT_SET_WIDGET_THEME -> {
-                handleStringArgument(
-                    call,
-                    result,
-                    view,
-                    ChannelContract.WIDGET_THEME,
-                ) { inAppChat.setWidgetTheme(it) }
-            }
-
-            ChannelContract.CHAT_GET_WIDGET_THEME -> {
-                readFromView(view, result) {
-                    inAppChat.getWidgetTheme()
-                }
-            }
-
-            else -> {
-                result.notImplemented()
-            }
+            else -> result.notImplemented()
         }
     }
 
-    private fun handleLanguage(
-        call: MethodCall,
-        result: MethodChannel.Result,
-        view: InAppChatView,
-    ) {
-        val languageCode = (call.arguments as? Map<*, *>)?.get(ChannelContract.LANGUAGE) as? String
-        if (languageCode.isNullOrBlank()) {
-            result.error("invalid_argument", "language must not be empty", null)
-            return
-        }
-        val language = ChatLanguageMapper.fromWidgetCode(languageCode)
+    private fun handleLanguage(call: MethodCall, result: MethodChannel.Result, current: InAppChatFragment) {
+        val code = (call.arguments as? Map<*, *>)?.get(ChannelContract.LANGUAGE) as? String
+        val language = code?.takeIf { it.isNotBlank() }?.let(ChatLanguageMapper::fromWidgetCode)
         if (language == null) {
             result.error("invalid_argument", "Unsupported Chat language", null)
             return
         }
-        runOnView(view, result) { inAppChat.setLanguage(language) }
+        runOnFragment(current, result) { current.setLanguage(language) }
     }
 
     private fun handleStringArgument(
         call: MethodCall,
         result: MethodChannel.Result,
-        view: InAppChatView,
-        key: String,
+        current: InAppChatFragment,
         operation: (String) -> Unit,
     ) {
-        val value = (call.arguments as? Map<*, *>)?.get(key) as? String
+        val value = (call.arguments as? Map<*, *>)?.get(ChannelContract.WIDGET_THEME) as? String
         if (value.isNullOrBlank()) {
-            result.error("invalid_argument", "$key must not be empty", null)
+            result.error("invalid_argument", "widgetTheme must not be empty", null)
             return
         }
-        runOnView(view, result) { operation(value) }
+        runOnFragment(current, result) { operation(value) }
     }
 
-    private fun handleSend(
-        call: MethodCall,
-        result: MethodChannel.Result,
-        view: InAppChatView,
-    ) {
-        val payload =
-            try {
-                ChatMapper.messagePayload(call.arguments)
-            } catch (error: IllegalArgumentException) {
-                result.error("invalid_argument", error.message, null)
-                return
-            }
-        runOnView(view, result) { view.send(payload) }
-    }
-
-    private fun handleContextualData(
-        call: MethodCall,
-        result: MethodChannel.Result,
-        view: InAppChatView,
-    ) {
-        val data =
-            try {
-                ChatMapper.contextualData(call.arguments)
-            } catch (error: IllegalArgumentException) {
-                result.error("invalid_argument", error.message, null)
-                return
-            }
-        runOnView(view, result) { inAppChat.sendContextualData(data) }
-    }
-
-    private fun runOnView(
-        view: InAppChatView,
-        result: MethodChannel.Result,
-        operation: () -> Unit,
-    ) {
-        view.post {
-            if (chatView !== view) {
-                result.error("chat_unavailable", "Chat view is unavailable", null)
-                return@post
-            }
-            try {
-                operation()
-                result.success(null)
-            } catch (error: RuntimeException) {
-                Log.e(TAG, "Native Chat operation failed", error)
-                result.error("native_error", "Chat operation failed", null)
-            }
+    private fun handleSend(call: MethodCall, result: MethodChannel.Result, current: InAppChatFragment) {
+        val payload = try {
+            ChatMapper.messagePayload(call.arguments)
+        } catch (error: IllegalArgumentException) {
+            result.error("invalid_argument", error.message, null)
+            return
         }
+        runOnFragment(current, result) { current.send(payload) }
     }
 
-    private fun readFromView(
-        view: InAppChatView,
+    private fun handleContextualData(call: MethodCall, result: MethodChannel.Result, current: InAppChatFragment) {
+        val data = try {
+            ChatMapper.contextualData(call.arguments)
+        } catch (error: IllegalArgumentException) {
+            result.error("invalid_argument", error.message, null)
+            return
+        }
+        runOnFragment(current, result) { current.sendContextualData(data) }
+    }
+
+    private fun runOnFragment(
+        current: InAppChatFragment,
         result: MethodChannel.Result,
         operation: () -> Any?,
     ) {
-        view.post {
-            if (chatView !== view) {
+        root.post {
+            if (disposed || fragment !== current || !current.isAdded) {
                 result.error("chat_unavailable", "Chat view is unavailable", null)
                 return@post
             }
@@ -278,27 +188,40 @@ internal class ChatPlatformView(
     }
 
     override fun dispose() {
+        if (disposed) return
+        disposed = true
         channel.setMethodCallHandler(null)
-        (chatView?.parent as? FrameLayout)?.removeView(chatView)
-        chatView = null
+        val current = fragment
+        fragment = null
+        val manager = fragmentActivity?.supportFragmentManager
+        fragmentActivity = null
+        if (current != null && manager != null && current.isAdded && !manager.isDestroyed) {
+            try {
+                val transaction = manager.beginTransaction().remove(current)
+                if (manager.isStateSaved) transaction.commitAllowingStateLoss() else transaction.commit()
+                Log.d(TAG, "InAppChatFragment removed")
+            } catch (error: RuntimeException) {
+                Log.w(TAG, "InAppChatFragment could not be removed", error)
+            }
+        }
         Log.d(TAG, "ChatPlatformView disposed")
     }
 
-    private fun neutralView(
-        context: Context,
-        error: ChatViewError,
-    ): View {
-        pendingError.set(error)
-        return FrameLayout(context).apply {
-            layoutParams = matchParentLayoutParams()
-        }
+    private fun reportError(error: ChatViewError) {
+        if (flutterReady) channel.invokeMethod(ChannelContract.CHAT_ON_ERROR, error.toMap()) else pendingError.set(error)
     }
 
-    private fun matchParentLayoutParams() =
-        FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT,
-        )
+    private fun neutralView(context: Context, error: ChatViewError): View {
+        reportError(error)
+        return FrameLayout(context).apply { layoutParams = matchParentLayoutParams() }
+    }
+
+    private fun matchParentLayoutParams() = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.MATCH_PARENT,
+    )
+
+    private fun fragmentTag(containerId: Int) = "infobip_huawei_chat_$containerId"
 
     private companion object {
         const val TAG = "InfobipHuaweiChat"

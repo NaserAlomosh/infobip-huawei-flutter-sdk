@@ -46,6 +46,8 @@ InfobipHuaweiChatError _decodeError(Object? payload) {
   final code = switch (payload[ChannelContract.code]) {
     'not_initialized' => InfobipHuaweiChatErrorCode.notInitialized,
     'activity_unavailable' => InfobipHuaweiChatErrorCode.activityUnavailable,
+    'activity_fragment_unavailable' =>
+      InfobipHuaweiChatErrorCode.activityFragmentUnavailable,
     'chat_unavailable' => InfobipHuaweiChatErrorCode.chatUnavailable,
     'native_error' => InfobipHuaweiChatErrorCode.nativeError,
     _ => InfobipHuaweiChatErrorCode.unknown,
@@ -196,9 +198,24 @@ final class InfobipHuaweiChatController {
 /// The native view owns the message composer and attachments. Put this widget
 /// in a Flutter [Scaffold] body to retain Flutter navigation and app bars.
 class InfobipHuaweiChatView extends StatefulWidget {
-  const InfobipHuaweiChatView({super.key, this.controller, this.onError});
+  const InfobipHuaweiChatView({
+    super.key,
+    this.controller,
+    this.withInput = true,
+    this.withToolbar = false,
+    this.onError,
+  });
 
   final InfobipHuaweiChatController? controller;
+
+  /// Whether the native Infobip message composer is displayed.
+  final bool withInput;
+
+  /// Whether the native Infobip toolbar is displayed.
+  ///
+  /// This defaults to `false` because Flutter applications commonly provide
+  /// their own app bar and route navigation.
+  final bool withToolbar;
 
   /// Called for lifecycle and availability failures affecting this view.
   ///
@@ -233,6 +250,11 @@ class _InfobipHuaweiChatViewState extends State<InfobipHuaweiChatView> {
     }
     return AndroidView(
       viewType: ChannelContract.chatView,
+      creationParams: <String, bool>{
+        'withInput': widget.withInput,
+        'withToolbar': widget.withToolbar,
+      },
+      creationParamsCodec: const StandardMessageCodec(),
       onPlatformViewCreated: (viewId) {
         widget.controller?._detach(_viewId);
         _bridge?.dispose();

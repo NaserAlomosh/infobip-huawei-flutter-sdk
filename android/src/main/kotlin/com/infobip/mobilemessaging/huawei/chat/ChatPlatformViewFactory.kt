@@ -23,5 +23,21 @@ internal class ChatPlatformViewFactory(
             messenger = messenger,
             activity = activityProvider(),
             chatManager = chatManager,
+            options = ChatViewOptions.from(args),
         )
+}
+
+internal data class ChatViewOptions(
+    val withInput: Boolean = true,
+    val withToolbar: Boolean = false,
+) {
+    companion object {
+        fun from(args: Any?): ChatViewOptions {
+            val params = args as? Map<*, *> ?: return ChatViewOptions()
+            return ChatViewOptions(
+                withInput = params["withInput"] as? Boolean ?: true,
+                withToolbar = params["withToolbar"] as? Boolean ?: false,
+            )
+        }
+    }
 }
