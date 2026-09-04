@@ -158,7 +158,7 @@ void main() {
     );
   });
 
-  test('delegates fetch and seen operations over the channel', () async {
+  test('delegates application-code fetch and seen operations', () async {
     final calls = <MethodCall>[];
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -201,6 +201,7 @@ void main() {
     ]);
     expect(calls.first.arguments, {
       ChannelContract.externalUserId: 'user',
+      ChannelContract.jwt: null,
       ChannelContract.options: {
         'from': null,
         'to': null,
@@ -213,6 +214,72 @@ void main() {
       ChannelContract.externalUserId: 'user',
       ChannelContract.messageIds: ['one', 'two'],
     });
+  });
+
+  test('trims and delegates an explicit fetch JWT', () async {
+    final calls = <MethodCall>[];
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(
+      const MethodChannel(ChannelContract.methodChannel),
+      (call) async {
+        calls.add(call);
+        return {
+          'countTotal': 0,
+          'countUnread': 0,
+          'countTotalFiltered': 0,
+          'countUnreadFiltered': 0,
+          'messages': <Object?>[],
+        };
+      },
+    );
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(
+        const MethodChannel(ChannelContract.methodChannel),
+        null,
+      ),
+    );
+
+    await InfobipMobileMessagingHuawei.fetchInbox(
+      externalUserId: 'user',
+      jwt: '  header.payload.signature  ',
+    );
+    await InfobipMobileMessagingHuawei.fetchInbox(
+      externalUserId: 'user',
+      jwt: '   ',
+    );
+
+    expect(
+      (calls.first.arguments as Map)[ChannelContract.jwt],
+      'header.payload.signature',
+    );
+    expect((calls.last.arguments as Map)[ChannelContract.jwt], isNull);
+  });
+
+  test('sets and clears the global JWT without exposing it elsewhere', () async {
+    final calls = <MethodCall>[];
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(
+      const MethodChannel(ChannelContract.methodChannel),
+      (call) async => calls.add(call),
+    );
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(
+        const MethodChannel(ChannelContract.methodChannel),
+        null,
+      ),
+    );
+
+    await InfobipMobileMessagingHuawei.setJwt('  current-token  ');
+    await InfobipMobileMessagingHuawei.setJwt(null);
+
+    expect(calls.map((call) => call.method), [
+      ChannelContract.setJwt,
+      ChannelContract.setJwt,
+    ]);
+    expect(calls.first.arguments, {ChannelContract.jwt: 'current-token'});
+    expect(calls.last.arguments, {ChannelContract.jwt: null});
   });
 
   test('rejects an empty seen update without invoking native code', () {
@@ -231,8 +298,8 @@ void main() {
     messenger.setMockMethodCallHandler(
       const MethodChannel(ChannelContract.methodChannel),
       (_) => throw PlatformException(
-        code: 'inbox_fetch_failed',
-        message: 'Unable to fetch Inbox',
+        code: 'ACCESS_TOKEN_MISSING',
+        message: 'Access token not provided',
       ),
     );
     addTearDown(
@@ -245,11 +312,17 @@ void main() {
     await expectLater(
       InfobipMobileMessagingHuawei.fetchInbox(externalUserId: 'user'),
       throwsA(
-        isA<PlatformException>().having(
-          (error) => error.code,
-          'code',
-          'inbox_fetch_failed',
-        ),
+        isA<PlatformException>()
+            .having(
+              (error) => error.code,
+              'code',
+              'ACCESS_TOKEN_MISSING',
+            )
+            .having(
+              (error) => error.message,
+              'message',
+              'Access token not provided',
+            ),
       ),
     );
   });

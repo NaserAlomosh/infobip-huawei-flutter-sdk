@@ -27,6 +27,8 @@ abstract final class ChannelContract {
   static const saveUser = 'saveUser';
   static const personalize = 'personalize';
   static const depersonalize = 'depersonalize';
+  static const setJwt = 'setJwt';
+  static const jwt = 'jwt';
   static const getInstallation = 'getInstallation';
   static const fetchInstallation = 'fetchInstallation';
   static const saveInstallation = 'saveInstallation';

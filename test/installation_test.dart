@@ -20,6 +20,7 @@ void main() {
         .setMockMethodCallHandler(channel, (call) async {
           calls.add(call);
           return <String, Object?>{
+            ChannelContract.installationId: 'installation-1',
             ChannelContract.pushRegistrationId: 'managed-id',
             ChannelContract.pushRegistrationEnabled: true,
             ChannelContract.notificationsEnabled: false,
@@ -42,8 +43,12 @@ void main() {
     final local = await platform.getInstallation();
     await platform.fetchInstallation();
     expect(local.pushRegistrationEnabled, isTrue);
+    expect(local.installationId, 'installation-1');
     expect(local.notificationsEnabled, isFalse);
-    expect(local.customAttributes?['created'], DateTime.utc(2026, 9, 1, 10, 15, 30));
+    expect(
+      local.customAttributes?['created'],
+      DateTime.utc(2026, 9, 1, 10, 15, 30),
+    );
     expect(calls.map((call) => call.method), [
       ChannelContract.getInstallation,
       ChannelContract.fetchInstallation,
@@ -81,7 +86,9 @@ void main() {
 
   test('rejects unsupported custom attribute values before delegation', () async {
     expect(
-      platform.saveInstallation(Installation(customAttributes: {'bad': Object()})),
+      platform.saveInstallation(
+        Installation(customAttributes: {'bad': Object()}),
+      ),
       throwsA(isA<PlatformException>()),
     );
   });
