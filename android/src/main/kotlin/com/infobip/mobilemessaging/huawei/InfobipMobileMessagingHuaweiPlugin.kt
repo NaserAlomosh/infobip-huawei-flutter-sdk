@@ -38,7 +38,15 @@ class InfobipMobileMessagingHuaweiPlugin :
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         applicationContext = binding.applicationContext
-        initializer = MobileMessagingInitializer(binding.applicationContext)
+        chatManager =
+            ChatManager(
+                context = binding.applicationContext,
+                initialized = { initializer?.isInitialized == true },
+            )
+        initializer =
+            MobileMessagingInitializer(binding.applicationContext) {
+                chatManager?.activate()
+            }
         userManager =
             UserManager(
                 context = binding.applicationContext,
@@ -55,11 +63,6 @@ class InfobipMobileMessagingHuaweiPlugin :
                 isInitialized = { initializer?.isInitialized == true },
             )
         eventBridge = NativeEventBridge(binding.applicationContext).also { it.register() }
-        chatManager =
-            ChatManager(
-                context = binding.applicationContext,
-                initialized = { initializer?.isInitialized == true },
-            )
         methodChannel =
             MethodChannel(binding.binaryMessenger, ChannelContract.METHOD_CHANNEL).also {
                 it.setMethodCallHandler(this)
@@ -73,7 +76,7 @@ class InfobipMobileMessagingHuaweiPlugin :
             ChatPlatformViewFactory(
                 messenger = binding.binaryMessenger,
                 activityProvider = { activity },
-                initialized = { initializer?.isInitialized == true },
+                chatManager = requireNotNull(chatManager),
             ),
         )
     }
@@ -299,7 +302,6 @@ class InfobipMobileMessagingHuaweiPlugin :
         initializer?.initialize(applicationCode) { error ->
             mainHandler.post {
                 if (error == null) {
-                    chatManager?.attach()
                     result.success(null)
                 } else {
                     result.error(error.code, error.message, error.details)

@@ -8,6 +8,7 @@ internal data class InitializationError(
 
 internal class InitializationCoordinator(
     private val start: (String, (InitializationError?) -> Unit) -> Unit,
+    private val afterSuccess: () -> Unit = {},
 ) {
     internal enum class State { NOT_INITIALIZED, INITIALIZING, INITIALIZED, FAILED }
 
@@ -70,6 +71,13 @@ internal class InitializationCoordinator(
             state = if (error == null) State.INITIALIZED else State.FAILED
             pending = callbacks.toList()
             callbacks.clear()
+        }
+        if (error == null) {
+            try {
+                afterSuccess()
+            } catch (_: Exception) {
+                // Optional integrations must not change Mobile Messaging initialization state.
+            }
         }
         pending.forEach { it(error) }
     }

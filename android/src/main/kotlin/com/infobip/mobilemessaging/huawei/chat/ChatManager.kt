@@ -1,6 +1,7 @@
 package com.infobip.mobilemessaging.huawei.chat
 
 import android.content.Context
+import android.util.Log
 import org.infobip.mobile.messaging.chat.InAppChat
 
 internal data class ChatFailure(
@@ -14,17 +15,32 @@ internal class ChatManager(
 ) {
     private val applicationContext = context.applicationContext
     private val inAppChat by lazy { InAppChat.getInstance(applicationContext) }
+    @Volatile
+    private var activated = false
+
+    @Synchronized
+    fun activate(): ChatFailure? {
+        if (activated) return null
+        Log.d(TAG, "InAppChat activation started")
+        return try {
+            inAppChat.activate()
+            activated = true
+            Log.d(TAG, "InAppChat activation succeeded")
+            null
+        } catch (error: Exception) {
+            Log.e(TAG, "InAppChat activation failed", error)
+            ChatFailure("chat_unavailable", "Chat activation failed")
+        }
+    }
 
     @Synchronized
     fun attach(): ChatFailure? {
         if (!initialized()) return ChatFailure("not_initialized", "Initialize the Infobip SDK first")
-        return try {
-            inAppChat
-            null
-        } catch (_: Exception) {
-            ChatFailure("chat_unavailable", "Chat is unavailable")
-        }
+        if (!activated) return ChatFailure("chat_unavailable", "Chat is not activated")
+        return null
     }
+
+    fun instance(): InAppChat = inAppChat
 
     fun getUnreadMessageCount(callback: (Int?, ChatFailure?) -> Unit) {
         val failure = attach()
@@ -45,4 +61,8 @@ internal class ChatManager(
     }
 
     fun detach() = Unit
+
+    private companion object {
+        const val TAG = "InfobipHuaweiChat"
+    }
 }

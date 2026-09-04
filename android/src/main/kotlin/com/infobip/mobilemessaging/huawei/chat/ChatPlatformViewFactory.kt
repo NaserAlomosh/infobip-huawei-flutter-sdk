@@ -10,7 +10,7 @@ import io.flutter.plugin.platform.PlatformViewFactory
 internal class ChatPlatformViewFactory(
     private val messenger: BinaryMessenger,
     private val activityProvider: () -> Activity?,
-    private val initialized: () -> Boolean,
+    private val chatManager: ChatManager,
 ) : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
     override fun create(
         context: Context,
@@ -22,6 +22,6 @@ internal class ChatPlatformViewFactory(
             viewId = viewId,
             messenger = messenger,
             activity = activityProvider(),
-            initialized = initialized(),
+            chatManager = chatManager,
         )
 }
