@@ -9,6 +9,16 @@ import org.junit.Test
 import org.infobip.mobile.messaging.inbox.MobileInboxFilterOptions
 
 class InboxMapperTest {
+    @Test
+    fun `maps null inbox to empty values`() {
+        val mapped = InboxMapper.inbox(null)
+
+        assertEquals(0, mapped[ChannelContract.COUNT_TOTAL])
+        assertEquals(0, mapped[ChannelContract.COUNT_UNREAD])
+        assertEquals(0, mapped[ChannelContract.COUNT_TOTAL_FILTERED])
+        assertEquals(0, mapped[ChannelContract.COUNT_UNREAD_FILTERED])
+        assertEquals(emptyList<Any>(), mapped[ChannelContract.MESSAGES])
+    }
 
     @Test
     fun `null Inbox messages map to an empty list`() {

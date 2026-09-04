@@ -52,13 +52,13 @@ internal object InboxMapper {
         return values.filterIsInstance<String>()
     }
 
-    fun inbox(value: Inbox): Map<String, Any?> =
+    fun inbox(value: Inbox?): Map<String, Any?> =
         mapOf(
-            ChannelContract.COUNT_TOTAL to value.countTotal,
-            ChannelContract.COUNT_UNREAD to value.countUnread,
-            ChannelContract.COUNT_TOTAL_FILTERED to value.countTotalFiltered,
-            ChannelContract.COUNT_UNREAD_FILTERED to value.countUnreadFiltered,
-            ChannelContract.MESSAGES to messages(value.messages),
+            ChannelContract.COUNT_TOTAL to (value?.countTotal ?: 0),
+            ChannelContract.COUNT_UNREAD to (value?.countUnread ?: 0),
+            ChannelContract.COUNT_TOTAL_FILTERED to (value?.countTotalFiltered ?: 0),
+            ChannelContract.COUNT_UNREAD_FILTERED to (value?.countUnreadFiltered ?: 0),
+            ChannelContract.MESSAGES to messages(value?.messages),
         )
 
     internal fun messages(value: List<InboxMessage>?): List<Map<String, Any?>> =

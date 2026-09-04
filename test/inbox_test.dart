@@ -132,8 +132,57 @@ void main() {
     expect(inbox.messages, isEmpty);
   });
 
+  test('decodes a null native Inbox as an empty Inbox', () {
+    final inbox = InboxCodec.decode(null);
+
+    expect(inbox.countTotal, 0);
+    expect(inbox.countUnread, 0);
+    expect(inbox.countTotalFiltered, 0);
+    expect(inbox.countUnreadFiltered, 0);
+    expect(inbox.messages, isEmpty);
+  });
+
+  test('decodes null Inbox counts as zero', () {
+    final inbox = InboxCodec.decode({
+      'countTotal': null,
+      'countUnread': null,
+      'countTotalFiltered': null,
+      'countUnreadFiltered': null,
+      'messages': const [],
+    });
+
+    expect(inbox.countTotal, 0);
+    expect(inbox.countUnread, 0);
+    expect(inbox.countTotalFiltered, 0);
+    expect(inbox.countUnreadFiltered, 0);
+  });
+
+  test('converts numeric Inbox counts to integers', () {
+    final inbox = InboxCodec.decode({
+      'countTotal': 4.0,
+      'countUnread': 2.0,
+      'countTotalFiltered': 3.0,
+      'countUnreadFiltered': 1.0,
+      'messages': const [],
+    });
+
+    expect(inbox.countTotal, 4);
+    expect(inbox.countUnread, 2);
+    expect(inbox.countTotalFiltered, 3);
+    expect(inbox.countUnreadFiltered, 1);
+  });
+
   test('rejects malformed native Inbox results', () {
-    expect(() => InboxCodec.decode(null), throwsFormatException);
+    expect(
+      () => InboxCodec.decode({
+        'countTotal': '1',
+        'countUnread': 0,
+        'countTotalFiltered': 1,
+        'countUnreadFiltered': 0,
+        'messages': const [],
+      }),
+      throwsFormatException,
+    );
     expect(
       () => InboxCodec.decode({
         'countTotal': 1,

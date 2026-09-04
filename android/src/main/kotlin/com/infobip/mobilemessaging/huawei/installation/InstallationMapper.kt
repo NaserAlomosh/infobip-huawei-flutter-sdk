@@ -7,7 +7,7 @@ import org.infobip.mobile.messaging.Installation
 internal object InstallationMapper {
     fun toMap(value: Installation): Map<String, Any?> =
         mapOf(
-            ChannelContract.INSTALLATION_ID to value.installationId,
+            ChannelContract.INSTALLATION_ID to null,
             ChannelContract.PUSH_REGISTRATION_ID to value.pushRegistrationId,
             ChannelContract.PUSH_REGISTRATION_ENABLED to value.isPushRegistrationEnabled,
             ChannelContract.IS_PRIMARY_DEVICE to value.isPrimaryDevice,
