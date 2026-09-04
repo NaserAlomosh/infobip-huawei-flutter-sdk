@@ -37,6 +37,7 @@ abstract final class InboxCodec {
   }
 
   static Inbox decode(Object? value) {
+    if (value == null) return _emptyInbox();
     final map = _map(value, 'Inbox result');
     final messages = map[ChannelContract.messages];
     if (messages != null && messages is! List) {
@@ -58,6 +59,14 @@ abstract final class InboxCodec {
       ),
     );
   }
+
+  static Inbox _emptyInbox() => const Inbox(
+    countTotal: 0,
+    countUnread: 0,
+    countTotalFiltered: 0,
+    countUnreadFiltered: 0,
+    messages: [],
+  );
 
   static InboxMessage _decodeMessage(Object? value) {
     final map = _map(value, 'Inbox message');
@@ -85,8 +94,13 @@ abstract final class InboxCodec {
   }
 
   static int _integer(Object? value, String name) {
-    if (value is! int || value < 0) throw FormatException('Invalid $name');
-    return value;
+    if (value == null) return 0;
+    if (value is! num || !value.isFinite) {
+      throw FormatException('Invalid $name');
+    }
+    final result = value.toInt();
+    if (result < 0) throw FormatException('Invalid $name');
+    return result;
   }
 
   static bool _requiredBool(Object? value, String name) {

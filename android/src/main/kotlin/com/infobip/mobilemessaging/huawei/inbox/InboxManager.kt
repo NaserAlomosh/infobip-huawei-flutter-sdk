@@ -94,7 +94,7 @@ internal class InboxManager(
         object : MobileMessaging.ResultListener<Inbox>() {
             override fun onResult(result: Result<Inbox, MobileMessagingError>) {
                 val inbox = result.data
-                if (result.isSuccess && inbox != null) {
+                if (result.isSuccess) {
                     complete(callback, InboxMapper.inbox(inbox))
                 } else {
                     fail(

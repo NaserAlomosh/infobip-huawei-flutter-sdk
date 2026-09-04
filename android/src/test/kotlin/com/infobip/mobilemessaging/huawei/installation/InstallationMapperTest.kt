@@ -24,6 +24,7 @@ class InstallationMapperTest {
 
         val mapped = InstallationMapper.toMap(installation)
 
+        assertNull(mapped[ChannelContract.INSTALLATION_ID])
         assertEquals(true, mapped[ChannelContract.PUSH_REGISTRATION_ENABLED])
         assertEquals(false, mapped[ChannelContract.IS_PRIMARY_DEVICE])
         assertEquals("en", mapped[ChannelContract.LANGUAGE])
