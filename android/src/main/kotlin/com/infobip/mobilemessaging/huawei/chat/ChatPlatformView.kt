@@ -28,40 +28,84 @@ internal class ChatPlatformView(
 
     init {
         Log.d(TAG, "ChatPlatformView creation started")
+
         val failure = chatManager.attach()
+
         root =
             when {
                 failure != null -> {
                     Log.e(TAG, "Native Chat error: ${failure.code}")
-                    neutralView(context, ChatViewError(failure.code, failure.message))
+                    neutralView(
+                        context,
+                        ChatViewError(
+                            failure.code,
+                            failure.message,
+                        ),
+                    )
                 }
 
                 activity == null -> {
-                    neutralView(context, ChatViewError("activity_unavailable"))
+                    Log.e(TAG, "Activity is unavailable")
+                    neutralView(
+                        context,
+                        ChatViewError("activity_unavailable"),
+                    )
+                }
+
+                activity !is androidx.lifecycle.LifecycleOwner -> {
+                    Log.e(TAG, "Activity does not implement LifecycleOwner")
+                    neutralView(
+                        context,
+                        ChatViewError(
+                            "activity_lifecycle_unavailable",
+                            "Activity does not provide Android Lifecycle",
+                        ),
+                    )
                 }
 
                 else -> {
                     try {
                         FrameLayout(activity).apply {
                             layoutParams = matchParentLayoutParams()
+
                             addView(
-                                InAppChatView(activity).also {
-                                    it.layoutParams = matchParentLayoutParams()
-                                    chatView = it
+                                InAppChatView(activity).also { view ->
+                                    view.layoutParams = matchParentLayoutParams()
+
                                     Log.d(TAG, "InAppChatView created successfully")
+
+                                    Log.d(TAG, "InAppChatView initialization started")
+
+                                    view.init(activity.lifecycle)
+
+                                    chatView = view
+
+                                    Log.d(TAG, "InAppChatView initialized successfully")
                                 },
                             )
                         }
                     } catch (error: RuntimeException) {
-                        Log.e(TAG, "Native Chat error while creating InAppChatView", error)
-                        neutralView(context, ChatViewError("native_error", "Chat could not be created"))
+                        Log.e(
+                            TAG,
+                            "Native Chat error while creating or initializing InAppChatView",
+                            error,
+                        )
+
+                        neutralView(
+                            context,
+                            ChatViewError(
+                                "native_error",
+                                "Chat could not be created",
+                            ),
+                        )
                     }
                 }
             }
+
         channel.setMethodCallHandler(this)
+
         Log.d(TAG, "PlatformView ready")
     }
-
     override fun getView(): View = root
 
     override fun onMethodCall(
