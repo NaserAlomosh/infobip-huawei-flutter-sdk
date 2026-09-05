@@ -13,8 +13,10 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
+import org.infobip.mobile.messaging.chat.core.MultithreadStrategy
 import org.infobip.mobile.messaging.chat.core.widget.LivechatWidgetView
 import org.infobip.mobile.messaging.chat.view.InAppChatFragment
+import org.infobip.mobile.messaging.chat.view.DefaultInAppChatFragmentEventsListener
 
 internal class ChatPlatformView(
     context: Context,
@@ -75,12 +77,18 @@ internal class ChatPlatformView(
             val created = InAppChatFragment().apply {
                 withInput = options.withInput
                 withToolbar = options.withToolbar
-                eventsListener = object : InAppChatFragment.EventsListener {
+                eventsListener = object : DefaultInAppChatFragmentEventsListener() {
                     override fun onChatViewChanged(view: LivechatWidgetView) {
                         if (!disposed && fragment === this@apply) {
                             currentWidgetView = view
                         }
                     }
+                    override fun onChatAttachmentPreviewOpened(
+                        url: String?,
+                        type: String?,
+                        caption: String?,
+                    ): Boolean = false
+                    override fun onExitChatPressed() = Unit
                 }
             }
             currentWidgetView = null
@@ -190,7 +198,12 @@ internal class ChatPlatformView(
             result.error("invalid_argument", error.message, null)
             return
         }
-        runOnFragment(current, result) { current.sendContextualData(data) }
+        runOnFragment(current, result) {
+            current.sendContextualData(
+                data,
+                MultithreadStrategy.ACTIVE,
+            )
+        }
     }
 
     private fun runOnFragment(
