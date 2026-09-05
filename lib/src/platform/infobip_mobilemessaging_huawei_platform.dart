@@ -29,6 +29,10 @@ abstract class InfobipMobileMessagingHuaweiPlatform extends PlatformInterface {
 
   Future<int> getChatUnreadMessageCount() => throw UnimplementedError();
 
+  Future<bool> isChatAvailable() => throw UnimplementedError();
+
+  Future<void> resetChatMessageCounter() => throw UnimplementedError();
+
   Future<User> getUser() => throw UnimplementedError();
 
   Future<User> fetchUser() => throw UnimplementedError();

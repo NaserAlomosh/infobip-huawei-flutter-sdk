@@ -5,6 +5,7 @@ abstract final class ChannelContract {
   static const chatViewChannel =
       'com.infobip.mobilemessaging.huawei/chat_view/';
   static const chatNavigateBack = 'navigateBackOrCloseChat';
+  static const chatIsMultithread = 'isMultithread';
   static const chatSend = 'send';
   static const chatSendContextualData = 'sendContextualData';
   static const chatSetLanguage = 'setLanguage';
@@ -98,6 +99,8 @@ abstract final class ChannelContract {
   static const deepLink = 'deepLink';
   static const isSilent = 'isSilent';
   static const getChatUnreadMessageCount = 'getChatUnreadMessageCount';
+  static const isChatAvailable = 'isChatAvailable';
+  static const resetChatMessageCounter = 'resetChatMessageCounter';
   static const count = 'count';
 
   static const eventVersion = 1;

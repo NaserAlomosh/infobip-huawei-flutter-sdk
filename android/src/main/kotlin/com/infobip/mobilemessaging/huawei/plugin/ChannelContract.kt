@@ -6,6 +6,7 @@ internal object ChannelContract {
     const val CHAT_VIEW = "com.infobip.mobilemessaging.huawei/chat_view"
     const val CHAT_VIEW_CHANNEL = "com.infobip.mobilemessaging.huawei/chat_view/"
     const val CHAT_NAVIGATE_BACK = "navigateBackOrCloseChat"
+    const val CHAT_IS_MULTITHREAD = "isMultithread"
     const val CHAT_SEND = "send"
     const val CHAT_SEND_CONTEXTUAL_DATA = "sendContextualData"
     const val CHAT_SET_LANGUAGE = "setLanguage"
@@ -96,6 +97,8 @@ internal object ChannelContract {
     const val DEEP_LINK = "deepLink"
     const val IS_SILENT = "isSilent"
     const val GET_CHAT_UNREAD_MESSAGE_COUNT = "getChatUnreadMessageCount"
+    const val IS_CHAT_AVAILABLE = "isChatAvailable"
+    const val RESET_CHAT_MESSAGE_COUNTER = "resetChatMessageCounter"
     const val COUNT = "count"
 
     const val EVENT_VERSION = 1

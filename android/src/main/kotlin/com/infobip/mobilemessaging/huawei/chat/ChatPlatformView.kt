@@ -116,6 +116,9 @@ internal class ChatPlatformView(
         }
         when (call.method) {
             ChannelContract.CHAT_NAVIGATE_BACK -> handleNavigateBack(current, result)
+            ChannelContract.CHAT_IS_MULTITHREAD -> runOnFragment(current, result) {
+                current.isMultiThread
+            }
             ChannelContract.CHAT_SEND -> handleSend(call, result, current)
             ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, current)
             ChannelContract.CHAT_SET_LANGUAGE -> handleLanguage(call, result, current)

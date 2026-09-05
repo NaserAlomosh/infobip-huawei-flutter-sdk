@@ -101,12 +101,17 @@ tokens, or stack traces.
 Global unread state is available independently of an embedded view:
 
 ```dart
-final current = await InfobipMobileMessagingHuawei.chat.getUnreadMessageCount();
+final available = await InfobipMobileMessagingHuawei.chat.isChatAvailable();
+final current = await InfobipMobileMessagingHuawei.chat.getMessageCounter();
+await InfobipMobileMessagingHuawei.chat.resetMessageCounter();
 final subscription = InfobipMobileMessagingHuawei
     .chat
     .onUnreadMessageCounterUpdated
     .listen((count) { /* update Flutter-owned UI */ });
 ```
+
+`getUnreadMessageCount()` remains available as a backward-compatible alias for
+`getMessageCounter()` and uses the same native counter query.
 
 The method returns `Future<int>` and never substitutes zero for an error. Calls before successful
 initialization fail with `not_initialized`; unavailable Chat and native failures use
@@ -116,8 +121,7 @@ the stream for future updates. Malformed and negative updates are ignored withou
 stream. One global Huawei listener is installed after initialization and removed at engine detach;
 creating or disposing embedded views does not register listeners.
 
-No other Chat events are public. Availability has no matching approved official
-Flutter API. Thread, raw-message, loading/connection, and component UI callbacks are omitted:
+No other Chat events are public. Thread, raw-message, loading/connection, and component UI callbacks are omitted:
 thread/raw events lack stable public models, while view and control callbacks belong to a specific
 embedded component rather than global Chat state. Native attachments remain available from the
 native composer.
@@ -135,6 +139,8 @@ final language = await chatController.getLanguage();
 
 await chatController.setWidgetTheme('configured-theme');
 final widgetTheme = await chatController.getWidgetTheme();
+
+final multithread = await chatController.isMultithread();
 ```
 
 `InfobipHuaweiChatMessagePayload` is deliberately a send payload and not a received-message model.
@@ -158,6 +164,11 @@ Thread commands remain intentionally omitted. Huawei 8.14.0 exposes them on the 
 but the inspected official Flutter source does not provide the stable thread models and operation
 result contract needed for a compatible permanent Dart API. In particular, this plugin does not
 claim headless history access or cache raw native thread objects.
+
+The official Flutter plugin's root `cleanup()` performs Mobile Messaging SDK cleanup. Huawei
+8.14.0 exposes `InAppChat.cleanup()` for the Chat module, which is narrower and therefore is not a
+semantic replacement for the global operation. Cleanup is intentionally not exposed by this
+plugin until equivalent global SDK semantics can be verified.
 
 Android PlatformViews require real-device validation for IME resizing, accessibility, attachment permissions, Activity recreation, and route leave/re-entry behavior. No manual keyboard workaround is installed. Chat also requires a correctly configured Infobip application/backend and a Huawei device or suitable HMS environment. Never log Chat content, contextual data, URLs, identity, tokens, or local attachment paths.
 

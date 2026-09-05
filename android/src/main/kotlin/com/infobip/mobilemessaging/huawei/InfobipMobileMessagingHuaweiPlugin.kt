@@ -266,6 +266,24 @@ class InfobipMobileMessagingHuaweiPlugin :
                 } ?: detached(result)
             }
 
+            ChannelContract.IS_CHAT_AVAILABLE -> {
+                chatManager?.isChatAvailable { available, failure ->
+                    mainHandler.post {
+                        if (failure == null) result.success(available)
+                        else result.error(failure.code, failure.message, null)
+                    }
+                } ?: detached(result)
+            }
+
+            ChannelContract.RESET_CHAT_MESSAGE_COUNTER -> {
+                chatManager?.resetMessageCounter { _, failure ->
+                    mainHandler.post {
+                        if (failure == null) result.success(null)
+                        else result.error(failure.code, failure.message, null)
+                    }
+                } ?: detached(result)
+            }
+
             else -> {
                 result.notImplemented()
             }
