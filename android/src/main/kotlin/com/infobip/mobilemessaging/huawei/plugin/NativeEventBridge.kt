@@ -8,10 +8,12 @@ import android.os.Handler
 import android.os.Looper
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.infobip.mobilemessaging.huawei.installation.InstallationMapper
+import com.infobip.mobilemessaging.huawei.user.UserMapper
 import io.flutter.plugin.common.EventChannel
 import org.infobip.mobile.messaging.Event
 import org.infobip.mobile.messaging.Installation
 import org.infobip.mobile.messaging.Message
+import org.infobip.mobile.messaging.User
 
 internal class NativeEventBridge(
     context: Context,
@@ -42,6 +44,12 @@ internal class NativeEventBridge(
                             )
                         }
                     }
+
+                    Event.USER_UPDATED.key -> emitUser(intent, ChannelContract.USER_UPDATED)
+
+                    Event.PERSONALIZED.key -> emitUser(intent, ChannelContract.PERSONALIZED)
+
+                    Event.DEPERSONALIZED.key -> emit(ChannelContract.DEPERSONALIZED, emptyMap())
                 }
             }
         }
@@ -54,6 +62,9 @@ internal class NativeEventBridge(
             IntentFilter().apply {
                 addAction(Event.MESSAGE_RECEIVED.key)
                 addAction(Event.INSTALLATION_UPDATED.key)
+                addAction(Event.USER_UPDATED.key)
+                addAction(Event.PERSONALIZED.key)
+                addAction(Event.DEPERSONALIZED.key)
             },
         )
         registered = true
@@ -82,6 +93,15 @@ internal class NativeEventBridge(
     ) {
         val event = EventEnvelope.create(type, payload)
         mainHandler.post { sink?.success(event) }
+    }
+
+    private fun emitUser(
+        intent: Intent,
+        type: String,
+    ) {
+        intent.extraOfType<User>()?.let { user ->
+            emit(type, mapOf(ChannelContract.USER to UserMapper.toMap(user)))
+        }
     }
 
     private inline fun <reified T> Intent.extraOfType(): T? {

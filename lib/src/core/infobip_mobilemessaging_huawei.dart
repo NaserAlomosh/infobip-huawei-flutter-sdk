@@ -4,6 +4,7 @@ import '../user/user.dart';
 import '../installation/installation.dart';
 import '../inbox/inbox.dart';
 import '../chat/chat.dart';
+import '../custom_event/custom_event.dart';
 
 /// Entry point for the Infobip Huawei Mobile Messaging plugin.
 final class InfobipMobileMessagingHuawei {
@@ -67,6 +68,53 @@ final class InfobipMobileMessagingHuawei {
   /// Removes the current personalization on the Infobip service.
   static Future<void> depersonalize() =>
       InfobipMobileMessagingHuaweiPlatform.instance.depersonalize();
+
+  /// Queues [event] for submission using the Huawei SDK.
+  static Future<void> submitEvent(InfobipHuaweiCustomEvent event) =>
+      InfobipMobileMessagingHuaweiPlatform.instance.submitEvent(event);
+
+  /// Submits [event] and completes after the Huawei SDK callback succeeds.
+  static Future<InfobipHuaweiCustomEvent> submitEventImmediately(
+    InfobipHuaweiCustomEvent event,
+  ) => InfobipMobileMessagingHuaweiPlatform.instance.submitEventImmediately(
+    event,
+  );
+
+  /// Depersonalizes the installation identified by [pushRegistrationId].
+  static Future<List<Installation>> depersonalizeInstallation(
+    String pushRegistrationId,
+  ) {
+    final id = pushRegistrationId.trim();
+    if (id.isEmpty) {
+      throw ArgumentError.value(
+        pushRegistrationId,
+        'pushRegistrationId',
+        'Must not be empty or whitespace-only',
+      );
+    }
+    return InfobipMobileMessagingHuaweiPlatform.instance
+        .depersonalizeInstallation(id);
+  }
+
+  /// Changes primary status for the installation identified by its push ID.
+  static Future<List<Installation>> setInstallationAsPrimary({
+    required String pushRegistrationId,
+    required bool isPrimary,
+  }) {
+    final id = pushRegistrationId.trim();
+    if (id.isEmpty) {
+      throw ArgumentError.value(
+        pushRegistrationId,
+        'pushRegistrationId',
+        'Must not be empty or whitespace-only',
+      );
+    }
+    return InfobipMobileMessagingHuaweiPlatform.instance
+        .setInstallationAsPrimary(
+          pushRegistrationId: id,
+          isPrimary: isPrimary,
+        );
+  }
 
   /// Configures the memory-only Infobip JWT used by native SDK requests.
   ///
