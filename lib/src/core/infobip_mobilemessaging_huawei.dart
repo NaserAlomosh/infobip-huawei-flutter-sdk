@@ -42,19 +42,28 @@ final class InfobipMobileMessagingHuawei {
           .registerForRemoteNotifications();
 
   /// Returns the locally cached user without making a server request.
-  static Future<User> getUser() =>
+  static Future<UserData> getUser() =>
       InfobipMobileMessagingHuaweiPlatform.instance.getUser();
 
   /// Refreshes and returns the user from Infobip services.
-  static Future<User> fetchUser() =>
+  static Future<UserData> fetchUser() =>
       InfobipMobileMessagingHuaweiPlatform.instance.fetchUser();
 
   /// Saves the supplied profile and completes with the resulting user.
-  static Future<User> saveUser(User user) =>
+  static Future<UserData> saveUser(UserData user) =>
       InfobipMobileMessagingHuaweiPlatform.instance.saveUser(user);
 
-  /// Associates this installation with [userIdentity] and optional attributes.
-  static Future<User> personalize(
+  /// Associates this installation with the supplied user context.
+  static Future<UserData> personalize(PersonalizeContext context) =>
+      InfobipMobileMessagingHuaweiPlatform.instance.personalize(
+        context.userIdentity,
+        context.userAttributes,
+        forceDepersonalize: context.forceDepersonalize,
+      );
+
+  /// Compatibility helper for the pre-v1 positional personalization API.
+  @Deprecated('Use personalize(PersonalizeContext(...))')
+  static Future<UserData> personalizeUser(
     UserIdentity userIdentity, [
     UserAttributes? userAttributes,
     bool forceDepersonalize = false,
@@ -98,7 +107,7 @@ final class InfobipMobileMessagingHuawei {
   static Future<Inbox> fetchInbox({
     required String externalUserId,
     String? jwt,
-    InboxFilterOptions? options,
+    FilterOptions? options,
   }) {
     if (externalUserId.trim().isEmpty) {
       throw ArgumentError.value(

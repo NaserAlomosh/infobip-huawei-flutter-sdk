@@ -31,7 +31,7 @@ class _InboxScreenState extends State<InboxScreen> {
     try {
       final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
         externalUserId: _externalUserId.text.trim(),
-        options: InboxFilterOptions(
+        options: FilterOptions(
           limit: limit,
           topic: _topic.text.trim().isEmpty ? null : _topic.text.trim(),
         ),
@@ -83,7 +83,7 @@ class _InboxScreenState extends State<InboxScreen> {
   Future<void> _fetchAfterUpdate() async {
     final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
       externalUserId: _externalUserId.text.trim(),
-      options: InboxFilterOptions(
+      options: FilterOptions(
         limit: int.tryParse(_limit.text.trim()),
         topic: _topic.text.trim().isEmpty ? null : _topic.text.trim(),
       ),

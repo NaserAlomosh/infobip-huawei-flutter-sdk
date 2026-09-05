@@ -83,7 +83,7 @@ class _InstallationScreenState extends State<InstallationScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Push registration enabled (read-only): '
-                  '${installation?.pushRegistrationEnabled ?? 'unknown'}',
+                  '${installation?.isPushRegistrationEnabled ?? 'unknown'}',
                 ),
                 Text(
                   'Notifications enabled (read-only): '

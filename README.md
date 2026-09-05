@@ -143,12 +143,14 @@ final cached = await InfobipMobileMessagingHuawei.getUser();
 final current = await InfobipMobileMessagingHuawei.fetchUser();
 
 final saved = await InfobipMobileMessagingHuawei.saveUser(
-  User(firstName: 'Sam', lastName: 'Taylor'),
+  UserData(firstName: 'Sam', lastName: 'Taylor'),
 );
 
 final personalized = await InfobipMobileMessagingHuawei.personalize(
-  const UserIdentity(externalUserId: 'YOUR_EXTERNAL_USER_ID'),
-  const UserAttributes(firstName: 'Sam'),
+  const PersonalizeContext(
+    userIdentity: UserIdentity(externalUserId: 'YOUR_EXTERNAL_USER_ID'),
+    userAttributes: UserAttributes(firstName: 'Sam'),
+  ),
 );
 
 await InfobipMobileMessagingHuawei.depersonalize();
@@ -170,14 +172,14 @@ final saved = await InfobipMobileMessagingHuawei.saveInstallation(
 );
 ```
 
-Only `isPrimaryDevice` and `customAttributes` are writable. Identifiers, registration state, device data, application data, and SDK data are native-managed snapshots.
+Only `isPrimaryDevice`, `isPushRegistrationEnabled`, and `customAttributes` are writable. Identifiers, registration state, device data, application data, and SDK data are native-managed snapshots.
 
 ## Inbox
 
 ```dart
 final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
   externalUserId: 'YOUR_EXTERNAL_USER_ID',
-  options: InboxFilterOptions(
+  options: FilterOptions(
     topics: const ['support'],
     limit: 20,
   ),
@@ -185,7 +187,10 @@ final inbox = await InfobipMobileMessagingHuawei.fetchInbox(
 
 await InfobipMobileMessagingHuawei.setInboxMessagesSeen(
   externalUserId: 'YOUR_EXTERNAL_USER_ID',
-  messageIds: inbox.messages.map((message) => message.messageId).toList(),
+  messageIds: inbox.messages
+      .map((message) => message.messageId)
+      .whereType<String>()
+      .toList(),
 );
 ```
 

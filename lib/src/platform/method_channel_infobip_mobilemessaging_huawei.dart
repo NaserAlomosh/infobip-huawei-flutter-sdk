@@ -51,24 +51,24 @@ final class MethodChannelInfobipMobileMessagingHuawei
       .invokeMethod<void>(ChannelContract.registerForRemoteNotifications);
 
   @override
-  Future<User> getUser() async => UserCodec.decode(
+  Future<UserData> getUser() async => UserCodec.decode(
     await methodChannel.invokeMethod<Object?>(ChannelContract.getUser),
   );
 
   @override
-  Future<User> fetchUser() async => UserCodec.decode(
+  Future<UserData> fetchUser() async => UserCodec.decode(
     await methodChannel.invokeMethod<Object?>(ChannelContract.fetchUser),
   );
 
   @override
-  Future<User> saveUser(User user) async => UserCodec.decode(
+  Future<UserData> saveUser(UserData user) async => UserCodec.decode(
     await methodChannel.invokeMethod<Object?>(ChannelContract.saveUser, {
       ChannelContract.user: UserCodec.encode(user),
     }),
   );
 
   @override
-  Future<User> personalize(
+  Future<UserData> personalize(
     UserIdentity userIdentity,
     UserAttributes? userAttributes, {
     required bool forceDepersonalize,
@@ -119,7 +119,7 @@ final class MethodChannelInfobipMobileMessagingHuawei
   Future<Inbox> fetchInbox({
     required String externalUserId,
     String? jwt,
-    InboxFilterOptions? options,
+    FilterOptions? options,
   }) async => InboxCodec.decode(
     await methodChannel.invokeMethod<Object?>(ChannelContract.fetchInbox, {
       ChannelContract.externalUserId: externalUserId,

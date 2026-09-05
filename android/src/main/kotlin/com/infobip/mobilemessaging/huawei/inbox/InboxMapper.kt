@@ -73,8 +73,8 @@ internal object InboxMapper {
             ChannelContract.SEEN to value.isSeen,
             ChannelContract.RECEIVED_TIMESTAMP to timestamp(value.receivedTimestamp),
             ChannelContract.CUSTOM_PAYLOAD to jsonObject(value.customPayload),
-            ChannelContract.DEEP_LINK to value.deeplink,
-            ChannelContract.IS_SILENT to value.isSilent,
+            "deeplink" to value.deeplink,
+            "silent" to value.isSilent,
         )
 
     private fun optionalString(

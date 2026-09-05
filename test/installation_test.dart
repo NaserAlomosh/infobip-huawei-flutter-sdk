@@ -22,7 +22,7 @@ void main() {
           return <String, Object?>{
             ChannelContract.installationId: 'installation-1',
             ChannelContract.pushRegistrationId: 'managed-id',
-            ChannelContract.pushRegistrationEnabled: true,
+            ChannelContract.isPushRegistrationEnabled: true,
             ChannelContract.notificationsEnabled: false,
             ChannelContract.language: 'en',
             ChannelContract.customAttributes: <String, Object?>{
@@ -79,7 +79,7 @@ void main() {
   test('rejects malformed installation fields', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async => <String, Object?>{
-          ChannelContract.pushRegistrationEnabled: 'yes',
+          ChannelContract.isPushRegistrationEnabled: 'yes',
         });
     expect(platform.getInstallation(), throwsFormatException);
   });

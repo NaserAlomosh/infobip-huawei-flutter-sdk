@@ -125,20 +125,15 @@ The package is Android-only and targets Huawei Mobile Services (HMS).
 
 ### Notifications
 
-`PushMessage`
-
-Contains:
-
-- message ID
-- title
-- body
-- custom payload
-- deep link
-- silent-message status
+`Message` mirrors the official shared notification model. Huawei-backed values
+include message presentation, timestamps, seen state, URL actions, custom
+payload, and Chat state. `originalPayload` and `internalData` remain nullable
+because Huawei 8.14.0 cannot provide the official platform-specific values.
+`PushMessage` is a deprecated source-compatible alias.
 
 ### User
 
-- `User`
+- `UserData` (`User` remains a deprecated alias)
 - `UserIdentity`
 - `UserAttributes`
 
@@ -158,8 +153,8 @@ Only fields explicitly supported for modification by the plugin can be updated.
 ### Inbox
 
 - `Inbox`
-- `InboxMessage`
-- `InboxFilterOptions`
+- `Message` (`InboxMessage` remains a deprecated alias)
+- `FilterOptions` (`InboxFilterOptions` remains a deprecated alias)
 
 Supports server counters, Inbox messages, time filters, topic filters, and result
 limits.
@@ -213,3 +208,46 @@ In-App Chat requires:
 
 Chat is exposed primarily as a native UI integration rather than a headless
 conversation API.
+## Model Parity
+
+The parity audit uses official Flutter commit
+`8b630d0f736d400635317131d549c345349bd54d` and Huawei SDK 8.14.0
+(reference revision `83786a498f165386041bf75e71488f1635f8af94`).
+
+| Official Flutter API/model | Official field/method | Huawei native equivalent | Plugin equivalent | Status | Required action |
+| --- | --- | --- | --- | --- | --- |
+| `Message` | `messageId`, `title`, `body`, `sound`, `vibrate`, `icon`, `silent`, `category` | `Message` getters | Same fields | EXACT | None |
+| `Message` | `customPayload`, `contentUrl` | `Message.customPayload`, `contentUrl` | Same fields | EXACT | Channel-safe conversion |
+| `Message` | `receivedTimestamp`, `seenDate`, `seen` | timestamps and `seenTimestamp != 0` | UTC `DateTime` and boolean | MAPPABLE | Map native timestamps |
+| `Message` | `browserUrl`, `deeplink`, `webViewUrl` | corresponding `Message` getters | Same fields | EXACT | None |
+| `Message` | `inAppOpenTitle`, `inAppDismissTitle`, `chat` | corresponding `Message` getters | Same fields | EXACT | None |
+| `Message` | `internalData` | Not exposed by the Huawei 8.14 public message contract | Nullable field | NOT_AVAILABLE_IN_HUAWEI | Return `null` |
+| `Message` | `originalPayload` | APNS payload | Nullable field | IOS_ONLY | Return `null`; never synthesize APNS data |
+| `PushMessage` | legacy class name | Same native message | Deprecated alias of `Message` | RENAMED | Migrate to `Message` |
+| `Installation` | registration, device, SDK, application, OS and user fields | corresponding Huawei `Installation` getters | Official field names | EXACT | None |
+| `Installation` | `pushServiceType` | Huawei `PushServiceType` | `PushServiceType.HMS` | HUAWEI_ONLY | Preserve HMS enum value |
+| `Installation` | `isPrimaryDevice`, `isPushRegistrationEnabled`, `customAttributes` | `InstallationJson.fromJSON` writable set | Mutable properties | EXACT | Save only these properties |
+| `Installation` | old shortened field names | N/A | Deprecated getters/constructor parameters | RENAMED | Migrate to official names |
+| `UserData` | identity and profile fields | `User`, `UserIdentity`, `UserAttributes` | Same names and types | MAPPABLE | Convert native sets to Dart lists |
+| `UserData` | `type` | Huawei user type | `Type` | MAPPABLE | Encode/decode native value |
+| `UserData` | `installations` | `User.installations` | `List<Installation>?` | MAPPABLE | Use aligned installation codec |
+| `User` | legacy plugin class name | Huawei `User` | Deprecated alias of `UserData` | RENAMED | Migrate to `UserData` |
+| `PersonalizeContext` | all fields | Huawei personalization context | Same fields | EXACT | Use as primary personalize argument |
+| `Inbox` | counters and `messages` | Huawei Mobile Inbox | Same counters and `List<Message>` | MAPPABLE | Reuse shared message model |
+| `FilterOptions` | `fromDateTime`, `toDateTime`, `topic`, `limit` | `MobileInboxFilterOptions` | Same fields | EXACT | Convert dates to UTC |
+| `FilterOptions` | multiple topics | Huawei list-topic constructor | `topics` | HUAWEI_ONLY | Retain supported extension |
+| `InboxFilterOptions`, `from`, `to` | legacy plugin names | Same native filters | Deprecated aliases | RENAMED | Migrate to official names |
+| `LibraryEvent` message payloads | `Message` | Huawei broadcasts | Typed `Stream<Message>` | BEHAVIOR_DIFFERENCE | Keep typed stream architecture |
+| `LibraryEvent` installation payloads | `Installation` | Huawei broadcasts | Typed `Stream<Installation>` | MAPPABLE | Keep typed stream architecture |
+| Firebase configuration | Firebase options | No Huawei equivalent | Not exposed | GOOGLE_ONLY | Intentionally omit |
+| iOS configuration | iOS options | No Android equivalent | Not exposed | IOS_ONLY | Intentionally omit |
+| Huawei initialization | Application Code | Huawei SDK initialization | `initialize(applicationCode:)` | ANDROID_ONLY | Retain coherent Huawei API |
+| Chat models | Chat UI/runtime models | Huawei Chat 8.14 | Existing view/controller models | BEHAVIOR_DIFFERENCE | Defer feature expansion to development-v2 |
+
+### Compatibility aliases
+
+Deprecated aliases preserve pre-v1 source compatibility for `PushMessage`,
+`User`, `InboxMessage`, `InboxFilterOptions`, `deepLink`, `isSilent`,
+`pushRegistrationEnabled`, `applicationVersion`, `operatingSystem`,
+`operatingSystemVersion`, `deviceTimezoneId`, and `appUserId`. Canonical code
+should use the official-style names.

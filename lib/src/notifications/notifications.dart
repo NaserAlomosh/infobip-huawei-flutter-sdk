@@ -3,7 +3,7 @@ import 'dart:async';
 import '../platform/channel_contract.dart';
 import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 import 'notification_events.dart';
-import 'push_message.dart';
+import 'message.dart';
 import 'push_message_codec.dart';
 import '../installation/installation.dart';
 import '../installation/installation_codec.dart';
@@ -18,10 +18,10 @@ final class InfobipHuaweiNotifications {
   Stream<Object?> get _events =>
       InfobipMobileMessagingHuaweiPlatform.instance.events;
 
-  Stream<PushMessage> get onMessageReceived =>
+  Stream<Message> get onMessageReceived =>
       _typed(ChannelContract.messageReceived, _message);
 
-  Stream<PushMessage> get onNotificationTapped =>
+  Stream<Message> get onNotificationTapped =>
       _typed(ChannelContract.notificationTapped, _message);
 
   Stream<NotificationActionEvent> get onNotificationActionTapped => _typed(
@@ -61,7 +61,7 @@ final class InfobipHuaweiNotifications {
     ),
   );
 
-  static PushMessage _message(Map<Object?, Object?> payload) {
+  static Message _message(Map<Object?, Object?> payload) {
     final message = payload['message'];
     if (message is! Map) throw const FormatException('Missing message');
     return PushMessageCodec.decode(message.cast<Object?, Object?>());
