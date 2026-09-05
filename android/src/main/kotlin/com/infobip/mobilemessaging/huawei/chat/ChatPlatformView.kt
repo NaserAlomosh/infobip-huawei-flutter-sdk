@@ -13,6 +13,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
+import org.infobip.mobile.messaging.chat.core.widget.LivechatWidgetView
 import org.infobip.mobile.messaging.chat.view.InAppChatFragment
 
 internal class ChatPlatformView(
@@ -27,6 +28,7 @@ internal class ChatPlatformView(
     private val pendingError = PendingChatViewError()
     private var fragmentActivity: FragmentActivity? = activity as? FragmentActivity
     private var fragment: InAppChatFragment? = null
+    private var currentWidgetView: LivechatWidgetView? = null
     private var disposed = false
     private var flutterReady = false
     private val root: View
@@ -73,7 +75,15 @@ internal class ChatPlatformView(
             val created = InAppChatFragment().apply {
                 withInput = options.withInput
                 withToolbar = options.withToolbar
+                eventsListener = object : InAppChatFragment.EventsListener {
+                    override fun onChatViewChanged(view: LivechatWidgetView) {
+                        if (!disposed && fragment === this@apply) {
+                            currentWidgetView = view
+                        }
+                    }
+                }
             }
+            currentWidgetView = null
             fragment = created
             manager.beginTransaction()
                 .replace(container.id, created, fragmentTag(container.id))
@@ -105,9 +115,7 @@ internal class ChatPlatformView(
             return
         }
         when (call.method) {
-            ChannelContract.CHAT_NAVIGATE_BACK -> runOnFragment(current, result) {
-                current.navigateBackOrCloseChat()
-            }
+            ChannelContract.CHAT_NAVIGATE_BACK -> handleNavigateBack(current, result)
             ChannelContract.CHAT_SEND -> handleSend(call, result, current)
             ChannelContract.CHAT_SEND_CONTEXTUAL_DATA -> handleContextualData(call, result, current)
             ChannelContract.CHAT_SET_LANGUAGE -> handleLanguage(call, result, current)
@@ -121,6 +129,20 @@ internal class ChatPlatformView(
                 current.getWidgetTheme()
             }
             else -> result.notImplemented()
+        }
+    }
+
+    private fun handleNavigateBack(current: InAppChatFragment, result: MethodChannel.Result) {
+        Log.d(TAG, "Chat back navigation requested")
+        runOnFragment(current, result) {
+            val handled = ChatBackNavigation.isHandledInternally(current.isMultiThread, currentWidgetView)
+            if (handled) {
+                current.showThreadList()
+                Log.d(TAG, "Chat back handled internally")
+            } else {
+                Log.d(TAG, "Chat back delegated to Flutter")
+            }
+            handled
         }
     }
 
@@ -193,6 +215,7 @@ internal class ChatPlatformView(
         channel.setMethodCallHandler(null)
         val current = fragment
         fragment = null
+        currentWidgetView = null
         val manager = fragmentActivity?.supportFragmentManager
         fragmentActivity = null
         if (current != null && manager != null && current.isAdded && !manager.isDestroyed) {
