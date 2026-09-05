@@ -38,6 +38,16 @@ void main() {
       controller.isMultithread(),
       throwsA(isA<PlatformException>()),
     );
+    await expectLater(
+      controller.showThreadsList(),
+      throwsA(
+        isA<PlatformException>().having(
+          (error) => error.code,
+          'code',
+          'chat_unavailable',
+        ),
+      ),
+    );
   });
 
   test('text payload rejects empty text', () {
@@ -198,6 +208,58 @@ void main() {
 
       expect(controller.isAttached, isTrue);
       expect(await controller.navigateBackOrCloseChat(), isTrue);
+    });
+
+    testWidgets('controller requests the thread list on its view channel', (
+      tester,
+    ) async {
+      final calls = <MethodCall>[];
+      messenger.setMockMethodCallHandler(const MethodChannel(channelName), (
+        call,
+      ) async {
+        calls.add(call);
+        return null;
+      });
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await controller.showThreadsList();
+
+      expect(
+        calls.where((call) => call.method == 'showThreadsList'),
+        hasLength(1),
+      );
+      expect(calls.last.arguments, isNull);
+    });
+
+    testWidgets('thread list request forwards a native platform error', (
+      tester,
+    ) async {
+      messenger.setMockMethodCallHandler(
+        const MethodChannel(channelName),
+        (call) async {
+          if (call.method == 'showThreadsList') {
+            throw PlatformException(
+              code: 'native_error',
+              message: 'Chat operation failed',
+            );
+          }
+          return null;
+        },
+      );
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await expectLater(
+        controller.showThreadsList(),
+        throwsA(
+          isA<PlatformException>().having(
+            (error) => error.code,
+            'code',
+            'native_error',
+          ),
+        ),
+      );
     });
 
     testWidgets('controller accepts a false navigation result', (

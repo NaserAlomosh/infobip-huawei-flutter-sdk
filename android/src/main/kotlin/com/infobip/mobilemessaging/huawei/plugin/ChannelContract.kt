@@ -6,6 +6,7 @@ internal object ChannelContract {
     const val CHAT_VIEW = "com.infobip.mobilemessaging.huawei/chat_view"
     const val CHAT_VIEW_CHANNEL = "com.infobip.mobilemessaging.huawei/chat_view/"
     const val CHAT_NAVIGATE_BACK = "navigateBackOrCloseChat"
+    const val CHAT_SHOW_THREADS_LIST = "showThreadsList"
     const val CHAT_IS_MULTITHREAD = "isMultithread"
     const val CHAT_SEND = "send"
     const val CHAT_SEND_CONTEXTUAL_DATA = "sendContextualData"

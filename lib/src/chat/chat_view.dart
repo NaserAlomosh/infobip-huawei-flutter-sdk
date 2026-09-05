@@ -167,6 +167,16 @@ final class InfobipHuaweiChatController {
     return handled;
   }
 
+  /// Shows the native conversation list for a multithread Chat widget.
+  ///
+  /// This controller must be attached to a live [InfobipHuaweiChatView].
+  Future<void> showThreadsList() async {
+    final bridge = _requireBridge();
+    await bridge.channel.invokeMethod<void>(
+      ChannelContract.chatShowThreadsList,
+    );
+  }
+
   /// Returns whether the attached native Chat fragment supports threads.
   Future<bool> isMultithread() async {
     final bridge = _requireBridge();

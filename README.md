@@ -167,7 +167,15 @@ await chatController.setWidgetTheme('configured-theme');
 final widgetTheme = await chatController.getWidgetTheme();
 
 final multithread = await chatController.isMultithread();
+if (multithread) {
+  await chatController.showThreadsList();
+}
 ```
+
+`showThreadsList()` displays the native Infobip conversation list for a
+multithread-enabled Live Chat widget. It requires a controller attached to a
+live `InfobipHuaweiChatView`. The command does not fetch or construct message
+history; the Infobip Chat SDK continues to own all message and thread data.
 
 `InfobipHuaweiChatMessagePayload` is deliberately a send payload and not a received-message model.
 Its current portable surface is non-empty text only. Programmatic attachments are omitted because
@@ -186,10 +194,9 @@ persist either setting or apply it to future views. A widget theme is not Androi
 ID, or Flutter `ThemeData`. `getWidgetTheme()` returns `null` when Huawei reports
 that no explicit widget theme is active; absence is not treated as a native failure.
 
-Thread commands remain intentionally omitted. Huawei 8.14.0 exposes them on the embedded component,
-but the inspected official Flutter source does not provide the stable thread models and operation
-result contract needed for a compatible permanent Dart API. In particular, this plugin does not
-claim headless history access or cache raw native thread objects.
+Thread model commands remain intentionally omitted because they do not provide a stable portable
+result contract. `showThreadsList()` is limited to native UI navigation and does not claim headless
+history access or cache raw native thread objects.
 
 Huawei 8.14.0 provides root SDK cleanup through `MobileMessaging.cleanup()`. The separate
 `InAppChat.cleanup()` operation only removes In-App Chat data and is not used to implement root
