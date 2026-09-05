@@ -57,8 +57,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     'Message ID: ${message.messageId ?? 'not provided'}',
     'Title: ${message.title ?? 'not provided'}',
     'Body: ${message.body ?? 'not provided'}',
-    'Deep link: ${message.deepLink ?? 'not provided'}',
-    'Silent: ${message.isSilent}',
+    'Deep link: ${message.deeplink ?? 'not provided'}',
+    'Silent: ${message.silent ?? false}',
     'Custom payload: ${const JsonEncoder.withIndent('  ').convert(message.customPayload)}',
   ].join('\n');
 

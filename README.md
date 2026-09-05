@@ -147,7 +147,7 @@ final saved = await InfobipMobileMessagingHuawei.saveUser(
 );
 
 final personalized = await InfobipMobileMessagingHuawei.personalize(
-  const PersonalizeContext(
+  PersonalizeContext(
     userIdentity: UserIdentity(externalUserId: 'YOUR_EXTERNAL_USER_ID'),
     userAttributes: UserAttributes(firstName: 'Sam'),
   ),
@@ -156,7 +156,7 @@ final personalized = await InfobipMobileMessagingHuawei.personalize(
 await InfobipMobileMessagingHuawei.depersonalize();
 ```
 
-`UserIdentity` supports an external user ID, phones, and emails. User attributes support names, gender, a date-only birthday, tags, and SDK-compatible custom attributes.
+`UserIdentity` supports an external user ID, phones, and emails. User attributes support names, gender, a date-only `String?` birthday in `YYYY-MM-DD` format, tags, and SDK-compatible custom attributes. Message `receivedTimestamp` and `seenDate` values are numeric Unix epoch milliseconds, matching the official Flutter model.
 
 ## Installation
 

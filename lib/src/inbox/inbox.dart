@@ -1,7 +1,7 @@
 import '../notifications/message.dart';
 
 /// Server-side options used when fetching Inbox messages.
-final class FilterOptions {
+class FilterOptions {
   const FilterOptions({
     DateTime? fromDateTime,
     DateTime? toDateTime,
@@ -28,7 +28,7 @@ final class FilterOptions {
 @Deprecated('Use FilterOptions')
 typedef InboxFilterOptions = FilterOptions;
 
-final class Inbox {
+class Inbox {
   const Inbox({
     required this.countTotal,
     required this.countUnread,

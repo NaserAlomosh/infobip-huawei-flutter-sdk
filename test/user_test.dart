@@ -44,8 +44,8 @@ void main() {
   test('decodes channel-safe user values', () async {
     final user = await platform.getUser();
     expect(user.externalUserId, 'sample-id');
-    expect(user.gender, Gender.female);
-    expect(user.birthday, DateTime.utc(1995, 6, 20));
+    expect(user.gender, Gender.Female);
+    expect(user.birthday, '1995-06-20');
     expect(user.tags, ['customer']);
     expect(user.customAttributes?['active'], true);
   });
@@ -55,7 +55,7 @@ void main() {
         .setMockMethodCallHandler(channel, (_) async => <String, Object?>{
           ChannelContract.gender: 'male',
         });
-    expect((await platform.getUser()).gender, Gender.male);
+    expect((await platform.getUser()).gender, Gender.Male);
   });
 
   test('delegates getUser and fetchUser independently', () async {
@@ -71,8 +71,8 @@ void main() {
     await platform.saveUser(
       User(
         firstName: 'Sample',
-        gender: Gender.male,
-        birthday: DateTime(1995, 6, 20, 23, 30),
+        gender: Gender.Male,
+        birthday: '1995-06-20',
         tags: const ['one', 'two'],
         customAttributes: const {'level': 2},
       ),
@@ -85,8 +85,8 @@ void main() {
   });
 
   test('encodes male and female genders', () async {
-    await platform.saveUser(const User(gender: Gender.male));
-    await platform.saveUser(const User(gender: Gender.female));
+    await platform.saveUser(User(gender: Gender.Male));
+    await platform.saveUser(User(gender: Gender.Female));
 
     expect(
       ((calls[0].arguments as Map)[ChannelContract.user]
@@ -98,20 +98,6 @@ void main() {
           as Map)[ChannelContract.gender],
       'female',
     );
-  });
-
-  test('rejects sending an unknown gender', () async {
-    await expectLater(
-      platform.saveUser(const User(gender: Gender.unknown)),
-      throwsA(
-        isA<PlatformException>().having(
-          (error) => error.code,
-          'code',
-          'invalid_argument',
-        ),
-      ),
-    );
-    expect(calls, isEmpty);
   });
 
   test('encodes DateTime custom values with a recursive date tag', () async {
@@ -139,8 +125,8 @@ void main() {
 
   test('delegates personalization identity, attributes, and force option', () async {
     await platform.personalize(
-      const UserIdentity(externalUserId: 'sample-id'),
-      const UserAttributes(firstName: 'Sample'),
+      UserIdentity(externalUserId: 'sample-id'),
+      UserAttributes(firstName: 'Sample'),
       forceDepersonalize: true,
     );
     final arguments = calls.single.arguments as Map<Object?, Object?>;
@@ -178,12 +164,12 @@ void main() {
     await expectLater(platform.fetchUser(), throwsFormatException);
   });
 
-  test('decodes an unknown future native gender distinctly from null', () async {
+  test('decodes an unknown future native gender as null', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async => <String, Object?>{
           ChannelContract.gender: 'unspecified',
         });
-    expect((await platform.getUser()).gender, Gender.unknown);
+    expect((await platform.getUser()).gender, isNull);
   });
 
   test('decodes null gender as absent', () async {

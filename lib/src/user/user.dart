@@ -5,8 +5,7 @@ import '../installation/installation.dart';
 
 enum Gender {
   Male,
-  Female,
-  unknown;
+  Female;
 
   @Deprecated('Use Gender.Male')
   static const male = Male;
@@ -14,39 +13,45 @@ enum Gender {
   static const female = Female;
 }
 
-enum Type { Lead, Customer, unknown }
+enum Type {
+  LEAD,
+  CUSTOMER;
 
-final class UserIdentity {
-  const UserIdentity({this.externalUserId, this.phones, this.emails});
-  final String? externalUserId;
-  final List<String>? phones;
-  final List<String>? emails;
+  @Deprecated('Use Type.LEAD')
+  static const Lead = LEAD;
+  @Deprecated('Use Type.CUSTOMER')
+  static const Customer = CUSTOMER;
 }
 
-final class UserAttributes {
-  const UserAttributes({
+class UserIdentity {
+  UserIdentity({this.externalUserId, this.phones, this.emails});
+  String? externalUserId;
+  List<String>? phones;
+  List<String>? emails;
+}
+
+class UserAttributes {
+  UserAttributes({
     this.firstName,
     this.lastName,
     this.middleName,
     this.gender,
     this.birthday,
-    this.type,
     this.tags,
     this.customAttributes,
   });
-  final String? firstName;
-  final String? lastName;
-  final String? middleName;
-  final Gender? gender;
-  final DateTime? birthday;
-  final Type? type;
-  final List<String>? tags;
-  final Map<String, Object?>? customAttributes;
+  String? firstName;
+  String? lastName;
+  String? middleName;
+  Gender? gender;
+  String? birthday;
+  List<String>? tags;
+  Map<String, dynamic>? customAttributes;
 }
 
 /// A Mobile Messaging user profile.
-final class UserData {
-  const UserData({
+class UserData {
+  UserData({
     this.externalUserId,
     this.firstName,
     this.lastName,
@@ -60,18 +65,18 @@ final class UserData {
     this.customAttributes,
     this.installations,
   });
-  final String? externalUserId;
-  final String? firstName;
-  final String? lastName;
-  final String? middleName;
-  final Gender? gender;
-  final DateTime? birthday;
-  final Type? type;
-  final List<String>? phones;
-  final List<String>? emails;
-  final List<String>? tags;
-  final Map<String, Object?>? customAttributes;
-  final List<Installation>? installations;
+  String? externalUserId;
+  String? firstName;
+  String? lastName;
+  String? middleName;
+  Gender? gender;
+  String? birthday;
+  Type? type;
+  List<String>? phones;
+  List<String>? emails;
+  List<String>? tags;
+  Map<String, dynamic>? customAttributes;
+  List<Installation>? installations;
 }
 
 /// Backwards-compatible name for [UserData].
@@ -79,8 +84,8 @@ final class UserData {
 typedef User = UserData;
 
 /// Values used to personalize an installation.
-final class PersonalizeContext {
-  const PersonalizeContext({
+class PersonalizeContext {
+  PersonalizeContext({
     this.forceDepersonalize = false,
     required this.userIdentity,
     this.userAttributes,

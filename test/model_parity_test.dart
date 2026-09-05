@@ -10,7 +10,7 @@ void main() {
       'messageId': 'm1', 'title': 'Title', 'body': 'Body', 'sound': 'default',
       'vibrate': true, 'icon': 'push', 'silent': false, 'category': 'offer',
       'customPayload': {'id': 7}, 'receivedTimestamp': 1788264000000,
-      'seenDate': '2026-09-01T12:01:00Z', 'seen': true,
+      'seenDate': 1788264060000, 'seen': true,
       'contentUrl': 'https://example.test/content',
       'browserUrl': 'https://example.test', 'deeplink': 'app://offer',
       'webViewUrl': 'https://example.test/web', 'inAppOpenTitle': 'Open',
@@ -19,8 +19,8 @@ void main() {
     expect(message.messageId, 'm1');
     expect(message.sound, 'default');
     expect(message.vibrate, isTrue);
-    expect(message.receivedTimestamp, isNotNull);
-    expect(message.seenDate, DateTime.utc(2026, 9, 1, 12, 1));
+    expect(message.receivedTimestamp, 1788264000000);
+    expect(message.seenDate, 1788264060000);
     expect(message.seen, isTrue);
     expect(message.deeplink, 'app://offer');
     expect(message.originalPayload, isNull);
@@ -51,6 +51,50 @@ void main() {
     expect(installation.pushRegistrationEnabled, isFalse);
   });
 
+  test('birthday remains an exact nullable YYYY-MM-DD string', () {
+    for (final birthday in <String?>[null, '1999-08-21', '2000-01-01']) {
+      final encoded = UserCodec.encode(UserData(birthday: birthday));
+      expect(encoded['birthday'], birthday);
+      expect(UserCodec.decode(encoded).birthday, birthday);
+    }
+  });
+
+  test('official user fields remain mutable', () {
+    final user = UserData(firstName: 'Before', birthday: '1999-08-21');
+    final identity = UserIdentity(externalUserId: 'before');
+    final attributes = UserAttributes(firstName: 'Before');
+
+    user
+      ..firstName = 'After'
+      ..birthday = '2000-01-01';
+    identity.externalUserId = 'after';
+    attributes.firstName = 'After';
+
+    expect(user.firstName, 'After');
+    expect(user.birthday, '2000-01-01');
+    expect(identity.externalUserId, 'after');
+    expect(attributes.firstName, 'After');
+  });
+
+  test('decodes official and Huawei push service enum values', () {
+    expect(
+      InstallationCodec.decode({'pushServiceType': 'GCM'}).pushServiceType,
+      PushServiceType.GCM,
+    );
+    expect(
+      InstallationCodec.decode({'pushServiceType': 'Firebase'}).pushServiceType,
+      PushServiceType.Firebase,
+    );
+    expect(
+      InstallationCodec.decode({'pushServiceType': 'APNS'}).pushServiceType,
+      PushServiceType.APNS,
+    );
+    expect(
+      InstallationCodec.decode({'pushServiceType': 'HMS'}).pushServiceType,
+      PushServiceType.HMS,
+    );
+  });
+
   test('maps UserData type and nested installations', () {
     final user = UserCodec.decode({
       'externalUserId': 'user', 'gender': 'female', 'type': 'customer',
@@ -60,12 +104,13 @@ void main() {
     });
     expect(user, isA<UserData>());
     expect(user.gender, Gender.Female);
-    expect(user.type, Type.Customer);
+    expect(user.type, Type.CUSTOMER);
+    expect(UserCodec.decode({'type': 'lead'}).type, Type.LEAD);
     expect(user.installations?.single.pushServiceType, PushServiceType.HMS);
   });
 
   test('constructs official personalization and filter models', () {
-    const context = PersonalizeContext(
+    final context = PersonalizeContext(
       forceDepersonalize: true,
       userIdentity: UserIdentity(externalUserId: 'user'),
       userAttributes: UserAttributes(firstName: 'Sam'),

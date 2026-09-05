@@ -59,7 +59,7 @@ void main() {
           'body': 'Body',
           'topic': 'news',
           'seen': false,
-          'receivedTimestamp': '2026-09-01T12:00:00Z',
+          'receivedTimestamp': 1788264000000,
           'customPayload': {
             'nested': {'enabled': true},
           },
@@ -75,9 +75,9 @@ void main() {
     expect(inbox.messages.single.messageId, 'message-1');
     expect(
       inbox.messages.single.receivedTimestamp,
-      DateTime.utc(2026, 9, 1, 12),
+      1788264000000,
     );
-    expect(inbox.messages.single.customPayload['nested'], {'enabled': true});
+    expect(inbox.messages.single.customPayload?['nested'], {'enabled': true});
     expect(inbox.messages.single.seen, isFalse);
     expect(inbox.messages.single.silent, isTrue);
   });

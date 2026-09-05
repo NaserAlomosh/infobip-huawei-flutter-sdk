@@ -1,13 +1,21 @@
 /// Push transport used by an Infobip installation.
 // ignore_for_file: constant_identifier_names
-enum PushServiceType { APNS, FCM, HMS }
+enum PushServiceType {
+  GCM,
+  Firebase,
+  APNS,
+  HMS;
+
+  @Deprecated('Use PushServiceType.Firebase')
+  static const FCM = Firebase;
+}
 
 /// An Infobip installation associated with this application instance.
 ///
 /// Huawei accepts changes to [isPrimaryDevice],
 /// [isPushRegistrationEnabled], and [customAttributes]. Other properties are
 /// native-managed snapshots.
-final class Installation {
+class Installation {
   Installation({
     this.installationId,
     this.pushRegistrationId,
@@ -60,7 +68,7 @@ final class Installation {
   final String? deviceTimezoneOffset;
   final String? applicationUserId;
   final String? deviceName;
-  Map<String, Object?>? customAttributes;
+  Map<String, dynamic>? customAttributes;
 
   @Deprecated('Use isPushRegistrationEnabled')
   bool? get pushRegistrationEnabled => isPushRegistrationEnabled;
