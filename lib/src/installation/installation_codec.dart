@@ -52,7 +52,8 @@ abstract final class InstallationCodec {
     return switch (value.toUpperCase()) {
       'APNS' => PushServiceType.APNS,
       'GCM' => PushServiceType.GCM,
-      'FIREBASE', 'FCM' => PushServiceType.Firebase,
+      'FIREBASE' => PushServiceType.Firebase,
+      'FCM' => PushServiceType.Firebase,
       'HMS' => PushServiceType.HMS,
       _ => throw FormatException('Unknown pushServiceType: $value'),
     };

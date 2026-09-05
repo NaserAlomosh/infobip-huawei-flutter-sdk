@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import '../../infobip_mobilemessaging_huawei.dart' show Installation;
 import '../platform/channel_contract.dart';
 import '../installation/installation_codec.dart';
 import 'user.dart';
@@ -108,8 +109,10 @@ abstract final class UserCodec {
 
   static Type? _type(Object? value) => switch (value) {
     null => null,
-    'lead', 'LEAD' => Type.LEAD,
-    'customer', 'CUSTOMER' => Type.CUSTOMER,
+    'lead' => Type.LEAD,
+    'LEAD' => Type.LEAD,
+    'customer' => Type.CUSTOMER,
+    'CUSTOMER' => Type.CUSTOMER,
     String() => null,
     _ => throw const FormatException('type must be a string.'),
   };

@@ -62,7 +62,7 @@ class _InboxScreenState extends State<InboxScreen> {
     try {
       await InfobipMobileMessagingHuawei.setInboxMessagesSeen(
         externalUserId: _externalUserId.text.trim(),
-        messageIds: [message.messageId],
+        messageIds: [message.messageId ?? ''],
       );
       if (mounted) {
         setState(() => _result = 'Message marked seen on the server.');
