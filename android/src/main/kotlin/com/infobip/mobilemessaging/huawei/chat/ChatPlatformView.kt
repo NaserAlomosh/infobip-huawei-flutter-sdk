@@ -2,6 +2,8 @@ package com.infobip.mobilemessaging.huawei.chat
 
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
@@ -28,6 +30,12 @@ internal class ChatPlatformView(
 ) : PlatformView, MethodChannel.MethodCallHandler {
     private val channel = MethodChannel(messenger, ChannelContract.CHAT_VIEW_CHANNEL + viewId)
     private val pendingError = PendingChatViewError()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val runtimeEvents = ChatRuntimeEventBridge { event ->
+        mainHandler.post {
+            if (!disposed) channel.invokeMethod(ChannelContract.CHAT_ON_RUNTIME_EVENT, event)
+        }
+    }
     private var fragmentActivity: FragmentActivity? = activity as? FragmentActivity
     private var fragment: InAppChatFragment? = null
     private var currentWidgetView: LivechatWidgetView? = null
@@ -81,7 +89,17 @@ internal class ChatPlatformView(
                     override fun onChatViewChanged(view: LivechatWidgetView) {
                         if (!disposed && fragment === this@apply) {
                             currentWidgetView = view
+                            publishRuntimeEvent(ChannelContract.CHAT_VIEW_CHANGED, view.name)
                         }
+                    }
+                    override fun onChatLoadingFinished() {
+                        publishRuntimeEvent(ChannelContract.CHAT_LOADED)
+                    }
+                    override fun onChatConnectionResumed() {
+                        publishRuntimeEvent(ChannelContract.CHAT_CONNECTION_CHANGED, "CONNECTED")
+                    }
+                    override fun onChatConnectionPaused() {
+                        publishRuntimeEvent(ChannelContract.CHAT_CONNECTION_CHANGED, "DISCONNECTED")
                     }
                     override fun onChatAttachmentPreviewOpened(
                         url: String?,
@@ -113,6 +131,7 @@ internal class ChatPlatformView(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         if (call.method == ChannelContract.CHAT_VIEW_READY) {
             flutterReady = true
+            runtimeEvents.ready()
             pendingError.take()?.let { channel.invokeMethod(ChannelContract.CHAT_ON_ERROR, it.toMap()) }
             result.success(null)
             return
@@ -231,6 +250,8 @@ internal class ChatPlatformView(
     override fun dispose() {
         if (disposed) return
         disposed = true
+        runtimeEvents.dispose()
+        mainHandler.removeCallbacksAndMessages(null)
         channel.setMethodCallHandler(null)
         val current = fragment
         fragment = null
@@ -251,6 +272,12 @@ internal class ChatPlatformView(
 
     private fun reportError(error: ChatViewError) {
         if (flutterReady) channel.invokeMethod(ChannelContract.CHAT_ON_ERROR, error.toMap()) else pendingError.set(error)
+    }
+
+    private fun publishRuntimeEvent(event: String, value: String? = null) {
+        val payload = mutableMapOf(ChannelContract.EVENT to event)
+        value?.let { payload[ChannelContract.VALUE] = it }
+        runtimeEvents.publish(payload)
     }
 
     private fun neutralView(context: Context, error: ChatViewError): View {

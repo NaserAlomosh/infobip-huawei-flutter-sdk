@@ -7,13 +7,17 @@ import 'package:flutter/services.dart';
 
 import '../platform/channel_contract.dart';
 import 'chat_error.dart';
+import 'chat_event.dart';
 import 'chat_message_payload.dart';
 
 typedef InfobipHuaweiChatErrorCallback =
-void Function(InfobipHuaweiChatError error);
+    void Function(InfobipHuaweiChatError error);
+typedef InfobipHuaweiChatEventCallback = void Function(
+  InfobipHuaweiChatEvent event,
+);
 
 final class _ChatViewBridge {
-  _ChatViewBridge(this.viewId, this._onError)
+  _ChatViewBridge(this.viewId, this._onError, this._onEvent)
       : channel = MethodChannel('${ChannelContract.chatViewChannel}$viewId') {
     channel.setMethodCallHandler(_handleMethodCall);
     unawaited(channel.invokeMethod<void>(ChannelContract.chatViewReady));
@@ -22,20 +26,68 @@ final class _ChatViewBridge {
   final int viewId;
   final MethodChannel channel;
   InfobipHuaweiChatErrorCallback? _onError;
+  InfobipHuaweiChatEventCallback? _onEvent;
 
   void updateErrorCallback(InfobipHuaweiChatErrorCallback? callback) {
     _onError = callback;
   }
 
+  void updateEventCallback(InfobipHuaweiChatEventCallback? callback) {
+    _onEvent = callback;
+  }
+
   Future<void> _handleMethodCall(MethodCall call) async {
-    if (call.method != ChannelContract.chatOnError) return;
-    _onError?.call(_decodeError(call.arguments));
+    switch (call.method) {
+      case ChannelContract.chatOnError:
+        _onError?.call(_decodeError(call.arguments));
+        return;
+      case ChannelContract.chatOnRuntimeEvent:
+        final event = decodeInfobipHuaweiChatEvent(call.arguments);
+        if (event != null) _onEvent?.call(event);
+        return;
+    }
   }
 
   void dispose() {
     _onError = null;
+    _onEvent = null;
     channel.setMethodCallHandler(null);
   }
+}
+
+@visibleForTesting
+InfobipHuaweiChatEvent? decodeInfobipHuaweiChatEvent(Object? payload) {
+  if (payload is! Map) return null;
+  final value = payload[ChannelContract.value];
+  switch (payload[ChannelContract.event]) {
+    case ChannelContract.chatLoaded:
+      return const InfobipHuaweiChatLoadedEvent();
+    case ChannelContract.chatViewChanged:
+      if (value is! String) return null;
+      return InfobipHuaweiChatViewChangedEvent(
+        state: switch (value) {
+          'LOADING' => InfobipHuaweiChatViewState.loading,
+          'THREAD_LIST' => InfobipHuaweiChatViewState.threadList,
+          'LOADING_THREAD' => InfobipHuaweiChatViewState.loadingThread,
+          'THREAD' => InfobipHuaweiChatViewState.thread,
+          'CLOSED_THREAD' => InfobipHuaweiChatViewState.closedThread,
+          'SINGLE_MODE_THREAD' => InfobipHuaweiChatViewState.singleModeThread,
+          _ => InfobipHuaweiChatViewState.unknown,
+        },
+        rawValue: value,
+      );
+    case ChannelContract.chatConnectionChanged:
+      if (value is! String) return null;
+      return InfobipHuaweiChatConnectionChangedEvent(
+        state: switch (value) {
+          'CONNECTED' => InfobipHuaweiChatConnectionState.connected,
+          'DISCONNECTED' => InfobipHuaweiChatConnectionState.disconnected,
+          _ => InfobipHuaweiChatConnectionState.unknown,
+        },
+        rawValue: value,
+      );
+  }
+  return null;
 }
 
 InfobipHuaweiChatError _decodeError(Object? payload) {
@@ -227,6 +279,7 @@ class InfobipHuaweiChatView extends StatefulWidget {
     this.withInput = true,
     this.withToolbar = false,
     this.onError,
+    this.onEvent,
   });
 
   final InfobipHuaweiChatController? controller;
@@ -246,6 +299,12 @@ class InfobipHuaweiChatView extends StatefulWidget {
   /// with a [PlatformException].
   final InfobipHuaweiChatErrorCallback? onError;
 
+  /// Receives ordered runtime events belonging only to this native Chat view.
+  ///
+  /// Native events that arrive while Flutter attaches are replayed from a
+  /// bounded per-view buffer. No events are delivered after disposal.
+  final InfobipHuaweiChatEventCallback? onEvent;
+
   @override
   State<InfobipHuaweiChatView> createState() => _InfobipHuaweiChatViewState();
 }
@@ -264,6 +323,7 @@ class _InfobipHuaweiChatViewState extends State<InfobipHuaweiChatView> {
       if (viewId != null && bridge != null) widget.controller?._attach(bridge);
     }
     _bridge?.updateErrorCallback(widget.onError);
+    _bridge?.updateEventCallback(widget.onEvent);
   }
 
   @override
@@ -294,6 +354,7 @@ class _InfobipHuaweiChatViewState extends State<InfobipHuaweiChatView> {
         final bridge = _ChatViewBridge(
           viewId,
           widget.onError,
+          widget.onEvent,
         );
 
         _bridge = bridge;

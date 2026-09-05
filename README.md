@@ -93,6 +93,11 @@ Scaffold(
     onError: (error) {
       // Update Flutter-owned UI with a friendly availability message.
     },
+    onEvent: (event) {
+      if (event is InfobipHuaweiChatLoadedEvent) {
+        // The Live Chat widget is ready.
+      }
+    },
   ),
 );
 ```
@@ -147,10 +152,17 @@ the stream for future updates. Malformed and negative updates are ignored withou
 stream. One global Huawei listener is installed after initialization and removed at engine detach;
 creating or disposing embedded views does not register listeners.
 
-No other Chat events are public. Thread, raw-message, loading/connection, and component UI callbacks are omitted:
-thread/raw events lack stable public models, while view and control callbacks belong to a specific
-embedded component rather than global Chat state. Native attachments remain available from the
-native composer.
+Embedded runtime events are delivered through `InfobipHuaweiChatView.onEvent`. The typed event
+family reports loading completion, view-state changes, and connection resume/pause. These events
+are view-scoped: they never enter the global event channel or another PlatformView. A native
+loading or connection callback may occur more than once during a view's lifetime.
+
+Events emitted before Flutter finishes attaching are retained in a 32-entry, per-view FIFO buffer;
+when full, the oldest event is discarded. The buffer is drained once without duplicate replay and
+cleared on disposal. Unknown future view values map to `unknown` while retaining `rawValue`.
+Raw-message, thread-operation, URL, attachment-preview, control-visibility, exit, and exception
+callbacks remain native-only. In particular, raw messages do not have a stable public payload
+model, exceptions remain separate from runtime events, and JWT requests are internal commands.
 
 The controller also exposes the component-scoped text and contextual-data commands:
 
