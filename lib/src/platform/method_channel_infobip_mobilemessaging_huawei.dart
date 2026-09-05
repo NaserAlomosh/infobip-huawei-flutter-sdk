@@ -8,6 +8,8 @@ import '../installation/installation.dart';
 import '../installation/installation_codec.dart';
 import '../inbox/inbox.dart';
 import '../inbox/inbox_codec.dart';
+import '../custom_event/custom_event.dart';
+import '../custom_event/custom_event_codec.dart';
 
 final class MethodChannelInfobipMobileMessagingHuawei
     extends InfobipMobileMessagingHuaweiPlatform {
@@ -85,6 +87,53 @@ final class MethodChannelInfobipMobileMessagingHuawei
   @override
   Future<void> depersonalize() =>
       methodChannel.invokeMethod<void>(ChannelContract.depersonalize);
+
+  @override
+  Future<void> submitEvent(InfobipHuaweiCustomEvent event) => methodChannel
+      .invokeMethod<void>(ChannelContract.submitEvent, {
+        ChannelContract.customEvent: CustomEventCodec.encode(event),
+      });
+
+  @override
+  Future<InfobipHuaweiCustomEvent> submitEventImmediately(
+    InfobipHuaweiCustomEvent event,
+  ) async => CustomEventCodec.decode(
+    await methodChannel.invokeMethod<Object?>(
+      ChannelContract.submitEventImmediately,
+      {ChannelContract.customEvent: CustomEventCodec.encode(event)},
+    ),
+  );
+
+  @override
+  Future<List<Installation>> depersonalizeInstallation(
+    String pushRegistrationId,
+  ) async => _installationList(
+    await methodChannel.invokeMethod<Object?>(
+      ChannelContract.depersonalizeInstallation,
+      {ChannelContract.pushRegistrationId: pushRegistrationId},
+    ),
+  );
+
+  @override
+  Future<List<Installation>> setInstallationAsPrimary({
+    required String pushRegistrationId,
+    required bool isPrimary,
+  }) async => _installationList(
+    await methodChannel.invokeMethod<Object?>(
+      ChannelContract.setInstallationAsPrimary,
+      {
+        ChannelContract.pushRegistrationId: pushRegistrationId,
+        ChannelContract.isPrimary: isPrimary,
+      },
+    ),
+  );
+
+  static List<Installation> _installationList(Object? value) {
+    if (value is! List) {
+      throw const FormatException('Installations payload must be a list.');
+    }
+    return List<Installation>.unmodifiable(value.map(InstallationCodec.decode));
+  }
 
   @override
   Future<void> setJwt(String? jwt) => methodChannel.invokeMethod<void>(

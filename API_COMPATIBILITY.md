@@ -73,6 +73,14 @@ Statuses have these precise meanings:
 | Deep link/open URL | `Message.getDeeplink()` and notification tap | Requires Adaptation | SDK supplies the value; navigation and URI allow-listing belong to the Flutter host. |
 | Push registration failure | `Event.REGISTRATION_UPDATED` result/error and `MobileMessaging.ResultListener` | Requires Adaptation | Map native error detail into stable error categories; never expose Java throwable objects. |
 
+## Custom events
+
+| Official Flutter API/capability | Huawei 8.14.0 native API | Status | Evidence and implementation notes |
+| --- | --- | --- | --- |
+| Submit custom event | `MobileMessaging.submitEvent(CustomEvent)` | Supported | Typed Dart model maps definition ID and supported properties to Huawei `CustomEvent`. |
+| Submit custom event immediately | `MobileMessaging.submitEvent(CustomEvent, ResultListener<CustomEvent>)` | Supported | Flutter parity name wraps Huawei's callback overload and waits for the native result. |
+| Custom event result | `CustomEvent` | Requires Adaptation | Server event ID and creation date map back to typed Dart fields; SDK errors retain native code and message. |
+
 ## Event system
 
 The official plugin exposes registration callbacks alongside message and notification callbacks; its event stream is conceptually backed by Android SDK events. The recommended
@@ -85,9 +93,9 @@ transport is shown for design purposes; names are intentionally not specified in
 | Notification action tapped | `Event.ACTION_TAPPED` | Requires Adaptation | EventChannel; serialize action plus message. |
 | Registration updated | `Event.REGISTRATION_UPDATED`, `Installation` | Requires Adaptation | EventChannel; token changes must be redacted from logs. |
 | Installation updated | `Event.INSTALLATION_UPDATED`, `Installation` | Requires Adaptation | EventChannel; local SDK events are the authoritative native trigger. |
-| User updated | `Event.USER_UPDATED`, `User` | Requires Adaptation | EventChannel; serialize nullable/typed attributes. |
-| Personalized | `Event.PERSONALIZED` | Requires Adaptation | EventChannel or completion of the initiating MethodChannel call plus event broadcast. |
-| Depersonalized | `Event.DEPERSONALIZED` | Requires Adaptation | Same dual completion/broadcast rule; clear cached Dart identity. |
+| User updated | `Event.USER_UPDATED`, `User` | Supported | Shared EventChannel; maps the broadcast `User` with the existing user codec. |
+| Personalized | `Event.PERSONALIZED`, `User` | Supported | Shared EventChannel; maps the broadcast `User` with the existing user codec. |
+| Depersonalized | `Event.DEPERSONALIZED` | Supported | Shared EventChannel emits `void`; no user payload is fabricated. |
 | Error event | SDK operation callbacks carry `MobileMessagingError` | Requires Adaptation | MethodChannel error for requested operations; EventChannel only for unsolicited asynchronous failure. |
 | Token received as a standalone event | Registration/installation update, not a distinct stable Flutter-neutral event | Requires Adaptation | Derive from installation transition; do not promise every underlying HMS callback. |
 | Inbox native events | `MobileInboxEvent` broadcasts | Intentionally Internal | Native count/fetch/seen broadcasts exist, but the official Flutter plugin has no approved public equivalent; the wrapper does not expose an inferred invalidation stream. |
@@ -141,6 +149,8 @@ Model source: `mobile-messaging-sdk/src/main/java/org/infobip/mobile/messaging/U
 | Custom installation attributes | `Installation.getCustomAttributes()` / `saveInstallation` | Requires Adaptation | Restrict to native supported primitive/date types and preserve patch semantics. |
 | Installation updated event | `Event.INSTALLATION_UPDATED` | Requires Adaptation | EventChannel conversion. |
 | Delete installation | No public delete-installation operation | Unsupported | Disabling registration is not deletion. |
+| Depersonalize installation | `MobileMessaging.depersonalizeInstallation(String, ResultListener<List<Installation>>)` | Supported | Validates the push registration ID, waits for the callback, and maps the complete returned list. |
+| Set installation primary status | `MobileMessaging.setInstallationAsPrimary(String, boolean, ResultListener<List<Installation>>)` | Supported | Supports both primary states and maps the complete callback result. |
 
 Model source: `mobile-messaging-sdk/src/main/java/org/infobip/mobile/messaging/Installation.java`.
 

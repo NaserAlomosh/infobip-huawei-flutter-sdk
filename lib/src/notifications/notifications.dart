@@ -7,6 +7,8 @@ import 'push_message.dart';
 import 'push_message_codec.dart';
 import '../installation/installation.dart';
 import '../installation/installation_codec.dart';
+import '../user/user.dart';
+import '../user/user_codec.dart';
 
 /// Notification and registration lifecycle events.
 final class InfobipHuaweiNotifications {
@@ -40,6 +42,31 @@ final class InfobipHuaweiNotifications {
   Stream<Installation> get onInstallationUpdated =>
       _typed(ChannelContract.installationUpdated, _installation);
 
+  /// Emits the user delivered by the Huawei `USER_UPDATED` broadcast.
+  Stream<User> get onUserUpdated =>
+      _typed(ChannelContract.userUpdated, _user);
+
+  /// Emits the user delivered by the Huawei `PERSONALIZED` broadcast.
+  Stream<User> get onPersonalized =>
+      _typed(ChannelContract.personalized, _user);
+
+  /// Emits when the Huawei SDK reports that depersonalization completed.
+  Stream<void> get onDepersonalized =>
+      _signal(ChannelContract.depersonalized);
+
+  Stream<void> _signal(String type) => _events.transform(
+    StreamTransformer<Object?, void>.fromHandlers(
+      handleData: (event, sink) {
+        if (event is Map &&
+            event['version'] == ChannelContract.eventVersion &&
+            event['type'] == type &&
+            event['payload'] is Map) {
+          sink.add(null);
+        }
+      },
+    ),
+  );
+
   Stream<T> _typed<T>(
     String type,
     T Function(Map<Object?, Object?> payload) decode,
@@ -69,4 +96,7 @@ final class InfobipHuaweiNotifications {
 
   static Installation _installation(Map<Object?, Object?> payload) =>
       InstallationCodec.decode(payload[ChannelContract.installation]);
+
+  static User _user(Map<Object?, Object?> payload) =>
+      UserCodec.decode(payload[ChannelContract.user]);
 }

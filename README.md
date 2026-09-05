@@ -187,9 +187,16 @@ InfobipMobileMessagingHuawei.notifications.onNotificationTapped;
 InfobipMobileMessagingHuawei.notifications.onNotificationActionTapped;
 InfobipMobileMessagingHuawei.notifications.onRegistrationUpdated;
 InfobipMobileMessagingHuawei.notifications.onInstallationUpdated;
+InfobipMobileMessagingHuawei.notifications.onUserUpdated;
+InfobipMobileMessagingHuawei.notifications.onPersonalized;
+InfobipMobileMessagingHuawei.notifications.onDepersonalized;
 ```
 
 Messages contain only message ID, title, body, channel-safe custom payload, deep link, and silent status. Registration and installation updates carry a typed `Installation`. They are not retained for cold-start replay.
+
+User update and personalization events carry the same typed `User` model returned by the user
+management APIs. Depersonalization emits `void` and does not fabricate a user payload. These
+lifecycle events use the existing shared event channel and are not buffered.
 
 Native listeners are installed once per Flutter engine and removed on detach. Flutter sink delivery is marshalled to Android's main thread. The most recent notification tap is retained when Dart is not listening, replaces any earlier pending tap, is replayed once on listen, and is then cleared. Other events are not buffered.
 
@@ -242,13 +249,36 @@ being stringified.
 
 User values are never logged or included in errors. Applications should apply the same care to
 their own UI, analytics, crash reporting, and persistence. This plugin does not normalize identity
-values. User update events are not exposed in Phase 5 because the official event parity and a
-dedicated public event contract have not been established. End-to-end identity conflict, server
+values. End-to-end identity conflict, server
 merge, and profile persistence behavior require a valid Application Code and configured Huawei
 device.
 
 User operation failures use `user_fetch_failed`, `user_save_failed`, `personalization_failed`,
 `depersonalization_failed`, `invalid_argument`, `not_initialized`, or `native_error`.
+
+## Custom events
+
+Custom events use a typed model whose definition and properties match the Huawei 8.14.0
+`CustomEvent` contract:
+
+```dart
+final event = InfobipHuaweiCustomEvent(
+  definitionId: 'purchase',
+  properties: {'amount': 29.99, 'completed': true},
+);
+
+await InfobipMobileMessagingHuawei.submitEvent(event);
+final submitted =
+    await InfobipMobileMessagingHuawei.submitEventImmediately(event);
+```
+
+`submitEvent()` calls the Huawei non-callback overload and queues the event. The Flutter-facing
+`submitEventImmediately()` name follows the official Flutter API and calls Huawei's callback-based
+`submitEvent(CustomEvent, ResultListener<CustomEvent>)` overload; its future completes only after
+the native callback succeeds. Returned events can include the server-assigned `eventId` and
+`createdAt`. Properties support strings, booleans, numbers, UTC `DateTime` values, and lists of
+those values. Native callback failures retain the Huawei error code and message in the resulting
+`PlatformException`.
 
 ## Installation management
 
@@ -261,8 +291,20 @@ final local = await InfobipMobileMessagingHuawei.getInstallation();
 final refreshed = await InfobipMobileMessagingHuawei.fetchInstallation();
 await InfobipMobileMessagingHuawei.saveInstallation(refreshed);
 
+final installations = await InfobipMobileMessagingHuawei
+    .depersonalizeInstallation(local.pushRegistrationId!);
+final updatedPrimaryState = await InfobipMobileMessagingHuawei
+    .setInstallationAsPrimary(
+      pushRegistrationId: local.pushRegistrationId!,
+      isPrimary: false,
+    );
+
 final registrationEnabled = local.pushRegistrationEnabled;
 ```
+
+The dedicated depersonalization and primary-status APIs trim and validate the push registration
+ID, wait for Huawei's `ResultListener<List<Installation>>`, and return every installation supplied
+by the SDK. They do not change `depersonalize()` or `saveInstallation()` behavior.
 
 `isPrimaryDevice` and `customAttributes` are writable. Push registration state and ID, language,
 notification permission state, app user ID, and device/application/OS/SDK

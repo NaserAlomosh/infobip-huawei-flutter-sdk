@@ -8,6 +8,7 @@ import com.infobip.mobilemessaging.huawei.chat.ChatManager
 import com.infobip.mobilemessaging.huawei.chat.ChatPlatformViewFactory
 import com.infobip.mobilemessaging.huawei.core.MobileMessagingInitializer
 import com.infobip.mobilemessaging.huawei.inbox.InboxManager
+import com.infobip.mobilemessaging.huawei.event.CustomEventManager
 import com.infobip.mobilemessaging.huawei.installation.InstallationManager
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import com.infobip.mobilemessaging.huawei.plugin.NativeEventBridge
@@ -31,6 +32,7 @@ class InfobipMobileMessagingHuaweiPlugin :
     private var eventBridge: NativeEventBridge? = null
     private var userManager: UserManager? = null
     private var installationManager: InstallationManager? = null
+    private var customEventManager: CustomEventManager? = null
     private var inboxManager: InboxManager? = null
     private var chatManager: ChatManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -54,6 +56,11 @@ class InfobipMobileMessagingHuaweiPlugin :
             )
         installationManager =
             InstallationManager(
+                context = binding.applicationContext,
+                isInitialized = { initializer?.isInitialized == true },
+            )
+        customEventManager =
+            CustomEventManager(
                 context = binding.applicationContext,
                 isInitialized = { initializer?.isInitialized == true },
             )
@@ -93,6 +100,7 @@ class InfobipMobileMessagingHuaweiPlugin :
         eventBridge = null
         userManager = null
         installationManager = null
+        customEventManager = null
         inboxManager = null
         chatManager = null
         applicationContext = null
@@ -169,6 +177,20 @@ class InfobipMobileMessagingHuaweiPlugin :
                 } ?: detached(result)
             }
 
+            ChannelContract.SUBMIT_EVENT -> {
+                customEventManager?.submit(
+                    call.argument<Any?>(ChannelContract.CUSTOM_EVENT),
+                ) { _, failure -> result.completeCustomEvent(null, failure) }
+                    ?: detached(result)
+            }
+
+            ChannelContract.SUBMIT_EVENT_IMMEDIATELY -> {
+                customEventManager?.submitImmediately(
+                    call.argument<Any?>(ChannelContract.CUSTOM_EVENT),
+                ) { event, failure -> result.completeCustomEvent(event, failure) }
+                    ?: detached(result)
+            }
+
             ChannelContract.SET_JWT -> {
                 try {
                     inboxManager?.setJwt(call.argument<Any?>(ChannelContract.JWT))
@@ -198,6 +220,21 @@ class InfobipMobileMessagingHuaweiPlugin :
                     call.argument<Any?>(ChannelContract.INSTALLATION),
                     { value, failure -> result.completeInstallation(value, failure) },
                 ) ?: detached(result)
+            }
+
+            ChannelContract.DEPERSONALIZE_INSTALLATION -> {
+                installationManager?.depersonalizeInstallation(
+                    call.argument<Any?>(ChannelContract.PUSH_REGISTRATION_ID),
+                ) { installations, failure -> result.completeInstallations(installations, failure) }
+                    ?: detached(result)
+            }
+
+            ChannelContract.SET_INSTALLATION_AS_PRIMARY -> {
+                installationManager?.setInstallationAsPrimary(
+                    call.argument<Any?>(ChannelContract.PUSH_REGISTRATION_ID),
+                    call.argument<Any?>(ChannelContract.IS_PRIMARY),
+                ) { installations, failure -> result.completeInstallations(installations, failure) }
+                    ?: detached(result)
             }
 
             ChannelContract.FETCH_INBOX -> {
@@ -272,6 +309,20 @@ class InfobipMobileMessagingHuaweiPlugin :
         } else {
             error(failure.code, failure.message, null)
         }
+    }
+
+    private fun MethodChannel.Result.completeInstallations(
+        installations: List<Map<String, Any?>>?,
+        failure: com.infobip.mobilemessaging.huawei.installation.InstallationFailure?,
+    ) {
+        if (failure == null) success(installations) else error(failure.code, failure.message, failure.details)
+    }
+
+    private fun MethodChannel.Result.completeCustomEvent(
+        event: Map<String, Any?>?,
+        failure: com.infobip.mobilemessaging.huawei.event.CustomEventFailure?,
+    ) {
+        if (failure == null) success(event) else error(failure.code, failure.message, failure.details)
     }
 
     private fun MethodChannel.Result.completeInbox(

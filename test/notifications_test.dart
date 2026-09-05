@@ -163,4 +163,54 @@ void main() {
 
     expect((await future).messageId, 'valid');
   });
+
+  test('decodes user updated and personalized events', () async {
+    final updated =
+        InfobipMobileMessagingHuawei.notifications.onUserUpdated.first;
+    final personalized =
+        InfobipMobileMessagingHuawei.notifications.onPersonalized.first;
+    platform.eventsController
+      ..add(envelope(ChannelContract.userUpdated, {
+        ChannelContract.user: {ChannelContract.externalUserId: 'updated-user'},
+      }))
+      ..add(envelope(ChannelContract.personalized, {
+        ChannelContract.user: {
+          ChannelContract.externalUserId: 'personalized-user',
+          ChannelContract.firstName: 'Ada',
+        },
+      }));
+
+    expect((await updated).externalUserId, 'updated-user');
+    expect((await personalized).firstName, 'Ada');
+  });
+
+  test('malformed user lifecycle payloads do not close streams', () async {
+    final updated =
+        InfobipMobileMessagingHuawei.notifications.onUserUpdated.first;
+    final personalized =
+        InfobipMobileMessagingHuawei.notifications.onPersonalized.first;
+    platform.eventsController
+      ..add(
+        envelope(ChannelContract.userUpdated, {ChannelContract.user: 'bad'}),
+      )
+      ..add(
+        envelope(ChannelContract.personalized, {ChannelContract.user: null}),
+      )
+      ..add(envelope(ChannelContract.userUpdated, {
+        ChannelContract.user: {ChannelContract.externalUserId: 'valid'},
+      }))
+      ..add(envelope(ChannelContract.personalized, {
+        ChannelContract.user: {ChannelContract.externalUserId: 'valid'},
+      }));
+
+    expect((await updated).externalUserId, 'valid');
+    expect((await personalized).externalUserId, 'valid');
+  });
+
+  test('depersonalized emits without a user payload', () async {
+    final emitted =
+        InfobipMobileMessagingHuawei.notifications.onDepersonalized.first;
+    platform.eventsController.add(envelope(ChannelContract.depersonalized, {}));
+    await emitted;
+  });
 }

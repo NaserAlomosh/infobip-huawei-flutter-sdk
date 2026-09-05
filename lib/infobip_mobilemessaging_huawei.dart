@@ -8,6 +8,7 @@ export 'src/notifications/notification_events.dart';
 export 'src/notifications/push_message.dart';
 export 'src/user/user.dart';
 export 'src/installation/installation.dart';
+export 'src/custom_event/custom_event.dart';
 export 'src/inbox/inbox.dart';
 export 'src/chat/chat_view.dart';
 export 'src/chat/chat_error.dart';

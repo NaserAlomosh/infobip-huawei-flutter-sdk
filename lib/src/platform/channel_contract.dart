@@ -27,6 +27,16 @@ abstract final class ChannelContract {
   static const saveUser = 'saveUser';
   static const personalize = 'personalize';
   static const depersonalize = 'depersonalize';
+  static const submitEvent = 'submitEvent';
+  static const submitEventImmediately = 'submitEventImmediately';
+  static const customEvent = 'customEvent';
+  static const definitionId = 'definitionId';
+  static const eventId = 'eventId';
+  static const createdAt = 'createdAt';
+  static const properties = 'properties';
+  static const depersonalizeInstallation = 'depersonalizeInstallation';
+  static const setInstallationAsPrimary = 'setInstallationAsPrimary';
+  static const isPrimary = 'isPrimary';
   static const setJwt = 'setJwt';
   static const jwt = 'jwt';
   static const getInstallation = 'getInstallation';
@@ -96,6 +106,9 @@ abstract final class ChannelContract {
   static const notificationActionTapped = 'notification_action_tapped';
   static const registrationUpdated = 'registration_updated';
   static const installationUpdated = 'installation_updated';
+  static const userUpdated = 'user_updated';
+  static const personalized = 'personalized';
+  static const depersonalized = 'depersonalized';
   static const chatUnreadMessageCounterUpdated =
       'chat_unread_message_counter_updated';
 }
