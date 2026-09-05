@@ -63,8 +63,8 @@ void main() {
           'customPayload': {
             'nested': {'enabled': true},
           },
-          'deepLink': 'app://inbox',
-          'isSilent': true,
+          'deeplink': 'app://inbox',
+          'silent': true,
         },
       ],
     });
@@ -79,7 +79,7 @@ void main() {
     );
     expect(inbox.messages.single.customPayload['nested'], {'enabled': true});
     expect(inbox.messages.single.seen, isFalse);
-    expect(inbox.messages.single.isSilent, isTrue);
+    expect(inbox.messages.single.silent, isTrue);
   });
 
   test('rejects conflicting or invalid topic filters', () {
@@ -200,7 +200,7 @@ void main() {
         'countTotalFiltered': 1,
         'countUnreadFiltered': 0,
         'messages': [
-          {'messageId': 'message', 'seen': false, 'isSilent': null},
+          {'messageId': 'message', 'seen': false, 'silent': 'no'},
         ],
       }),
       throwsFormatException,

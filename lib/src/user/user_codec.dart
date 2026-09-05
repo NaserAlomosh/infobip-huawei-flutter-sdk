@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 
 import '../platform/channel_contract.dart';
+import '../installation/installation_codec.dart';
 import 'user.dart';
 
 abstract final class UserCodec {
@@ -40,7 +41,7 @@ abstract final class UserCodec {
         ),
       };
 
-  static Map<String, Object?> encode(User user) => <String, Object?>{
+  static Map<String, Object?> encode(UserData user) => <String, Object?>{
     ChannelContract.externalUserId: user.externalUserId,
     ChannelContract.firstName: user.firstName,
     ChannelContract.lastName: user.lastName,
@@ -57,24 +58,26 @@ abstract final class UserCodec {
     ),
   };
 
-  static User decode(Object? value) {
+  static UserData decode(Object? value) {
     if (value is! Map) {
       throw const FormatException('User payload must be a map.');
     }
     final map = value.cast<Object?, Object?>();
-    return User(
+    return UserData(
       externalUserId: _string(map, ChannelContract.externalUserId),
       firstName: _string(map, ChannelContract.firstName),
       lastName: _string(map, ChannelContract.lastName),
       middleName: _string(map, ChannelContract.middleName),
       gender: _gender(map[ChannelContract.gender]),
       birthday: _birthday(map[ChannelContract.birthday]),
+      type: _type(map[ChannelContract.type]),
       phones: _strings(map, ChannelContract.phones),
       emails: _strings(map, ChannelContract.emails),
       tags: _strings(map, ChannelContract.tags),
       customAttributes: _decodeCustomAttributes(
         map[ChannelContract.customAttributes],
       ),
+      installations: _installations(map[ChannelContract.installations]),
     );
   }
 
@@ -95,21 +98,38 @@ abstract final class UserCodec {
 
   static Gender? _gender(Object? value) => switch (value) {
     null => null,
-    'male' => Gender.male,
-    'female' => Gender.female,
+    'male' => Gender.Male,
+    'female' => Gender.Female,
     String() => Gender.unknown,
     _ => throw const FormatException('gender must be a string.'),
   };
 
   static String? _encodeGender(Gender? value) => switch (value) {
     null => null,
-    Gender.male => 'male',
-    Gender.female => 'female',
+    Gender.Male => 'male',
+    Gender.Female => 'female',
     Gender.unknown => throw PlatformException(
       code: 'invalid_argument',
       message: 'Gender.unknown cannot be sent to the native SDK.',
     ),
   };
+
+  static Type? _type(Object? value) => switch (value) {
+    null => null,
+    'lead' => Type.Lead,
+    'customer' => Type.Customer,
+    String() => Type.unknown,
+    _ => throw const FormatException('type must be a string.'),
+  };
+
+
+  static List<Installation>? _installations(Object? value) {
+    if (value == null) return null;
+    if (value is! List) {
+      throw const FormatException('installations must be a list.');
+    }
+    return List.unmodifiable(value.map(InstallationCodec.decode));
+  }
 
   static DateTime? _birthday(Object? value) {
     if (value == null) return null;

@@ -27,10 +27,12 @@ internal object UserMapper {
             ChannelContract.MIDDLE_NAME to user.middleName,
             ChannelContract.GENDER to user.gender?.name?.lowercase(Locale.ROOT),
             ChannelContract.BIRTHDAY to user.birthday?.let(dateFormat::format),
+            ChannelContract.TYPE to user.type?.name?.lowercase(Locale.ROOT),
             ChannelContract.PHONES to user.phones?.toList(),
             ChannelContract.EMAILS to user.emails?.toList(),
             ChannelContract.TAGS to user.tags?.toList(),
             ChannelContract.CUSTOM_ATTRIBUTES to channelCustomAttributes(user.customAttributes),
+            ChannelContract.INSTALLATIONS to user.installations?.map { com.infobip.mobilemessaging.huawei.installation.InstallationMapper.toMap(it) },
         )
 
     fun toUser(value: Any?): User {

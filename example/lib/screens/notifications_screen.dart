@@ -39,7 +39,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         (installation) => _show(
           'Registration updated',
           'Push registration enabled: '
-              '${installation.pushRegistrationEnabled ?? 'unknown'}',
+              '${installation.isPushRegistrationEnabled ?? 'unknown'}',
         ),
       ),
       notifications.onInstallationUpdated.listen(
@@ -47,13 +47,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           'Installation updated',
           'Primary device: ${installation.isPrimaryDevice ?? 'unknown'}\n'
               'Push registration enabled: '
-              '${installation.pushRegistrationEnabled ?? 'unknown'}',
+              '${installation.isPushRegistrationEnabled ?? 'unknown'}',
         ),
       ),
     ]);
   }
 
-  String _message(PushMessage message) => [
+  String _message(Message message) => [
     'Message ID: ${message.messageId ?? 'not provided'}',
     'Title: ${message.title ?? 'not provided'}',
     'Body: ${message.body ?? 'not provided'}',

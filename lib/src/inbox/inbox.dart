@@ -1,32 +1,33 @@
+import '../notifications/message.dart';
+
 /// Server-side options used when fetching Inbox messages.
-final class InboxFilterOptions {
-  const InboxFilterOptions({
-    this.from,
-    this.to,
+final class FilterOptions {
+  const FilterOptions({
+    DateTime? fromDateTime,
+    DateTime? toDateTime,
     this.topic,
     this.topics,
     this.limit,
-  });
+    DateTime? from,
+    DateTime? to,
+  })  : fromDateTime = fromDateTime ?? from,
+        toDateTime = toDateTime ?? to;
 
-  /// Lower bound for message creation time, forwarded as a UTC instant.
-  final DateTime? from;
-
-  /// Upper bound for message creation time, forwarded as a UTC instant.
-  final DateTime? to;
-
-  /// Exact Inbox topic to request.
+  final DateTime? fromDateTime;
+  final DateTime? toDateTime;
   final String? topic;
-
-  /// Exact Inbox topics to request.
-  ///
-  /// This cannot be combined with [topic].
   final List<String>? topics;
-
-  /// Maximum number of messages returned by the server.
   final int? limit;
+
+  @Deprecated('Use fromDateTime')
+  DateTime? get from => fromDateTime;
+  @Deprecated('Use toDateTime')
+  DateTime? get to => toDateTime;
 }
 
-/// A page of Inbox messages and server-authoritative counters.
+@Deprecated('Use FilterOptions')
+typedef InboxFilterOptions = FilterOptions;
+
 final class Inbox {
   const Inbox({
     required this.countTotal,
@@ -35,35 +36,12 @@ final class Inbox {
     required this.countUnreadFiltered,
     required this.messages,
   });
-
   final int countTotal;
   final int countUnread;
   final int countTotalFiltered;
   final int countUnreadFiltered;
-  final List<InboxMessage> messages;
+  final List<Message> messages;
 }
 
-/// A message returned by Infobip Inbox.
-final class InboxMessage {
-  const InboxMessage({
-    required this.messageId,
-    required this.title,
-    required this.body,
-    required this.topic,
-    required this.seen,
-    required this.receivedTimestamp,
-    required this.customPayload,
-    required this.deepLink,
-    required this.isSilent,
-  });
-
-  final String messageId;
-  final String? title;
-  final String? body;
-  final String? topic;
-  final bool seen;
-  final DateTime? receivedTimestamp;
-  final Map<String, Object?> customPayload;
-  final String? deepLink;
-  final bool isSilent;
-}
+@Deprecated('Use Message')
+typedef InboxMessage = Message;

@@ -44,15 +44,15 @@ void main() {
           'title': 'Title',
           'body': 'Body',
           'customPayload': {'orderId': 42},
-          'deepLink': 'app://orders/42',
-          'isSilent': true,
+          'deeplink': 'app://orders/42',
+          'silent': true,
         },
       }),
     );
     final message = await future;
     expect(message.messageId, 'message-1');
     expect(message.customPayload, {'orderId': 42});
-    expect(message.isSilent, isTrue);
+    expect(message.silent, isTrue);
   });
 
   test('decodes notification tapped events', () async {
@@ -65,7 +65,7 @@ void main() {
         'message': {
           'messageId': 'message-tapped',
           'title': 'Opened',
-          'isSilent': false,
+          'silent': false,
         },
       }),
     );
@@ -88,7 +88,7 @@ void main() {
       ..add(
         envelope(ChannelContract.notificationActionTapped, {
           'actionId': 'accept',
-          'message': {'messageId': 'message-2', 'isSilent': false},
+          'message': {'messageId': 'message-2', 'silent': false},
         }),
       )
       ..add(
@@ -129,7 +129,7 @@ void main() {
       ..add(envelope(ChannelContract.messageReceived, {'message': 'bad'}))
       ..add(
         envelope(ChannelContract.messageReceived, {
-          'message': {'messageId': 'valid', 'isSilent': false},
+          'message': {'messageId': 'valid', 'silent': false},
         }),
       );
     expect((await future).messageId, 'valid');
@@ -141,14 +141,14 @@ void main() {
     platform.eventsController
       ..add(
         envelope(ChannelContract.messageReceived, {
-          'message': {'messageId': 'bad-bool', 'isSilent': null},
+          'message': {'messageId': 'bad-bool', 'silent': 'no'},
         }),
       )
       ..add(
         envelope(ChannelContract.messageReceived, {
           'message': {
             'messageId': 'bad-payload',
-            'isSilent': false,
+            'silent': false,
             'customPayload': {
               'nested': {1: 'invalid'},
             },
@@ -157,7 +157,7 @@ void main() {
       )
       ..add(
         envelope(ChannelContract.messageReceived, {
-          'message': {'messageId': 'valid', 'isSilent': false},
+          'message': {'messageId': 'valid', 'silent': false},
         }),
       );
 
