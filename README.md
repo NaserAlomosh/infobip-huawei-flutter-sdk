@@ -37,6 +37,32 @@ Channel names, method identifiers, and versioned event identifiers are centraliz
 
 Chat uses Huawei SDK 8.14.0's `InAppChatFragment` through a dedicated Android PlatformView. The fragment retains the Infobip native composer, attachment workflow, focus handling, validation, and upload lifecycle. It is hosted by the application's AndroidX `FragmentActivity`.
 
+### Chat JWT authentication
+
+Register the root Chat JWT provider before Chat needs to authenticate:
+
+```dart
+await InfobipMobileMessagingHuawei.setChatJwtProvider(
+  () async {
+    return await myBackend.getFreshInfobipChatJwt();
+  },
+  (error) {
+    // Optional host-side error handling.
+  },
+);
+```
+
+Huawei Chat can request authentication more than once during its lifecycle, including after a
+network reconnection. The callback is invoked on demand for every native request and must return a
+fresh, valid JWT each time; do not return a cached token that may have expired. JWT generation and
+signing belong to the host application's trusted backend. The plugin neither generates nor signs,
+persists, or logs Chat JWTs.
+
+`setJwt()` configures Mobile Messaging and Inbox authorization and is not the Chat authentication
+API. Chat authentication uses only `setChatJwtProvider()`. Root `cleanup()` clears the native Chat
+provider and its pending requests, and clears the Dart callback, so register the provider again
+after reinitialization.
+
 The Android host activity must extend `FlutterFragmentActivity` (or another
 AndroidX `FragmentActivity`) rather than `FlutterActivity` so the native Chat
 fragment can be attached safely.
@@ -194,7 +220,8 @@ await InfobipMobileMessagingHuawei.initialize(
 );
 ```
 
-Cleanup clears the plugin's in-memory global JWT and the native SDK JWT supplier before invoking
+Cleanup clears the plugin's in-memory global JWT, the native SDK JWT supplier, and the Chat JWT
+provider before invoking
 `MobileMessaging.cleanup()`. It is not a logout operation; use `depersonalize()` for normal
 user/session flows. After successful cleanup, operations that require initialization fail with
 `not_initialized` until `initialize` succeeds again.

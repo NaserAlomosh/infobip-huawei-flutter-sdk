@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import '../notifications/notifications.dart';
+import '../platform/channel_contract.dart';
 import '../platform/infobip_mobilemessaging_huawei_platform.dart';
 import '../user/user.dart';
 import '../installation/installation.dart';
@@ -16,6 +19,10 @@ final class InfobipMobileMessagingHuawei {
 
   /// Global Chat state and events.
   static InfobipHuaweiChat get chat => InfobipHuaweiChat.instance;
+
+  static Future<String> Function()? _chatJwtProvider;
+  static void Function(Object error)? _chatJwtProviderErrorHandler;
+  static StreamSubscription<Object?>? _chatJwtSubscription;
 
   /// Initializes the native SDK with an Infobip application code.
   ///
@@ -38,8 +45,13 @@ final class InfobipMobileMessagingHuawei {
   ///
   /// Initialize the SDK again before further use. For signing a user out, use
   /// [depersonalize] instead.
-  static Future<void> cleanup() =>
-      InfobipMobileMessagingHuaweiPlatform.instance.cleanup();
+  static Future<void> cleanup() async {
+    await InfobipMobileMessagingHuaweiPlatform.instance.cleanup();
+    _chatJwtProvider = null;
+    _chatJwtProviderErrorHandler = null;
+    await _chatJwtSubscription?.cancel();
+    _chatJwtSubscription = null;
+  }
 
   /// Asks the Infobip SDK to register this installation for remote
   /// notifications.
@@ -130,6 +142,79 @@ final class InfobipMobileMessagingHuawei {
       InfobipMobileMessagingHuaweiPlatform.instance.setJwt(
         jwt?.trim().isEmpty == true ? null : jwt?.trim(),
       );
+
+  /// Registers the asynchronous provider used for In-App Chat authentication.
+  ///
+  /// The native Chat SDK may invoke [jwtProvider] repeatedly, including after
+  /// reconnection and lifecycle changes. Return a fresh, non-empty JWT for
+  /// every invocation. This provider is separate from [setJwt], which
+  /// configures Mobile Messaging and Inbox authorization.
+  static Future<void> setChatJwtProvider(
+    Future<String> Function() jwtProvider, [
+    void Function(Object error)? onError,
+  ]) async {
+    _chatJwtProvider = jwtProvider;
+    _chatJwtProviderErrorHandler = onError;
+    await _chatJwtSubscription?.cancel();
+    _chatJwtSubscription = InfobipMobileMessagingHuaweiPlatform.instance.events
+        .where(_isChatJwtRequest)
+        .listen((_) => _provideChatJwt());
+    try {
+      await InfobipMobileMessagingHuaweiPlatform.instance.setChatJwtProvider();
+    } on Object {
+      _chatJwtProvider = null;
+      _chatJwtProviderErrorHandler = null;
+      await _chatJwtSubscription?.cancel();
+      _chatJwtSubscription = null;
+      rethrow;
+    }
+  }
+
+  static bool _isChatJwtRequest(Object? event) =>
+      event is Map &&
+      event['version'] == ChannelContract.eventVersion &&
+      event['type'] == ChannelContract.chatJwtRequested &&
+      event['payload'] is Map;
+
+  static Future<void> _provideChatJwt() async {
+    final platform = InfobipMobileMessagingHuaweiPlatform.instance;
+    final provider = _chatJwtProvider;
+    if (provider == null) {
+      await _rejectChatJwt(platform, 'Chat JWT provider is not registered');
+      return;
+    }
+    late final String jwt;
+    try {
+      jwt = (await provider()).trim();
+      if (jwt.isEmpty) {
+        throw const FormatException('Chat JWT must not be empty');
+      }
+    } on Object catch (error) {
+      try {
+        _chatJwtProviderErrorHandler?.call(error);
+      } on Object {
+        // A host error handler must not prevent the native callback completing.
+      }
+      await _rejectChatJwt(platform, 'Unable to provide Chat JWT');
+      return;
+    }
+    try {
+      await platform.resolveChatJwt(jwt);
+    } on Object {
+      // Native teardown may race an in-flight provider result.
+    }
+  }
+
+  static Future<void> _rejectChatJwt(
+    InfobipMobileMessagingHuaweiPlatform platform,
+    String error,
+  ) async {
+    try {
+      await platform.rejectChatJwt(error);
+    } on Object {
+      // Native teardown may race an in-flight provider failure.
+    }
+  }
 
   /// Returns the locally cached installation without network access.
   static Future<Installation> getInstallation() =>
