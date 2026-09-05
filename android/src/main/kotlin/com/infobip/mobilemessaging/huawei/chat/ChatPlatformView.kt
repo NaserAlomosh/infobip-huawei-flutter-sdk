@@ -16,6 +16,7 @@ import io.flutter.plugin.platform.PlatformView
 import org.infobip.mobile.messaging.chat.core.MultithreadStrategy
 import org.infobip.mobile.messaging.chat.core.widget.LivechatWidgetView
 import org.infobip.mobile.messaging.chat.view.InAppChatFragment
+import org.infobip.mobile.messaging.chat.view.DefaultInAppChatFragmentEventsListener
 
 internal class ChatPlatformView(
     context: Context,
@@ -76,19 +77,17 @@ internal class ChatPlatformView(
             val created = InAppChatFragment().apply {
                 withInput = options.withInput
                 withToolbar = options.withToolbar
-                eventsListener = object : InAppChatFragment.EventsListener {
+                eventsListener = object : DefaultInAppChatFragmentEventsListener() {
                     override fun onChatViewChanged(view: LivechatWidgetView) {
                         if (!disposed && fragment === this@apply) {
                             currentWidgetView = view
                         }
                     }
-
                     override fun onChatAttachmentPreviewOpened(
                         url: String?,
                         type: String?,
                         caption: String?,
                     ): Boolean = false
-
                     override fun onExitChatPressed() = Unit
                 }
             }
