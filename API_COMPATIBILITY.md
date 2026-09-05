@@ -223,9 +223,9 @@ Its presentation command opens native Chat rather than exporting Huawei's embedd
 
 | Capability | Official Flutter API | Huawei 8.14.0 API | Parity | Public decision | Reason |
 | --- | --- | --- | --- | --- | --- |
-| Embedded Chat UI | Full-screen native Chat presentation | `InAppChatActivity`, `InAppChatFragment`, `InAppChatView` | Adaptable | Implemented | A PlatformView embeds `InAppChatView`. |
-| Flutter-owned toolbar | Flutter presentation owns its route chrome | `InAppChatView` has no component toolbar | Adaptable | Implemented | Flutter supplies the `AppBar`; the native view supplies Chat content. |
-| Native composer | Native Chat input | `InAppChatView` input | Exact | Implemented | Native focus, validation, and upload behavior is retained. |
+| Embedded Chat UI | Full-screen native Chat presentation | `InAppChatActivity`, `InAppChatFragment`, `InAppChatView` | Adaptable | Implemented | A PlatformView hosts `InAppChatFragment`. |
+| Flutter-owned toolbar | Flutter presentation owns its route chrome | `InAppChatFragment.withToolbar` | Adaptable | Implemented | Flutter supplies the `AppBar`; the native fragment supplies Chat content. |
+| Native composer | Native Chat input | `InAppChatFragment.withInput` | Exact | Implemented | Native focus, validation, and upload behavior is retained. |
 | Native attachments | Native attachment picker and composer | `InAppChatAttachment`, `AttachmentSource`, native input UI | Exact | Implemented | Supported through the native composer. |
 | Back navigation | Chat navigation command | `navigateBackOrCloseChat()` | Adaptable | Implemented | A view-scoped boolean lets Flutter decide whether to pop. |
 | Chat availability | `isChatAvailable` | `InAppChat.isChatAvailable()` | Exact | Implemented | Direct global SDK query; no view-state inference. |
@@ -247,9 +247,11 @@ Its presentation command opens native Chat rather than exporting Huawei's embedd
 | `getActiveThread` | No stable nullable thread model contract | `getActiveThread(...)` and callback | Huawei-only at the safe Dart boundary | Deferred | Active-thread identity and errors cannot be preserved in the approved API. |
 | `showThread` | No stable thread identifier/model contract | `showThread(...)` | Huawei-only at the safe Dart boundary | Deferred | Dart cannot safely reconstruct the required native thread argument. |
 | `showThreadList` | `ChatViewController.showThreadsList` | `showThreadList()` | Exact | Implemented | View-scoped native UI navigation does not expose or duplicate thread models. |
-| Chat events | Unread counter update only has approved parity | `InAppChatEventsListener` and component listeners | Adaptable selectively | Implemented for unread only | Operation-result events are not duplicated as streams. |
+| Chat loaded | `ChatView.chatLoaded` / `onChatLoadingFinished` | `InAppChatFragment.EventsListener.onChatLoadingFinished()` | Exact | Implemented | A typed, view-scoped loaded event reflects widget loading, not PlatformView creation. |
+| Chat view changed | `ChatViewEvent` / `onChatViewChanged` | `onChatViewChanged(LivechatWidgetView)` | Adaptable | Implemented | Native values map to a Dart enum with an unknown/raw-value fallback. |
+| Chat connection changed | `onChatConnectionChanged` | `onChatConnectionResumed()` / `onChatConnectionPaused()` | Adaptable | Implemented | The two callbacks map to typed connected/disconnected states. |
 | Raw-message events | No stable public received/raw-message model | `onChatRawMessageReceived` | Huawei-only at the safe Dart boundary | Intentionally omitted | Raw internal structures are not exposed as maps or invented Dart messages. |
-| View-specific events | No approved portable surface | View/Fragment `EventsListener` callbacks | Huawei-only | Intentionally omitted | UI callbacks remain owned by the embedded component and are not mixed into global events. |
+| Other component events | No stable portable surface | Remaining View/Fragment `EventsListener` callbacks | Huawei-only | Intentionally omitted | Operation, control, URL, attachment, exit, and exception callbacks remain separate from runtime state. |
 
 Language and widget theme are component-scoped. Setters complete only after the native call succeeds;
 getters read the attached component. Empty values fail in Dart and at the native boundary. Other
@@ -261,6 +263,12 @@ no additional persistence guarantee and does not store them for future PlatformV
 Huawei Chat 8.14.0 is a native UI/web-chat integration with reusable UI components and public
 component commands. It is not a complete headless Chat client: history, receipts, and a stable typed
 public received-message stream are not available independently of those components.
+
+Runtime UI events are owned by the `InAppChatFragment` instance and use its dedicated PlatformView
+method channel. A bounded 32-event FIFO covers the interval before Dart signals readiness; it drops
+the oldest entry when full, drains once in order, and is cleared on view disposal. Global unread
+events remain on the shared SDK event channel. Chat exception handling and JWT requests are not
+part of the runtime event family.
 
 ### UI integration and configuration
 

@@ -12,5 +12,6 @@ export 'src/custom_event/custom_event.dart';
 export 'src/inbox/inbox.dart';
 export 'src/chat/chat_view.dart';
 export 'src/chat/chat_error.dart';
+export 'src/chat/chat_event.dart';
 export 'src/chat/chat_message_payload.dart';
 export 'src/chat/chat.dart';

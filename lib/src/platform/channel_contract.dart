@@ -15,6 +15,12 @@ abstract final class ChannelContract {
   static const chatGetWidgetTheme = 'getWidgetTheme';
   static const chatViewReady = 'viewReady';
   static const chatOnError = 'onError';
+  static const chatOnRuntimeEvent = 'onRuntimeEvent';
+  static const chatLoaded = 'loaded';
+  static const chatViewChanged = 'viewChanged';
+  static const chatConnectionChanged = 'connectionChanged';
+  static const event = 'event';
+  static const value = 'value';
   static const code = 'code';
   static const message = 'message';
   static const text = 'text';
