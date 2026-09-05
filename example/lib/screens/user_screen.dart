@@ -50,8 +50,7 @@ class _UserScreenState extends State<UserScreen> {
     'First name: ${user.firstName ?? 'not set'}',
     'Last name: ${user.lastName ?? 'not set'}',
     'Gender: ${user.gender?.name ?? 'not set'}',
-    'Birthday: '
-        '${user.birthday?.toIso8601String().split('T').first ?? 'not set'}',
+    'Birthday: ${user.birthday ?? 'not set'}',
     'Tags: ${user.tags?.length ?? 0}',
   ].join('\n');
 

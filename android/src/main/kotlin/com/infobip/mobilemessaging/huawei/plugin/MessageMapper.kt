@@ -3,7 +3,6 @@ package com.infobip.mobilemessaging.huawei.plugin
 import org.infobip.mobile.messaging.Message
 import org.json.JSONArray
 import org.json.JSONObject
-import java.time.Instant
 
 internal object MessageMapper {
     fun map(message: Message): Map<String, Any?> =
@@ -18,8 +17,8 @@ internal object MessageMapper {
             "category" to message.category,
             "customPayload" to channelSafeObject(message.customPayload),
             "internalData" to null,
-            "receivedTimestamp" to timestamp(message.receivedTimestamp),
-            "seenDate" to message.seenTimestamp.takeIf { it != 0L }?.let(::timestamp),
+            "receivedTimestamp" to message.receivedTimestamp,
+            "seenDate" to message.seenTimestamp.takeIf { it != 0L },
             "contentUrl" to message.contentUrl,
             "seen" to (message.seenTimestamp != 0L),
             "originalPayload" to null,
@@ -30,8 +29,6 @@ internal object MessageMapper {
             "inAppDismissTitle" to message.inAppDismissTitle,
             "chat" to message.isChat,
         )
-
-    private fun timestamp(value: Long): String = Instant.ofEpochMilli(value).toString()
 
     private fun channelSafeObject(value: JSONObject?): Map<String, Any?>? =
         value?.keys()?.asSequence()?.associateWith { key -> channelSafe(value.opt(key)) }

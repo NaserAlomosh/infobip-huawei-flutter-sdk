@@ -32,9 +32,7 @@ abstract final class UserCodec {
         ChannelContract.lastName: attributes.lastName,
         ChannelContract.middleName: attributes.middleName,
         ChannelContract.gender: _encodeGender(attributes.gender),
-        ChannelContract.birthday: attributes.birthday == null
-            ? null
-            : _dateOnly(attributes.birthday!),
+        ChannelContract.birthday: _birthday(attributes.birthday),
         ChannelContract.tags: attributes.tags,
         ChannelContract.customAttributes: _encodeCustomAttributes(
           attributes.customAttributes,
@@ -47,9 +45,7 @@ abstract final class UserCodec {
     ChannelContract.lastName: user.lastName,
     ChannelContract.middleName: user.middleName,
     ChannelContract.gender: _encodeGender(user.gender),
-    ChannelContract.birthday: user.birthday == null
-        ? null
-        : _dateOnly(user.birthday!),
+    ChannelContract.birthday: _birthday(user.birthday),
     ChannelContract.phones: user.phones,
     ChannelContract.emails: user.emails,
     ChannelContract.tags: user.tags,
@@ -100,7 +96,7 @@ abstract final class UserCodec {
     null => null,
     'male' => Gender.Male,
     'female' => Gender.Female,
-    String() => Gender.unknown,
+    String() => null,
     _ => throw const FormatException('gender must be a string.'),
   };
 
@@ -108,20 +104,15 @@ abstract final class UserCodec {
     null => null,
     Gender.Male => 'male',
     Gender.Female => 'female',
-    Gender.unknown => throw PlatformException(
-      code: 'invalid_argument',
-      message: 'Gender.unknown cannot be sent to the native SDK.',
-    ),
   };
 
   static Type? _type(Object? value) => switch (value) {
     null => null,
-    'lead' => Type.Lead,
-    'customer' => Type.Customer,
-    String() => Type.unknown,
+    'lead', 'LEAD' => Type.LEAD,
+    'customer', 'CUSTOMER' => Type.CUSTOMER,
+    String() => null,
     _ => throw const FormatException('type must be a string.'),
   };
-
 
   static List<Installation>? _installations(Object? value) {
     if (value == null) return null;
@@ -131,16 +122,17 @@ abstract final class UserCodec {
     return List.unmodifiable(value.map(InstallationCodec.decode));
   }
 
-  static DateTime? _birthday(Object? value) {
+  static String? _birthday(Object? value) {
     if (value == null) return null;
     if (value is! String || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
       throw const FormatException('birthday must use YYYY-MM-DD.');
     }
-    final parsed = DateTime.tryParse('${value}T00:00:00.000Z');
-    if (parsed == null || _dateOnly(parsed) != value) {
+    final parts = value.split('-').map(int.parse).toList();
+    final parsed = DateTime.utc(parts[0], parts[1], parts[2]);
+    if (_dateOnly(parsed) != value) {
       throw const FormatException('birthday is not a valid date.');
     }
-    return parsed;
+    return value;
   }
 
   static String _dateOnly(DateTime value) =>

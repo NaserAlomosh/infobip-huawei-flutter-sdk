@@ -71,7 +71,7 @@ internal object InboxMapper {
             ChannelContract.BODY to value.body,
             ChannelContract.TOPIC to value.topic,
             ChannelContract.SEEN to value.isSeen,
-            ChannelContract.RECEIVED_TIMESTAMP to timestamp(value.receivedTimestamp),
+            ChannelContract.RECEIVED_TIMESTAMP to value.receivedTimestamp,
             ChannelContract.CUSTOM_PAYLOAD to jsonObject(value.customPayload),
             "deeplink" to value.deeplink,
             "silent" to value.isSilent,
@@ -134,8 +134,6 @@ internal object InboxMapper {
             throw IllegalArgumentException("$key must be a UTC timestamp")
         }
     }
-
-    private fun timestamp(value: Long): String = Instant.ofEpochMilli(value).toString()
 
     private fun jsonObject(value: JSONObject?): Map<String, Any?> {
         if (value == null) return emptyMap()

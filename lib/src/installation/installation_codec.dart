@@ -51,7 +51,8 @@ abstract final class InstallationCodec {
     if (value is! String) throw const FormatException('pushServiceType must be a string');
     return switch (value.toUpperCase()) {
       'APNS' => PushServiceType.APNS,
-      'FCM' => PushServiceType.FCM,
+      'GCM' => PushServiceType.GCM,
+      'FIREBASE', 'FCM' => PushServiceType.Firebase,
       'HMS' => PushServiceType.HMS,
       _ => throw FormatException('Unknown pushServiceType: $value'),
     };

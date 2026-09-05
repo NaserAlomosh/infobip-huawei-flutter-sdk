@@ -156,10 +156,10 @@ class _InboxScreenState extends State<InboxScreen> {
                       [
                         if (message.body != null) message.body!,
                         'Topic: ${message.topic ?? 'none'}',
-                        'Received: ${message.receivedTimestamp?.toLocal() ?? 'unknown'}',
+                        'Received: ${message.receivedTimestamp ?? 'unknown'}',
                       ].join('\n'),
                     ),
-                    trailing: message.seen
+                    trailing: message.seen == true
                         ? const Icon(
                             Icons.drafts_outlined,
                             semanticLabel: 'Seen',

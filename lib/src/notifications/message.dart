@@ -2,7 +2,7 @@
 ///
 /// [originalPayload] is an iOS-only value in the official Flutter plugin and
 /// is always `null` on Huawei Android.
-final class Message {
+class Message {
   const Message({
     this.messageId,
     this.title,
@@ -39,13 +39,13 @@ final class Message {
   final String? icon;
   final bool? silent;
   final String? category;
-  final Map<String, Object?>? customPayload;
+  final Map<String, dynamic>? customPayload;
   final String? internalData;
-  final DateTime? receivedTimestamp;
-  final DateTime? seenDate;
+  final num? receivedTimestamp;
+  final num? seenDate;
   final String? contentUrl;
   final bool? seen;
-  final Map<String, Object?>? originalPayload;
+  final Map<String, dynamic>? originalPayload;
   final String? browserUrl;
   final String? deeplink;
   final String? webViewUrl;

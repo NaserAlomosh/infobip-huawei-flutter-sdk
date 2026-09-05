@@ -12,8 +12,8 @@ abstract final class PushMessageCodec {
     category: _string(map['category'], 'category'),
     customPayload: _map(map['customPayload'], 'customPayload'),
     internalData: _string(map['internalData'], 'internalData'),
-    receivedTimestamp: _date(map['receivedTimestamp'], 'receivedTimestamp'),
-    seenDate: _date(map['seenDate'], 'seenDate'),
+    receivedTimestamp: _number(map['receivedTimestamp'], 'receivedTimestamp'),
+    seenDate: _number(map['seenDate'], 'seenDate'),
     contentUrl: _string(map['contentUrl'], 'contentUrl'),
     seen: _bool(map['seen'], 'seen'),
     originalPayload: _map(map['originalPayload'], 'originalPayload'),
@@ -36,17 +36,12 @@ abstract final class PushMessageCodec {
     throw FormatException('$name must be a boolean');
   }
 
-  static DateTime? _date(Object? value, String name) {
-    if (value == null) return null;
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value, isUtc: true);
-    }
-    if (value is! String) throw FormatException('$name must be a timestamp');
-    return DateTime.tryParse(value)?.toUtc() ??
-        (throw FormatException('$name must be a valid timestamp'));
+  static num? _number(Object? value, String name) {
+    if (value == null || value is num) return value as num?;
+    throw FormatException('$name must be numeric milliseconds');
   }
 
-  static Map<String, Object?>? _map(Object? value, String name) {
+  static Map<String, dynamic>? _map(Object? value, String name) {
     if (value == null) return null;
     if (value is! Map || value.keys.any((key) => key is! String)) {
       throw FormatException('$name must be a string-keyed map');
