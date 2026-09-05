@@ -99,7 +99,7 @@ internal class NativeEventBridge(
         intent: Intent,
         type: String,
     ) {
-        intent.extraOfType<User>()?.let { user ->
+        UserBroadcastMapper.fromIntent(intent)?.let { user ->
             emit(type, mapOf(ChannelContract.USER to UserMapper.toMap(user)))
         }
     }
@@ -111,5 +111,12 @@ internal class NativeEventBridge(
             .asSequence()
             .mapNotNull { extras.get(it) as? T }
             .firstOrNull()
+    }
+}
+
+internal object UserBroadcastMapper {
+    fun fromIntent(intent: Intent): User? {
+        val extras = intent.extras ?: return null
+        return runCatching { User.createFrom(extras) }.getOrNull()
     }
 }
