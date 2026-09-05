@@ -51,7 +51,7 @@ Until publication, applications can reference this repository explicitly:
 dependencies:
   infobip_mobilemessaging_huawei:
     git:
-      url: https://github.com/NaserAlomosh/infobip-huawei-flutter-sdk.git
+      url: https://github.com/NaserAlomosh/mobile-messaging-huawei-flutter-plugin.git
       ref: v1.0.0
 ```
 
