@@ -15,6 +15,7 @@ internal class ChatManager(
 ) {
     private val applicationContext = context.applicationContext
     private val inAppChat by lazy { InAppChat.getInstance(applicationContext) }
+    private val operations by lazy { ChatOperations.from(inAppChat) }
     @Volatile
     private var activated = false
 
@@ -49,7 +50,7 @@ internal class ChatManager(
             return
         }
         try {
-            val count = inAppChat.getMessageCounter()
+            val count = operations.getMessageCounter()
             if (count < 0) {
                 callback(null, ChatFailure("native_error", "Unable to read Chat unread message count"))
             } else {
@@ -57,6 +58,33 @@ internal class ChatManager(
             }
         } catch (_: Exception) {
             callback(null, ChatFailure("native_error", "Unable to read Chat unread message count"))
+        }
+    }
+
+    fun isChatAvailable(callback: (Boolean?, ChatFailure?) -> Unit) = execute(
+        "Unable to read Chat availability",
+        callback,
+    ) { operations.isChatAvailable() }
+
+    fun resetMessageCounter(callback: (Unit?, ChatFailure?) -> Unit) = execute(
+        "Unable to reset Chat message counter",
+        callback,
+    ) { operations.resetMessageCounter() }
+
+    private fun <T> execute(
+        failureMessage: String,
+        callback: (T?, ChatFailure?) -> Unit,
+        operation: () -> T,
+    ) {
+        val failure = attach()
+        if (failure != null) {
+            callback(null, failure)
+            return
+        }
+        try {
+            callback(operation(), null)
+        } catch (_: Exception) {
+            callback(null, ChatFailure("native_error", failureMessage))
         }
     }
 

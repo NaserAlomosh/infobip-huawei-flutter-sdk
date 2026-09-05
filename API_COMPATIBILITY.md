@@ -226,7 +226,12 @@ Its presentation command opens native Chat rather than exporting Huawei's embedd
 | Native composer | Native Chat input | `InAppChatView` input | Exact | Implemented | Native focus, validation, and upload behavior is retained. |
 | Native attachments | Native attachment picker and composer | `InAppChatAttachment`, `AttachmentSource`, native input UI | Exact | Implemented | Supported through the native composer. |
 | Back navigation | Chat navigation command | `navigateBackOrCloseChat()` | Adaptable | Implemented | A view-scoped boolean lets Flutter decide whether to pop. |
+| Chat availability | `isChatAvailable` | `InAppChat.isChatAvailable()` | Exact | Implemented | Direct global SDK query; no view-state inference. |
 | Unread count | `getChatUnreadMessageCount` | `MobileChat.getUnreadMessagesCounter()` | Adaptable | Implemented | Exposed as global SDK state. |
+| Message counter parity | `getMessageCounter` | `InAppChat.getMessageCounter()` | Exact | Implemented | `getUnreadMessageCount()` is retained as an alias using the same platform query. |
+| Reset message counter | `resetMessageCounter` | `InAppChat.resetMessageCounter()` | Exact | Implemented | Synchronous native reset is bridged as `Future<void>`. |
+| Multithread state | `ChatViewController.isMultithread` | `InAppChatFragment.isMultiThread` | Exact | Implemented | Reads the currently attached fragment through its view-scoped channel. |
+| Global cleanup | Root `cleanup()` invokes Mobile Messaging cleanup | Only Chat-specific `InAppChat.cleanup()` verified | Mismatch | Requires Adaptation | Chat-only cleanup cannot represent the broader official root SDK operation, so it is intentionally deferred. |
 | Unread updates | `onChatUnreadMessageCounterUpdated` | `InAppChatEventsListener.onChangedUnreadMessagesCounter(int)` | Adaptable | Implemented | Typed global stream on the shared EventChannel. |
 | Programmatic text send | Programmatic Chat send | `send(MessagePayload)` | Adaptable | Implemented | A typed, validated text-only outbound payload maps to `MessagePayload(text)`. |
 | Contextual data | String contextual-data command | `sendContextualData(String)` | Exact | Implemented | The string remains opaque and distinct from message content. |
@@ -258,7 +263,7 @@ public received-message stream are not available independently of those componen
 | Official Flutter Chat API/capability | Huawei Chat 8.14.0 native API | Status | Evidence and implementation notes |
 | --- | --- | --- | --- |
 | Initialize chat module | `MobileChat.getInstance(Context)` / chat module initialization tied to core SDK | Requires Adaptation | Core SDK must be ready first; retain application context and install listeners once per engine. |
-| Check chat availability | `MobileChat` availability/configuration callback | Requires Adaptation | Network/config result is asynchronous and may change; map to a future/state rather than a compile-time flag. |
+| Check chat availability | `InAppChat.isChatAvailable()` | Supported | Implemented as a direct SDK query after initialization; the plugin does not infer it from a view. |
 | Show native Chat Activity | `InAppChatActivity` / `InAppChatScreen.show(Context)` | Supported | The SDK retains a full-screen native entry point, but it is one option rather than the only supported UI architecture. |
 | Embed Chat in a Flutter layout | `InAppChatView` | Supported | `InfobipHuaweiChatView` uses a dedicated PlatformView, retains native input, and renders below a Flutter-controlled `AppBar`. Real-device keyboard, accessibility, and attachment validation remains required. |
 | Disable native toolbar | `InAppChatFragment.withToolbar` | Requires Adaptation | Set the Fragment option to disable its Infobip toolbar when Flutter owns the app bar. This configuration point is verified on the Fragment; it must not be attributed to the View. |
@@ -267,6 +272,8 @@ public received-message stream are not available independently of those componen
 | Close/hide chat | Component navigation plus Activity/Fragment/View lifecycle | Requires Adaptation | Activity finish, Fragment removal, and PlatformView disposal are distinct operations and must run on the main thread. |
 | Chat authentication/session | SDK personalization plus chat session managed internally | Requires Adaptation | No Flutter-accessible credential/session token should be invented. User identity changes must synchronize with core personalization. |
 | Get unread count | Chat unread-message counter getter/callback | Requires Adaptation | Async/cached result maps to a future; unavailable/offline states must not collapse to zero. |
+| Reset unread count | `InAppChat.resetMessageCounter()` | Supported | The native synchronous operation is exposed as `Future<void>` and native failures propagate. |
+| Read multithread mode | `InAppChatFragment.isMultiThread` | Supported | The attached fragment is the single source of truth, consistent with back navigation. |
 | Listen for unread count | `InAppChatEventsListener.onChangedUnreadMessagesCounter(int)` | Requires Adaptation | Implemented on the shared EventChannel; the listener is removed at engine detach. |
 | Chat configuration/theme | Component widget language/theme commands plus Android resources | Requires Adaptation | Runtime widget language/theme strings are implemented; Android resource configuration remains host-owned. |
 | Multiple Flutter engines | Singleton chat SDK plus per-engine listener/UI ownership | Requires Adaptation | Enforce one active presentation/listener owner or provide deterministic arbitration. |

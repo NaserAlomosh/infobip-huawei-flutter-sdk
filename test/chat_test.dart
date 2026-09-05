@@ -34,6 +34,10 @@ void main() {
       controller.getWidgetTheme(),
       throwsA(isA<PlatformException>()),
     );
+    await expectLater(
+      controller.isMultithread(),
+      throwsA(isA<PlatformException>()),
+    );
   });
 
   test('text payload rejects empty text', () {
@@ -208,6 +212,34 @@ void main() {
       await mountView(tester, controller: controller);
 
       expect(await controller.navigateBackOrCloseChat(), isFalse);
+    });
+
+    for (final value in [true, false]) {
+      testWidgets('controller returns $value for multithread state', (
+        tester,
+      ) async {
+        messenger.setMockMethodCallHandler(
+          const MethodChannel(channelName),
+          (call) async => call.method == 'isMultithread' ? value : null,
+        );
+        final controller = InfobipHuaweiChatController();
+        await mountView(tester, controller: controller);
+
+        expect(await controller.isMultithread(), value);
+      });
+    }
+
+    testWidgets('controller rejects malformed multithread state', (
+      tester,
+    ) async {
+      messenger.setMockMethodCallHandler(
+        const MethodChannel(channelName),
+        (call) async => call.method == 'isMultithread' ? 1 : null,
+      );
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      await expectLater(controller.isMultithread(), throwsFormatException);
     });
 
     testWidgets('controller sends text on its view channel', (tester) async {

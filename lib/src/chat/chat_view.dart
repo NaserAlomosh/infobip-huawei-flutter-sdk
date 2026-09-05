@@ -166,6 +166,18 @@ final class InfobipHuaweiChatController {
     return handled;
   }
 
+  /// Returns whether the attached native Chat fragment supports threads.
+  Future<bool> isMultithread() async {
+    final bridge = _requireBridge();
+    final value = await bridge.channel.invokeMethod<Object?>(
+      ChannelContract.chatIsMultithread,
+    );
+    if (value is! bool) {
+      throw const FormatException('Invalid Chat multithread result');
+    }
+    return value;
+  }
+
   _ChatViewBridge _requireBridge() {
     final bridge = _bridge;
     if (bridge == null) {

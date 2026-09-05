@@ -42,6 +42,22 @@ final class MethodChannelInfobipMobileMessagingHuawei
   }
 
   @override
+  Future<bool> isChatAvailable() async {
+    final result = await methodChannel.invokeMethod<Object?>(
+      ChannelContract.isChatAvailable,
+    );
+    if (result is! bool) {
+      throw const FormatException('Invalid Chat availability result');
+    }
+    return result;
+  }
+
+  @override
+  Future<void> resetChatMessageCounter() => methodChannel.invokeMethod<void>(
+    ChannelContract.resetChatMessageCounter,
+  );
+
+  @override
   Future<void> initialize({required String applicationCode}) async {
     await methodChannel.invokeMethod<void>(ChannelContract.initialize, {
       ChannelContract.applicationCode: applicationCode,
