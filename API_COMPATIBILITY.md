@@ -217,7 +217,8 @@ The inspected official public Chat surface uses the root plugin commands
 `showChat`, `getChatUnreadMessageCount`, `setChatLanguage`, `setChatWidgetTheme`,
 `sendChatMessage`, and `sendChatContextualData`, plus
 `onChatUnreadMessageCounterUpdated`. Its language, widget-theme, message, and contextual-data inputs
-are strings; it does not export a stable thread family or portable programmatic attachment model.
+are strings. Its view controller also exposes thread-list navigation, but it does not export a
+stable thread model family or portable programmatic attachment model.
 Its presentation command opens native Chat rather than exporting Huawei's embeddable Android view.
 
 | Capability | Official Flutter API | Huawei 8.14.0 API | Parity | Public decision | Reason |
@@ -232,6 +233,7 @@ Its presentation command opens native Chat rather than exporting Huawei's embedd
 | Message counter parity | `getMessageCounter` | `InAppChat.getMessageCounter()` | Exact | Implemented | `getUnreadMessageCount()` is retained as an alias using the same platform query. |
 | Reset message counter | `resetMessageCounter` | `InAppChat.resetMessageCounter()` | Exact | Implemented | Synchronous native reset is bridged as `Future<void>`. |
 | Multithread state | `ChatViewController.isMultithread` | `InAppChatFragment.isMultiThread` | Exact | Implemented | Reads the currently attached fragment through its view-scoped channel. |
+| Show thread list | `ChatViewController.showThreadsList` | `InAppChatFragment.showThreadList()` | Exact | Implemented | Requests the native conversation list through the attached view's channel; thread data remains SDK-owned. |
 | Global cleanup | Root `cleanup()` invokes Mobile Messaging cleanup | `MobileMessaging.cleanup()` | Exact | Implemented | Clears Inbox JWT state, the SDK `JwtSupplier`, the Chat `JwtProvider`, and pending Chat JWT callbacks before root cleanup. Initialize and register the Chat provider again before further use; `InAppChat.cleanup()` remains separate. |
 | Unread updates | `onChatUnreadMessageCounterUpdated` | `InAppChatEventsListener.onChangedUnreadMessagesCounter(int)` | Adaptable | Implemented | Typed global stream on the shared EventChannel. |
 | Chat JWT provider | `setChatJwtProvider` | `InAppChat.setWidgetJwtProvider(JwtProvider)` | Exact / Supported | Implemented | Flutter async callback is bridged to Huawei `JwtCallback` and invoked on demand for fresh tokens. |
@@ -244,7 +246,7 @@ Its presentation command opens native Chat rather than exporting Huawei's embedd
 | `getThreads` | No stable typed thread collection contract | `getThreads(...)` and callback | Huawei-only at the safe Dart boundary | Deferred | Returning native objects or untyped maps would make an unstable API. |
 | `getActiveThread` | No stable nullable thread model contract | `getActiveThread(...)` and callback | Huawei-only at the safe Dart boundary | Deferred | Active-thread identity and errors cannot be preserved in the approved API. |
 | `showThread` | No stable thread identifier/model contract | `showThread(...)` | Huawei-only at the safe Dart boundary | Deferred | Dart cannot safely reconstruct the required native thread argument. |
-| `showThreadList` | No equivalent approved operation | `showThreadList()` | Huawei-only | Deferred | Exposing one navigation command without the thread model family would be incomplete. |
+| `showThreadList` | `ChatViewController.showThreadsList` | `showThreadList()` | Exact | Implemented | View-scoped native UI navigation does not expose or duplicate thread models. |
 | Chat events | Unread counter update only has approved parity | `InAppChatEventsListener` and component listeners | Adaptable selectively | Implemented for unread only | Operation-result events are not duplicated as streams. |
 | Raw-message events | No stable public received/raw-message model | `onChatRawMessageReceived` | Huawei-only at the safe Dart boundary | Intentionally omitted | Raw internal structures are not exposed as maps or invented Dart messages. |
 | View-specific events | No approved portable surface | View/Fragment `EventsListener` callbacks | Huawei-only | Intentionally omitted | UI callbacks remain owned by the embedded component and are not mixed into global events. |
@@ -298,7 +300,7 @@ the compatibility conclusion.
 | `getThreads(...)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Exposes threads through the component; it is not a continuously synchronized Flutter repository. |
 | `getActiveThread(...)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | The returned active-thread model/callback must be converted. |
 | `showThread(...)` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Enables programmatic thread selection in an embedded Chat instance. |
-| `showThreadList()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Deferred with the rest of the thread model family. |
+| `showThreadList()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Exposed as view-scoped native thread-list navigation without exposing thread data. |
 | `navigateBackOrCloseChat()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Suitable for forwarding Android/Flutter back; the host must honor the component's navigation result. |
 | `setLanguage(...)` / `getLanguage()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Implemented as a component-scoped widget-code string mapped to and from Huawei's `LivechatWidgetLanguage`. |
 | `setWidgetTheme(...)` / `getWidgetTheme()` | `InAppChatFragment`, `InAppChatView` | Requires Adaptation | Implemented as the native string widget-theme identifier; it is not a Flutter or Android resource theme. |

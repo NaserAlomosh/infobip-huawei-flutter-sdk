@@ -5,6 +5,7 @@ abstract final class ChannelContract {
   static const chatViewChannel =
       'com.infobip.mobilemessaging.huawei/chat_view/';
   static const chatNavigateBack = 'navigateBackOrCloseChat';
+  static const chatShowThreadsList = 'showThreadsList';
   static const chatIsMultithread = 'isMultithread';
   static const chatSend = 'send';
   static const chatSendContextualData = 'sendContextualData';

@@ -124,6 +124,9 @@ internal class ChatPlatformView(
         }
         when (call.method) {
             ChannelContract.CHAT_NAVIGATE_BACK -> handleNavigateBack(current, result)
+            ChannelContract.CHAT_SHOW_THREADS_LIST -> runOnFragment(current, result) {
+                current.showThreadList()
+            }
             ChannelContract.CHAT_IS_MULTITHREAD -> runOnFragment(current, result) {
                 current.isMultiThread
             }
