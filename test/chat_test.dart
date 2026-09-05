@@ -196,6 +196,20 @@ void main() {
       expect(await controller.navigateBackOrCloseChat(), isTrue);
     });
 
+    testWidgets('controller accepts a false navigation result', (
+      tester,
+    ) async {
+      messenger.setMockMethodCallHandler(
+        const MethodChannel(channelName),
+        (call) async =>
+            call.method == 'navigateBackOrCloseChat' ? false : null,
+      );
+      final controller = InfobipHuaweiChatController();
+      await mountView(tester, controller: controller);
+
+      expect(await controller.navigateBackOrCloseChat(), isFalse);
+    });
+
     testWidgets('controller sends text on its view channel', (tester) async {
       final calls = <MethodCall>[];
       messenger.setMockMethodCallHandler(const MethodChannel(channelName), (
