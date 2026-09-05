@@ -1,62 +1,215 @@
 # API Compatibility
 
-## Scope
+This document summarizes the public API coverage of
+`infobip_mobilemessaging_huawei` v1.0.0 against the Infobip Huawei
+Mobile Messaging Android SDK 8.14.0.
 
-This document describes the public v1 surface of this Android-only wrapper relative to the official Infobip Flutter capability and the Infobip Huawei Mobile Messaging Android SDK 8.14.0. It does not promise APIs that are absent from this package.
+The package is Android-only and targets Huawei Mobile Services (HMS).
 
-Statuses mean:
+## Status Legend
 
-- **Supported** — exposed with equivalent behavior.
-- **Adapted** — exposed through a Flutter-safe model, asynchronous API, event stream, or Android UI bridge.
-- **Unsupported** — no equivalent exists in Huawei SDK 8.14.0 or this Android-only package.
-- **Intentionally omitted** — the native capability is not exposed because v1 has no stable, portable public contract.
+| Status | Meaning |
+| --- | --- |
+| **Supported** | Exposed with equivalent behavior. |
+| **Adapted** | Supported through a Flutter-specific model, Future, Stream, or native Android bridge. |
+| **Unsupported** | Not available in Huawei SDK 8.14.0 or not supported by this package. |
+| **Intentionally omitted** | Available natively but intentionally not part of the stable v1 public API. |
 
-## Capability matrix
+---
 
-| Area | Capability | v1 status | Notes |
-| --- | --- | --- | --- |
-| Core | Initialize with an Application Code | Adapted | Asynchronous, idempotent for the same code, and application-context scoped. |
-| Core | Configure a memory-only JWT | Adapted | `setJwt` sets or clears the JWT used by supported native requests. |
-| Core | SDK shutdown/reset | Unsupported | Engine detachment does not reset the native singleton. |
-| Platforms | Android with Huawei Mobile Services | Supported | Android API 26 or later. |
-| Platforms | iOS or FCM transport | Unsupported | No iOS plugin registration or Firebase implementation is included. |
-| Push | Request remote-notification registration | Adapted | Host owns runtime notification permission; SDK owns HMS token handling. |
-| Push | Message received | Adapted | Typed event while a Flutter engine and subscriber are active. |
-| Push | Notification and action tapped | Adapted | The latest pending notification tap can replay once after subscription. |
-| Push | Registration and installation updates | Adapted | Events contain a typed `Installation`. |
-| Push | Raw token injection | Unsupported | HMS and the native SDK own token acquisition and refresh. |
-| Push | Background Dart callback | Unsupported | No background Dart isolate is registered. |
-| User | Cached fetch, server fetch, and save | Supported | Native callbacks are exposed as futures. |
-| User | Personalize and depersonalize | Adapted | Identity, attributes, and force-depersonalize semantics are explicit. |
-| User | Delete server user | Unsupported | Depersonalization disconnects identity; it is not user deletion. |
-| Installation | Cached fetch, server fetch, and save | Adapted | Only primary-device state and custom attributes are writable. |
-| Installation | Delete installation | Unsupported | No public v1 deletion operation exists. |
-| Inbox | Fetch, filters, counters, and mark seen | Adapted | External user ID is explicit; a request-scoped JWT is optional. |
-| Inbox | Offline-authoritative Inbox | Unsupported | Results and counters are server-backed. |
-| Inbox | Native Inbox event stream | Intentionally omitted | No stable official Flutter parity is exposed by v1. |
-| Chat | Embedded native Chat UI | Adapted | Hosted in a PlatformView backed by `InAppChatFragment`; requires `FragmentActivity`. |
-| Chat | Native composer and attachment picker | Supported | Attachment lifecycle remains native. |
-| Chat | Back navigation | Adapted | A view-scoped controller reports whether native Chat consumed the action. |
-| Chat | Unread count and update stream | Adapted | Current count is a future; subsequent changes are a global stream. |
-| Chat | Programmatic text send and contextual data | Adapted | Requires a live attached view; message payloads are text-only. |
-| Chat | Language and widget theme | Adapted | View-scoped; values map to Huawei widget configuration. |
-| Chat | Programmatic attachments | Intentionally omitted | Android URI ownership and permissions have no v1 portable model. |
-| Chat | Thread commands and models | Intentionally omitted | v1 does not define a stable public thread contract. |
-| Chat | Raw messages and additional component events | Intentionally omitted | Only the typed unread-counter event is public. |
+## Core
 
-## Public models
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Initialize with Application Code | **Adapted** | Asynchronous and application-context scoped. |
+| Configure JWT | **Adapted** | `setJwt` sets or clears the in-memory JWT used by supported requests. |
+| SDK shutdown / reset | **Unsupported** | Flutter engine detachment does not reset the native SDK singleton. |
 
-- `PushMessage` contains message ID, title, body, channel-safe custom payload, deep link, and silent status.
-- `User`, `UserIdentity`, and `UserAttributes` represent identity and supported profile fields. Birthdays retain date-only semantics; custom `DateTime` values represent UTC instants.
-- `Installation` exposes SDK-managed device and registration state while restricting updates to primary-device state and compatible custom attributes.
-- `Inbox`, `InboxMessage`, and `InboxFilterOptions` expose server counters, messages, time/topic filters, and a result limit.
-- `InfobipHuaweiChatMessagePayload` represents outbound non-empty text, not a received Chat message.
-- `InfobipHuaweiChatError` reports typed embedded-view lifecycle and availability failures.
+---
 
-## Explicit constraints
+## Platform Support
 
-Custom user and installation attributes support values accepted by Huawei SDK 8.14.0: strings, booleans, numbers, dates, and lists of those scalar types. Native models are converted field by field and are not exposed directly.
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Android + Huawei Mobile Services | **Supported** | Android API 26+. |
+| iOS | **Unsupported** | No iOS implementation is included. |
+| Firebase / FCM | **Unsupported** | This package is specifically for Huawei/HMS. |
 
-Notification events are not a durable queue. Except for the latest pending notification tap, events are neither buffered nor replayed. Native SDK notification processing is distinct from Dart event delivery.
+---
 
-Chat is a native UI integration rather than a headless conversation client. It requires successful core initialization, a compatible Android activity, and an Infobip backend with Chat enabled. Failures do not expose tokens, message content, URLs, attachment paths, or native stack traces.
+## Push Notifications
+
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Remote notification registration | **Adapted** | Host app owns runtime permission; Infobip SDK owns HMS token handling. |
+| Message received | **Adapted** | Exposed through typed Flutter events. |
+| Notification tapped | **Adapted** | Latest pending notification tap may replay once after subscription. |
+| Notification action tapped | **Adapted** | Exposed through typed Flutter events. |
+| Registration updates | **Adapted** | Exposes updated `Installation`. |
+| Installation updates | **Adapted** | Exposes updated `Installation`. |
+| Raw token injection | **Unsupported** | HMS and the Infobip SDK own token acquisition and refresh. |
+| Background Dart isolate callback | **Unsupported** | Native processing remains available, but no Dart background handler is registered. |
+
+---
+
+## User Management
+
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Get cached user | **Supported** | Returns the locally cached SDK user. |
+| Fetch user | **Supported** | Server fetch exposed as a `Future`. |
+| Save user | **Supported** | Supported user properties and custom attributes can be updated. |
+| Personalize user | **Adapted** | Maps Flutter identity and attributes to Huawei SDK models. |
+| Depersonalize user | **Adapted** | Disconnects the current user identity. |
+| Delete server user | **Unsupported** | Depersonalization is not server-side user deletion. |
+
+---
+
+## Installation Management
+
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Get cached installation | **Supported** | Returns local SDK installation state. |
+| Fetch installation | **Supported** | Server refresh exposed as a `Future`. |
+| Save installation | **Adapted** | Only supported writable fields are accepted. |
+| Primary device state | **Adapted** | Can be updated where supported by the SDK. |
+| Custom attributes | **Adapted** | Supports Huawei-compatible scalar/date/list values. |
+| Delete installation | **Unsupported** | No public v1 installation-deletion API. |
+
+---
+
+## Mobile Inbox
+
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Fetch Inbox | **Adapted** | External user ID is explicit. |
+| Filter messages | **Adapted** | Supports time, topic, and result-limit filters. |
+| Inbox counters | **Adapted** | Returned with server-backed Inbox data. |
+| Mark message as seen | **Adapted** | Uses the native Inbox SDK operation. |
+| Optional request JWT | **Adapted** | Supported for authenticated Inbox requests. |
+| Offline-authoritative Inbox | **Unsupported** | Inbox state remains server-backed. |
+| Native Inbox event stream | **Intentionally omitted** | Not part of the stable v1 Flutter API. |
+
+---
+
+## In-App Chat
+
+### UI
+
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Embedded native Chat UI | **Adapted** | Uses `InAppChatFragment` through a Flutter PlatformView. |
+| Native message composer | **Supported** | Composer remains fully native. |
+| Native attachment picker | **Supported** | Attachment handling remains native. |
+| Chat back navigation | **Adapted** | Controller reports whether native Chat consumed the back action. |
+| Chat scrolling | **Adapted** | Flutter gesture handling is configured for the embedded native view. |
+
+### Chat APIs
+
+| Capability | Status | Notes |
+| --- | --- | --- |
+| Unread message count | **Adapted** | Current value exposed as a `Future`. |
+| Unread count updates | **Adapted** | Exposed as a Flutter stream. |
+| Send text message | **Adapted** | Requires an attached Chat view. |
+| Send contextual data | **Adapted** | Requires an attached Chat view. |
+| Language | **Adapted** | View-scoped native widget configuration. |
+| Widget theme | **Adapted** | View-scoped native widget configuration. |
+| Programmatic attachments | **Intentionally omitted** | Android URI ownership and permission semantics are not part of v1. |
+| Thread APIs | **Intentionally omitted** | Stable thread models are not exposed in v1. |
+| Raw Chat messages | **Intentionally omitted** | v1 does not expose raw component messages. |
+| Additional Chat runtime events | **Intentionally omitted** | Only stable v1 Chat events are exposed. |
+
+---
+
+## Public Models
+
+### Notifications
+
+`PushMessage`
+
+Contains:
+
+- message ID
+- title
+- body
+- custom payload
+- deep link
+- silent-message status
+
+### User
+
+- `User`
+- `UserIdentity`
+- `UserAttributes`
+
+These models expose supported Infobip profile and identity fields.
+
+Birthday values retain date-only semantics, while custom `DateTime` attributes
+represent UTC timestamps.
+
+### Installation
+
+`Installation`
+
+Represents SDK-managed device and registration information.
+
+Only fields explicitly supported for modification by the plugin can be updated.
+
+### Inbox
+
+- `Inbox`
+- `InboxMessage`
+- `InboxFilterOptions`
+
+Supports server counters, Inbox messages, time filters, topic filters, and result
+limits.
+
+### Chat
+
+- `InfobipHuaweiChatMessagePayload`
+- `InfobipHuaweiChatError`
+
+`InfobipHuaweiChatMessagePayload` represents outbound text messages.
+
+`InfobipHuaweiChatError` represents typed Chat view lifecycle and availability
+errors.
+
+---
+
+## Data Type Constraints
+
+Custom User and Installation attributes support Huawei SDK 8.14.0 compatible
+values:
+
+- `String`
+- `bool`
+- numeric values
+- dates
+- lists containing supported scalar values
+
+Native Android SDK objects are converted into Flutter-safe models and are never
+exposed directly.
+
+---
+
+## Event Delivery
+
+Notification events are not treated as a persistent event queue.
+
+The latest pending notification tap may be replayed once after Flutter
+subscribes. Other notification events are delivered only while the Flutter
+engine and event subscriber are active.
+
+---
+
+## Chat Requirements
+
+In-App Chat requires:
+
+- successful Infobip SDK initialization
+- an Android `FragmentActivity`
+- Chat enabled for the configured Infobip application/profile
+- a compatible Huawei Android environment
+
+Chat is exposed primarily as a native UI integration rather than a headless
+conversation API.
