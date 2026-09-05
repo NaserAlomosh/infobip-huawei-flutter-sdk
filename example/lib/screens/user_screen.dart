@@ -143,7 +143,7 @@ class _UserScreenState extends State<UserScreen> {
           SectionCard(
             title: 'Personalization',
             description:
-                'Use a test identity with a development Infobip application. '
+                'Use a test identity with a non-production Infobip application. '
                 'Values are not persisted by this example.',
             children: [
               TextField(
