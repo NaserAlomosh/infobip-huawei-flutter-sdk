@@ -1,6 +1,8 @@
 package com.infobip.mobilemessaging.huawei.chat
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import org.infobip.mobile.messaging.chat.InAppChat
 
@@ -12,10 +14,13 @@ internal data class ChatFailure(
 internal class ChatManager(
     context: Context,
     private val initialized: () -> Boolean,
+    requestDartJwt: () -> Boolean = { false },
+    private val mainHandler: Handler = Handler(Looper.getMainLooper()),
 ) {
     private val applicationContext = context.applicationContext
     private val inAppChat by lazy { InAppChat.getInstance(applicationContext) }
     private val operations by lazy { ChatOperations.from(inAppChat) }
+    private val jwtBridge = ChatJwtBridge(requestDartJwt)
     @Volatile
     private var activated = false
 
@@ -71,6 +76,37 @@ internal class ChatManager(
         callback,
     ) { operations.resetMessageCounter() }
 
+    @Synchronized
+    fun setJwtProvider(): ChatFailure? = try {
+        jwtBridge.enable()
+        inAppChat.setWidgetJwtProvider { callback ->
+            jwtBridge.request(
+                object : ChatJwtCallback {
+                    override fun onJwtReady(jwt: String) {
+                        mainHandler.post { callback.onJwtReady(jwt) }
+                    }
+
+                    override fun onJwtError(error: Throwable) {
+                        mainHandler.post { callback.onJwtError(error) }
+                    }
+                },
+            )
+        }
+        checkNotNull(inAppChat.getWidgetJwtProvider())
+        null
+    } catch (_: Exception) {
+        jwtBridge.clear()
+        ChatFailure("native_error", "Unable to register Chat JWT provider")
+    }
+
+    fun resolveJwt(jwt: Any?): ChatFailure? =
+        if (jwtBridge.resolve(jwt)) null
+        else ChatFailure("invalid_argument", "No pending Chat JWT request or JWT is invalid")
+
+    fun rejectJwt(error: Any?): ChatFailure? =
+        if (jwtBridge.reject(error)) null
+        else ChatFailure("invalid_argument", "No pending Chat JWT request")
+
     private fun <T> execute(
         failureMessage: String,
         callback: (T?, ChatFailure?) -> Unit,
@@ -88,11 +124,18 @@ internal class ChatManager(
         }
     }
 
-    fun detach() = Unit
+    fun detach() {
+        clearJwtProvider()
+    }
 
     @Synchronized
     fun resetAfterCleanup() {
         activated = false
+    }
+
+    fun clearJwtProvider() {
+        jwtBridge.clear()
+        runCatching { inAppChat.setWidgetJwtProvider(null) }
     }
 
     private companion object {

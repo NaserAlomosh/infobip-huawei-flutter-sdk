@@ -38,7 +38,11 @@ internal object ChannelContract {
     const val SET_INSTALLATION_AS_PRIMARY = "setInstallationAsPrimary"
     const val IS_PRIMARY = "isPrimary"
     const val SET_JWT = "setJwt"
+    const val SET_CHAT_JWT_PROVIDER = "setChatJwtProvider"
+    const val RESOLVE_CHAT_JWT = "resolveChatJwt"
+    const val REJECT_CHAT_JWT = "rejectChatJwt"
     const val JWT = "jwt"
+    const val ERROR = "error"
     const val GET_INSTALLATION = "getInstallation"
     const val FETCH_INSTALLATION = "fetchInstallation"
     const val SAVE_INSTALLATION = "saveInstallation"
@@ -112,4 +116,5 @@ internal object ChannelContract {
     const val PERSONALIZED = "personalized"
     const val DEPERSONALIZED = "depersonalized"
     const val CHAT_UNREAD_MESSAGE_COUNTER_UPDATED = "chat_unread_message_counter_updated"
+    const val CHAT_JWT_REQUESTED = "chat_jwt_requested"
 }

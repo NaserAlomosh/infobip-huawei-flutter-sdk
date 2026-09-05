@@ -20,6 +20,7 @@ internal class NativeEventBridge(
     private val mainHandler: Handler = Handler(Looper.getMainLooper()),
 ) {
     private val broadcasts = LocalBroadcastManager.getInstance(context.applicationContext)
+    @Volatile
     private var sink: EventChannel.EventSink? = null
     private var registered = false
 
@@ -71,11 +72,20 @@ internal class NativeEventBridge(
     }
 
     fun listen(eventSink: EventChannel.EventSink?) {
-        mainHandler.post { sink = eventSink }
+        sink = eventSink
     }
 
     fun cancel() {
-        mainHandler.post { sink = null }
+        sink = null
+    }
+
+    fun emitChatJwtRequested(): Boolean {
+        val eventSink = sink ?: return false
+        val event = EventEnvelope.create(ChannelContract.CHAT_JWT_REQUESTED, emptyMap())
+        mainHandler.post {
+            if (sink === eventSink) eventSink.success(event)
+        }
+        return true
     }
 
     @Synchronized

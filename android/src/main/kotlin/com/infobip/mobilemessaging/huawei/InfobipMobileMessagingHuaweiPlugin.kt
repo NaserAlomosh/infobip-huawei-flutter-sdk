@@ -46,6 +46,7 @@ class InfobipMobileMessagingHuaweiPlugin :
             ChatManager(
                 context = binding.applicationContext,
                 initialized = { initializer?.isInitialized == true },
+                requestDartJwt = { eventBridge?.emitChatJwtRequested() == true },
             )
         initializer =
             MobileMessagingInitializer(binding.applicationContext) {
@@ -75,7 +76,10 @@ class InfobipMobileMessagingHuaweiPlugin :
             CleanupManager(
                 context = binding.applicationContext,
                 isInitialized = { initializer?.isInitialized == true },
-                clearPluginJwtState = { inboxManager?.clearJwtState() },
+                clearPluginJwtState = {
+                    inboxManager?.clearJwtState()
+                    chatManager?.clearJwtProvider()
+                },
                 resetPluginState = {
                     initializer?.reset()
                     chatManager?.resetAfterCleanup()
@@ -219,6 +223,26 @@ class InfobipMobileMessagingHuaweiPlugin :
                 } catch (_: IllegalArgumentException) {
                     result.error("invalid_argument", "jwt must be a string or null", null)
                 }
+            }
+
+            ChannelContract.SET_CHAT_JWT_PROVIDER -> {
+                val failure = chatManager?.setJwtProvider() ?: return detached(result)
+                if (failure == null) result.success(null)
+                else result.error(failure.code, failure.message, null)
+            }
+
+            ChannelContract.RESOLVE_CHAT_JWT -> {
+                val failure = chatManager?.resolveJwt(call.argument<Any?>(ChannelContract.JWT))
+                    ?: return detached(result)
+                if (failure == null) result.success(null)
+                else result.error(failure.code, failure.message, null)
+            }
+
+            ChannelContract.REJECT_CHAT_JWT -> {
+                val failure = chatManager?.rejectJwt(call.argument<Any?>(ChannelContract.ERROR))
+                    ?: return detached(result)
+                if (failure == null) result.success(null)
+                else result.error(failure.code, failure.message, null)
             }
 
             ChannelContract.GET_INSTALLATION -> {
@@ -408,5 +432,6 @@ class InfobipMobileMessagingHuaweiPlugin :
 
     override fun onCancel(arguments: Any?) {
         eventBridge?.cancel()
+        chatManager?.detach()
     }
 }
