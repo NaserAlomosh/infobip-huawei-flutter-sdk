@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -9,11 +10,11 @@ import 'chat_error.dart';
 import 'chat_message_payload.dart';
 
 typedef InfobipHuaweiChatErrorCallback =
-    void Function(InfobipHuaweiChatError error);
+void Function(InfobipHuaweiChatError error);
 
 final class _ChatViewBridge {
   _ChatViewBridge(this.viewId, this._onError)
-    : channel = MethodChannel('${ChannelContract.chatViewChannel}$viewId') {
+      : channel = MethodChannel('${ChannelContract.chatViewChannel}$viewId') {
     channel.setMethodCallHandler(_handleMethodCall);
     unawaited(channel.invokeMethod<void>(ChannelContract.chatViewReady));
   }
@@ -47,7 +48,7 @@ InfobipHuaweiChatError _decodeError(Object? payload) {
     'not_initialized' => InfobipHuaweiChatErrorCode.notInitialized,
     'activity_unavailable' => InfobipHuaweiChatErrorCode.activityUnavailable,
     'activity_fragment_unavailable' =>
-      InfobipHuaweiChatErrorCode.activityFragmentUnavailable,
+    InfobipHuaweiChatErrorCode.activityFragmentUnavailable,
     'chat_unavailable' => InfobipHuaweiChatErrorCode.chatUnavailable,
     'native_error' => InfobipHuaweiChatErrorCode.nativeError,
     _ => InfobipHuaweiChatErrorCode.unknown,
@@ -255,11 +256,24 @@ class _InfobipHuaweiChatViewState extends State<InfobipHuaweiChatView> {
         'withToolbar': widget.withToolbar,
       },
       creationParamsCodec: const StandardMessageCodec(),
+
+      gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+        Factory<OneSequenceGestureRecognizer>(
+              () => EagerGestureRecognizer(),
+        ),
+      },
+
       onPlatformViewCreated: (viewId) {
         widget.controller?._detach(_viewId);
         _bridge?.dispose();
+
         _viewId = viewId;
-        final bridge = _ChatViewBridge(viewId, widget.onError);
+
+        final bridge = _ChatViewBridge(
+          viewId,
+          widget.onError,
+        );
+
         _bridge = bridge;
         widget.controller?._attach(bridge);
       },
