@@ -65,6 +65,10 @@ final class MethodChannelInfobipMobileMessagingHuawei
   }
 
   @override
+  Future<void> cleanup() =>
+      methodChannel.invokeMethod<void>(ChannelContract.cleanup);
+
+  @override
   Future<void> registerForRemoteNotifications() => methodChannel
       .invokeMethod<void>(ChannelContract.registerForRemoteNotifications);
 

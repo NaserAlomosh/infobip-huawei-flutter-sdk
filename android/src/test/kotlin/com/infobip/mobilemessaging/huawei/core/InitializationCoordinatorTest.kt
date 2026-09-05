@@ -3,11 +3,27 @@ package com.infobip.mobilemessaging.huawei.core
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InitializationCoordinatorTest {
+    @Test
+    fun `reset requires initialization again and accepts a new application code`() {
+        val coordinator = InitializationCoordinator(start = { _, complete -> complete(null) })
+        coordinator.initialize("first") {}
+        assertTrue(coordinator.isInitialized)
+
+        coordinator.reset()
+
+        assertFalse(coordinator.isInitialized)
+        var error: InitializationError? = InitializationError("pending", "pending")
+        coordinator.initialize("second") { error = it }
+        assertNull(error)
+        assertTrue(coordinator.isInitialized)
+    }
+
     @Test
     fun `first initialization starts native build once`() {
         var starts = 0

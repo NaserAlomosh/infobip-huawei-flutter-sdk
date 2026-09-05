@@ -9,6 +9,7 @@ final class InitializationPlatform extends InfobipMobileMessagingHuaweiPlatform
   String? applicationCode;
   Object? error;
   var registrationCalls = 0;
+  var cleanupCalls = 0;
 
   @override
   Stream<Object?> get events => const Stream.empty();
@@ -22,6 +23,12 @@ final class InitializationPlatform extends InfobipMobileMessagingHuaweiPlatform
   @override
   Future<void> registerForRemoteNotifications() async {
     registrationCalls++;
+    if (error case final Object error) throw error;
+  }
+
+  @override
+  Future<void> cleanup() async {
+    cleanupCalls++;
     if (error case final Object error) throw error;
   }
 }
@@ -45,6 +52,11 @@ void main() {
   test('delegates initialization to the platform', () async {
     await InfobipMobileMessagingHuawei.initialize(applicationCode: 'test-code');
     expect(platform.applicationCode, 'test-code');
+  });
+
+  test('delegates root cleanup to the platform', () async {
+    await InfobipMobileMessagingHuawei.cleanup();
+    expect(platform.cleanupCalls, 1);
   });
 
   test('delegates remote notification registration to the platform', () async {

@@ -90,6 +90,11 @@ internal class ChatManager(
 
     fun detach() = Unit
 
+    @Synchronized
+    fun resetAfterCleanup() {
+        activated = false
+    }
+
     private companion object {
         const val TAG = "InfobipHuaweiChat"
     }

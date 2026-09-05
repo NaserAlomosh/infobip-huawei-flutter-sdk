@@ -165,10 +165,9 @@ but the inspected official Flutter source does not provide the stable thread mod
 result contract needed for a compatible permanent Dart API. In particular, this plugin does not
 claim headless history access or cache raw native thread objects.
 
-The official Flutter plugin's root `cleanup()` performs Mobile Messaging SDK cleanup. Huawei
-8.14.0 exposes `InAppChat.cleanup()` for the Chat module, which is narrower and therefore is not a
-semantic replacement for the global operation. Cleanup is intentionally not exposed by this
-plugin until equivalent global SDK semantics can be verified.
+Huawei 8.14.0 provides root SDK cleanup through `MobileMessaging.cleanup()`. The separate
+`InAppChat.cleanup()` operation only removes In-App Chat data and is not used to implement root
+cleanup.
 
 Android PlatformViews require real-device validation for IME resizing, accessibility, attachment permissions, Activity recreation, and route leave/re-entry behavior. No manual keyboard workaround is installed. Chat also requires a correctly configured Infobip application/backend and a Huawei device or suitable HMS environment. Never log Chat content, contextual data, URLs, identity, tokens, or local attachment paths.
 
@@ -183,6 +182,22 @@ await InfobipMobileMessagingHuawei.initialize(
 ```
 
 The application code must be non-empty. Initialization is asynchronous and uses Android's application context. Concurrent calls with the same code share one native build, and after success later equivalent calls complete without rebuilding. Calls with a different code are rejected with `already_initialized`, including after a failed attempt. A failed initialization can be retried by calling `initialize` again with the same application code; the retry starts a new native build. Failures cross the channel as `PlatformException` with stable codes: `invalid_argument`, `already_initialized`, `initialization_failed`, or `native_error`.
+
+Use root cleanup only when resetting all local SDK state, such as before switching Application
+Codes, then initialize again before further SDK calls:
+
+```dart
+await InfobipMobileMessagingHuawei.cleanup();
+
+await InfobipMobileMessagingHuawei.initialize(
+  applicationCode: 'NEW_APPLICATION_CODE',
+);
+```
+
+Cleanup clears the plugin's in-memory global JWT and the native SDK JWT supplier before invoking
+`MobileMessaging.cleanup()`. It is not a logout operation; use `depersonalize()` for normal
+user/session flows. After successful cleanup, operations that require initialization fail with
+`not_initialized` until `initialize` succeeds again.
 
 ## Push lifecycle and notification events
 

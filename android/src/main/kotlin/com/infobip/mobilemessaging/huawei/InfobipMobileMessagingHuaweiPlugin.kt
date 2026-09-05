@@ -6,9 +6,10 @@ import android.os.Handler
 import android.os.Looper
 import com.infobip.mobilemessaging.huawei.chat.ChatManager
 import com.infobip.mobilemessaging.huawei.chat.ChatPlatformViewFactory
+import com.infobip.mobilemessaging.huawei.core.CleanupManager
 import com.infobip.mobilemessaging.huawei.core.MobileMessagingInitializer
-import com.infobip.mobilemessaging.huawei.inbox.InboxManager
 import com.infobip.mobilemessaging.huawei.event.CustomEventManager
+import com.infobip.mobilemessaging.huawei.inbox.InboxManager
 import com.infobip.mobilemessaging.huawei.installation.InstallationManager
 import com.infobip.mobilemessaging.huawei.plugin.ChannelContract
 import com.infobip.mobilemessaging.huawei.plugin.NativeEventBridge
@@ -28,6 +29,7 @@ class InfobipMobileMessagingHuaweiPlugin :
     private var methodChannel: MethodChannel? = null
     private var eventChannel: EventChannel? = null
     private var initializer: MobileMessagingInitializer? = null
+    private var cleanupManager: CleanupManager? = null
     private var applicationContext: Context? = null
     private var eventBridge: NativeEventBridge? = null
     private var userManager: UserManager? = null
@@ -69,6 +71,16 @@ class InfobipMobileMessagingHuaweiPlugin :
                 context = binding.applicationContext,
                 isInitialized = { initializer?.isInitialized == true },
             )
+        cleanupManager =
+            CleanupManager(
+                context = binding.applicationContext,
+                isInitialized = { initializer?.isInitialized == true },
+                clearPluginJwtState = { inboxManager?.clearJwtState() },
+                resetPluginState = {
+                    initializer?.reset()
+                    chatManager?.resetAfterCleanup()
+                },
+            )
         eventBridge = NativeEventBridge(binding.applicationContext).also { it.register() }
         methodChannel =
             MethodChannel(binding.binaryMessenger, ChannelContract.METHOD_CHANNEL).also {
@@ -97,6 +109,7 @@ class InfobipMobileMessagingHuaweiPlugin :
         methodChannel = null
         eventChannel = null
         initializer = null
+        cleanupManager = null
         eventBridge = null
         userManager = null
         installationManager = null
@@ -130,6 +143,13 @@ class InfobipMobileMessagingHuaweiPlugin :
         when (call.method) {
             ChannelContract.INITIALIZE -> {
                 initialize(call, result)
+            }
+
+            ChannelContract.CLEANUP -> {
+                val manager = cleanupManager ?: return detached(result)
+                val error = manager.cleanup()
+                if (error == null) result.success(null)
+                else result.error(error.code, error.message, error.details)
             }
 
             ChannelContract.REGISTER_FOR_REMOTE_NOTIFICATIONS -> {

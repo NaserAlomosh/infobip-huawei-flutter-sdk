@@ -100,6 +100,8 @@ internal class MobileMessagingInitializer(
     val isInitialized: Boolean
         get() = coordinator.isInitialized
 
+    fun reset() = coordinator.reset()
+
     fun registerForRemoteNotifications(callback: (InitializationError?) -> Unit) {
         if (!isInitialized) {
             callback(

@@ -19,6 +19,7 @@ internal object ChannelContract {
     const val CHAT_VIEW_READY = "viewReady"
     const val CHAT_ON_ERROR = "onError"
     const val INITIALIZE = "initialize"
+    const val CLEANUP = "cleanup"
     const val REGISTER_FOR_REMOTE_NOTIFICATIONS = "registerForRemoteNotifications"
     const val APPLICATION_CODE = "applicationCode"
     const val GET_USER = "getUser"
