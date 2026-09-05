@@ -20,6 +20,15 @@ internal class InitializationCoordinator(
     val isInitialized: Boolean
         get() = synchronized(this) { state == State.INITIALIZED }
 
+    fun reset() {
+        synchronized(this) {
+            state = State.NOT_INITIALIZED
+            applicationCode = null
+            attempt++
+            callbacks.clear()
+        }
+    }
+
     fun initialize(
         code: String,
         callback: (InitializationError?) -> Unit,

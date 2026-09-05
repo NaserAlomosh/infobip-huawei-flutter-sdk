@@ -20,6 +20,7 @@ abstract final class ChannelContract {
   static const data = 'data';
   static const widgetTheme = 'widgetTheme';
   static const initialize = 'initialize';
+  static const cleanup = 'cleanup';
   static const registerForRemoteNotifications =
       'registerForRemoteNotifications';
   static const applicationCode = 'applicationCode';

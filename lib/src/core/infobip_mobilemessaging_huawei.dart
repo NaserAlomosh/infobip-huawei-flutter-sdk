@@ -34,6 +34,13 @@ final class InfobipMobileMessagingHuawei {
     );
   }
 
+  /// Removes local Mobile Messaging SDK data and state.
+  ///
+  /// Initialize the SDK again before further use. For signing a user out, use
+  /// [depersonalize] instead.
+  static Future<void> cleanup() =>
+      InfobipMobileMessagingHuaweiPlatform.instance.cleanup();
+
   /// Asks the Infobip SDK to register this installation for remote
   /// notifications.
   ///

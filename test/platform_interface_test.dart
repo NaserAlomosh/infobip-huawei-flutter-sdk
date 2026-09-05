@@ -48,6 +48,31 @@ void main() {
   });
 
   test(
+    'forwards cleanup over the method channel',
+    () async {
+      const channelName = 'cleanup-method-test';
+      final calls = <MethodCall>[];
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      const channel = MethodChannel(channelName);
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        calls.add(call);
+        return null;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+      final platform = MethodChannelInfobipMobileMessagingHuawei(
+        methodChannel: channel,
+        eventChannel: const EventChannel('cleanup-event-test'),
+      );
+      await platform.cleanup();
+
+      expect(calls.single.method, ChannelContract.cleanup);
+      expect(calls.single.arguments, isNull);
+    },
+  );
+
+  test(
     'forwards remote notification registration over the method channel',
     () async {
       const channelName = 'registration-method-test';
