@@ -27,7 +27,7 @@ internal object MessageMapper {
             "webViewUrl" to message.webViewUrl,
             "inAppOpenTitle" to message.inAppOpenTitle,
             "inAppDismissTitle" to message.inAppDismissTitle,
-            "chat" to message.isChat,
+            "chat" to message.isChatMessage(),
         )
 
     private fun channelSafeObject(value: JSONObject?): Map<String, Any?>? =
