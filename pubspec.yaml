@@ -1,0 +1,31 @@
+name: infobip_mobilemessaging_huawei
+description: Android Flutter plugin for Infobip Huawei Mobile Messaging, with notifications, user and installation management, Inbox, and Chat.
+version: 1.0.0
+repository: https://github.com/NaserAlomosh/mobile-messaging-huawei-flutter-plugin
+issue_tracker: https://github.com/NaserAlomosh/mobile-messaging-huawei-flutter-plugin/issues
+topics:
+  - flutter
+  - huawei
+  - infobip
+  - notifications
+
+environment:
+  sdk: ^3.9.0
+  flutter: ">=3.35.7"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.1.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.infobip.mobilemessaging.huawei
+        pluginClass: InfobipMobileMessagingHuaweiPlugin
