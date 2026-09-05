@@ -1,48 +1,47 @@
 # Contributing
 
-## Architecture
+## Development approach
 
-- Keep the public Dart API independent of `MethodChannel` and `EventChannel` details.
+- Keep public Dart APIs minimal, strongly typed, documented, and independent of channel details.
 - Route platform operations through the platform interface and central channel contract.
-- Add Dart and Kotlin feature boundaries only when implementing a real, reviewed capability.
-- Keep the Android plugin lifecycle-safe and release channel handlers on engine detachment.
-- Do not add an iOS implementation unless the supported-platform decision changes explicitly.
+- Keep Android code lifecycle-safe, release handlers and listeners on detach, and avoid retaining an activity beyond its attachment lifecycle.
+- Do not add iOS or non-Huawei transport support without an explicit supported-platform decision.
+- Treat published names, models, channel behavior, and errors as compatibility commitments.
 
-## Public API stability
+## Dependencies
 
-Public APIs must be intentional, strongly typed, documented, and supported by a compatibility assessment. Avoid exposing provisional methods or native implementation details. Treat published names and behavior as compatibility commitments.
+The native implementation targets Infobip Huawei Mobile Messaging SDK 8.14.0. Do not upgrade Infobip, Huawei, Flutter, Kotlin, Gradle, or Android Gradle Plugin dependencies silently. Review release notes, transitive dependencies, repository requirements, host impact, and `API_COMPATIBILITY.md` for every SDK change. Do not add copied AARs, application-specific SDKs, signing configuration, or unrelated build plugins.
 
-## Dependency management
+## Formatting and validation
 
-- Keep Android and Dart dependencies minimal and relevant to this reusable plugin.
-- Pin Infobip SDK modules to the reviewed baseline.
-- Do not silently upgrade Infobip, Huawei, Flutter, Kotlin, Gradle, or Android Gradle Plugin versions.
-- Review release notes, transitive dependencies, repository requirements, and host-app impact for every SDK upgrade.
-- Do not add application-specific SDKs, AARs, signing configuration, multidex configuration, or unrelated build plugins.
-
-## Formatting and analysis
-
-Run before committing:
+Run from the repository root before opening a pull request:
 
 ```sh
-dart format .
+dart format lib test example/lib example/test
+flutter pub get
 flutter analyze
+flutter test
+(
+  cd example
+  flutter pub get
+  flutter analyze
+  flutter test
+  flutter build apk --debug
+)
+dart pub publish --dry-run
+git diff --check
 ```
 
-Kotlin must remain idiomatic, null-safe, lifecycle-aware, and compatible with Java 17. Do not block the Android main thread.
+Add focused Dart tests for public and platform-channel behavior. Add native tests when Kotlin behavior changes. Device-dependent functionality must be validated on a supported Huawei device with the contributor's own ignored host configuration.
 
-## Testing
+## Pull requests
 
-Run `flutter test` for the package and example. Add focused platform-interface tests for channel infrastructure and native tests when Kotlin behavior is introduced. Tests must not imply that an unimplemented Infobip feature works. Device-dependent functionality must eventually be tested on a supported Huawei device.
+Use a focused branch and a concise commit message. Describe public API or host-configuration impact, tests performed, device coverage, and any remaining limitations. Do not combine SDK upgrades with unrelated changes.
 
-## Credentials and security
+## Security
 
-Never commit `agconnect-services.json`, Infobip Application Codes, secrets, credentials, keystores, signing passwords, or production payloads. Keep host-application identity and AGConnect configuration outside the plugin. Verify ignored files with `git status` before each commit.
+Never commit or log `agconnect-services.json`, Application Codes, JWTs, API keys, push tokens, user data, production payloads, keystores, private keys, signing passwords, Chat content, contextual data, or attachment paths. Keep host identity and AppGallery Connect configuration outside the reusable plugin. Verify ignored files and staged changes before every commit.
 
-## Native code
+## Native implementation
 
-The Android module is a library and must not declare an `applicationId`. Keep channel identifiers and method identifiers centralized. Map errors and models at the platform boundary, release listeners on detach, and invoke native SDK APIs only after their lifecycle and threading requirements have been reviewed.
-
-## SDK upgrades
-
-An SDK upgrade requires an explicit change, release-note review, dependency-graph verification, compatibility-table update, analysis, tests, and an Android build. Never use a dynamic dependency version.
+The Android module is a library and must not declare an `applicationId`. Keep channel and method identifiers centralized, use explicit model mapping, sanitize platform errors, dispatch SDK work according to its threading requirements, and invoke features only after successful SDK initialization. Embedded Chat requires an attached `FragmentActivity` and must dispose its fragment and view-scoped channel cleanly.
